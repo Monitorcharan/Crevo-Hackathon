@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
-import { ArrowRight, ArrowUpRight, BriefcaseBusiness, Check, ChevronDown, CirclePlus, Compass, Instagram, Menu, MessageCircle, Search, Send, Sparkles, UserRound, WandSparkles, X } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Aperture, Box, BriefcaseBusiness, Check, ChevronDown, CirclePlus, Clapperboard, Compass, Film, Instagram, Layers3, Menu, MessageCircle, Search, Send, Sparkles, UserRound, WandSparkles, X } from 'lucide-react'
 import { SiInstagram, SiFacebook, SiX, SiYoutube, SiReddit } from 'react-icons/si'
 import { api, authMode, setAuthMode, setToken, token } from './api.js'
 import { firebaseSignOut } from './firebaseAuth.js'
@@ -46,11 +46,56 @@ function Nav({ session, onLogout, dark }) {
   </nav><div className="nav-actions">{session ? <><span className="nav-greeting">Hi, {session.user.name.split(' ')[0]}</span><button className="text-button" onClick={onLogout}>Log out</button></> : <><Link className="text-button" to="/login">Log in</Link><Link className="button button-small button-light" to="/join">Get started <ArrowUpRight size={15}/></Link></>}</div><button className="mobile-menu" aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></header>
 }
 
+const craftCards = [
+  { name: 'AI filmmakers', detail: 'Films with a point of view', query: 'Video', Icon: Clapperboard, art: 'film' },
+  { name: 'Motion & 3D', detail: 'Worlds built in motion', query: 'Motion', Icon: Box, art: 'motion' },
+  { name: 'Campaign imagery', detail: 'Visuals made to stand out', query: 'Photography', Icon: Aperture, art: 'image' },
+  { name: 'Social content', detail: 'Ideas made for the feed', query: 'UGC', Icon: Layers3, art: 'social' },
+]
+
+function ExploreCrafts() {
+  return <section className="craft-section" id="explore"><div className="container"><div className="landing-section-head"><div><span className="eyebrow">EXPLORE BY CRAFT</span><h2>Find the kind of<br/><em>magic you need.</em></h2></div><p>From a cinematic launch film to a scroll-stopping campaign, start with the work you want to make.</p></div><div className="craft-grid">{craftCards.map(({ name, detail, query, Icon, art }, index) => <Link key={name} to={`/discover?q=${encodeURIComponent(query)}`} className={`craft-card craft-${art}`}><span className="craft-card-top"><span>0{index + 1} / CREATIVE CRAFT</span><ArrowUpRight size={20}/></span><span className="craft-art" aria-hidden="true"><Icon strokeWidth={1.2}/></span><span className="craft-card-bottom"><strong>{name}</strong><small>{detail}</small></span></Link>)}</div><div className="craft-footer"><span>Looking for something more specific? Search creators by skill, tools, and portfolio type.</span><Link to="/discover">Browse all creators <ArrowUpRight size={16}/></Link></div></div></section>
+}
+
+function WorkProof() {
+  return <section className="workproof-section"><div className="container workproof-grid"><div className="workproof-copy"><span className="eyebrow">MORE THAN A PRETTY PICTURE</span><h2>See the work.<br/><em>Understand the craft.</em></h2><p>Crevo portfolios give brands a closer look at what went into each piece. Explore the finished result alongside the tools, process, format, and commercial-use details that matter to a real campaign.</p><div className="workproof-points"><div><span>01</span><div><strong>Tools & models</strong><p>See the AI and production tools a creator reports using.</p></div></div><div><span>02</span><div><strong>Workflow & output</strong><p>Understand how an idea became the final image, film, or animation.</p></div></div><div><span>03</span><div><strong>Usage clarity</strong><p>Review format and commercial-use terms before starting a conversation.</p></div></div></div><Link className="button button-primary" to="/discover">Explore portfolios <ArrowUpRight size={17}/></Link></div><div className="workproof-visual"><div className="workproof-image"><img src="/demo/cafe-concept.png" alt="Illustrative AI campaign artwork for a café concept"/><span>ILLUSTRATIVE PROJECT</span></div><div className="workproof-note"><span>INSIDE AN AI PORTFOLIO</span><div><strong>Tool stack</strong><small>Models & editing tools</small></div><div><strong>Process</strong><small>From concept to delivery</small></div><div><strong>Use rights</strong><small>Creator-reported terms</small></div></div></div></div></section>
+}
+
+function Journey() {
+  const steps = [
+    ['01', 'Discover the talent', 'Search by craft, skill, tools, and the kind of work a creator has made.'],
+    ['02', 'Shape your brief', 'Set the content type, style, format, budget, and commercial-use needs.'],
+    ['03', 'Find your fit', 'Review applications and ranked suggestions with clear reasons behind each match.'],
+    ['04', 'Make it together', 'Accept a creator and keep your project conversation in one place.'],
+  ]
+  return <section className="journey-section" id="how-it-works"><div className="container"><div className="landing-section-head"><div><span className="eyebrow">HOW CREVO WORKS</span><h2>From first spark<br/><em>to final frame.</em></h2></div><p>A simple path from finding the right person to making something worth sharing.</p></div><div className="journey-grid">{steps.map(([number, title, detail]) => <article key={number}><span>{number}</span><div className="journey-line"/><h3>{title}</h3><p>{detail}</p></article>)}</div><div className="journey-action"><Link className="button button-dark" to="/join">Start a project <ArrowUpRight size={17}/></Link><Link className="journey-text-link" to="/discover">Or explore creators first <ArrowRight size={16}/></Link></div></div></section>
+}
+
+function AudiencePaths() {
+  return <section className="audience-section"><div className="container audience-grid"><article className="audience-brand"><span className="eyebrow">FOR BRANDS & AGENCIES</span><div><h2>Bring the idea.<br/>Find your people.</h2><p>Discover AI-native talent, make a brief that captures what you need, and move from application to collaboration with clarity.</p><Link to="/join">Start as a brand <ArrowUpRight size={18}/></Link></div><BriefcaseBusiness aria-hidden="true" className="audience-watermark"/></article><article className="audience-creator"><span className="eyebrow">FOR CREATORS</span><div><h2>Let the work<br/>speak louder.</h2><p>Build a profile that shows your craft and process, share your portfolio and channels, and find briefs worth pitching.</p><Link to="/join">Join as a creator <ArrowUpRight size={18}/></Link></div><Film aria-hidden="true" className="audience-watermark"/></article></div></section>
+}
+
+function LandingFaq() {
+  const items = [
+    ['How do I find the right creator?', 'Browse the directory or search by skill, specialty, AI tools, and portfolio content type. Brands can also publish a brief and review ranked matches.'],
+    ['What can I see in an AI portfolio?', 'Each work sample can include the finished media, tools and models, workflow notes, output format, and commercial-use information.'],
+    ['Are tools and past work verified?', 'Portfolio and tool details are creator reported. Crevo labels them clearly so you can ask follow-up questions before an engagement.'],
+    ['What happens after I publish a brief?', 'Creators can apply with a note. You can review applicants, accept one, and continue in a shared project conversation.'],
+  ]
+  return <section className="landing-faq"><div className="container faq-grid"><div><span className="eyebrow">GOOD TO KNOW</span><h2>A few things<br/><em>worth knowing.</em></h2><p>Clear details make better collaborations.</p></div><div className="faq-list">{items.map(([question, answer]) => <details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
+}
+
 function Landing() {
   const { data: creators } = useRequest('/creators', [])
-  return <><section className="hero"><Suspense fallback={<div className="hero-fallback"/>}><Hero/></Suspense><div className="hero-grain"/><div className="container hero-content"><motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7 }}><div className="eyebrow hero-eyebrow"><span className="live-dot"/> THE CREATIVE CONNECTION PLATFORM</div><h1>Where ideas<br/><em>find their people.</em></h1><p>Find remarkable creators, make work that moves people, and build what’s next together.</p><div className="hero-actions"><Link to="/discover" className="button button-primary">Explore creators <ArrowUpRight size={18}/></Link><Link to="/join" className="button button-outline">Join the community <ArrowRight size={18}/></Link></div></motion.div></div><div className="hero-bottom container"><span>SCROLL TO EXPLORE</span><span>CREATIVE ENERGY, CONNECTED ↘</span></div></section>
-    <section className="intro-section"><div className="container"><div className="section-top"><div><span className="eyebrow">01 / THE PLATFORM</span><h2>Great work starts<br/>with the right people<span className="accent">.</span></h2></div><p>Crevo brings creative talent and ambitious brands into the same room. Discover, pitch, match and collaborate in one place.</p></div><div className="feature-grid"><article><span className="feature-number">01</span><Compass size={30}/><h3>Find your fit</h3><p>Explore creators by craft, audience and platform, or get ranked suggestions for your brief.</p></article><article><span className="feature-number">02</span><WandSparkles size={30}/><h3>Make your mark</h3><p>Give your work a home with a profile and portfolio you can shape to tell your story.</p></article><article><span className="feature-number">03</span><MessageCircle size={30}/><h3>Build together</h3><p>Move from application to project conversation without losing the thread.</p></article></div></div></section>
-    <section className="featured-section"><div className="container"><div className="section-heading"><div><span className="eyebrow">02 / CREATOR SPOTLIGHT</span><h2>People making<br/>things happen<span className="accent">.</span></h2></div><Link className="round-link" to="/discover"><ArrowUpRight/></Link></div><div className="creator-grid">{creators?.length ? creators.slice(0, 3).map((c,i) => <CreatorCard key={c.id} creator={c} index={i}/>) : <Empty title="A new creative community" detail="Creator spotlights will appear as members build their profiles." action={<Link className="button button-dark" to="/join">Join as a creator <ArrowRight size={16}/></Link>}/>}</div></div></section>
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  function searchCreators(event) { event.preventDefault(); navigate(`/discover${query.trim() ? `?q=${encodeURIComponent(query.trim())}` : ''}`) }
+  return <><section className="hero"><Suspense fallback={<div className="hero-fallback"/>}><Hero/></Suspense><div className="hero-grain"/><div className="container hero-content"><motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7 }}><div className="eyebrow hero-eyebrow"><span className="live-dot"/> THE CREATIVE CONNECTION PLATFORM</div><h1>Where ideas<br/><em>find their people.</em></h1><p>Find remarkable AI creators, see how they work, and make the next great thing together.</p><form className="hero-search" onSubmit={searchCreators}><Search size={21} aria-hidden="true"/><input aria-label="Search AI creators" placeholder="Try video, motion, Runway, photography…" value={query} onChange={event => setQuery(event.target.value)}/><button type="submit">Find creators <ArrowUpRight size={17}/></button></form><div className="hero-suggestions"><span>POPULAR:</span>{['Video', 'Motion', 'Photography', 'UGC'].map(term => <Link key={term} to={`/discover?q=${encodeURIComponent(term)}`}>{term}</Link>)}</div><div className="hero-actions"><Link to="/discover" className="button button-primary">Explore creators <ArrowUpRight size={18}/></Link><Link to="/join" className="button button-outline">Join the community <ArrowRight size={18}/></Link></div></motion.div></div><div className="hero-bottom container"><span>SCROLL TO EXPLORE</span><span>CREATIVE ENERGY, CONNECTED ↘</span></div></section>
+    <ExploreCrafts/>
+    <section className="intro-section"><div className="container"><div className="section-top"><div><span className="eyebrow">01 / THE PLATFORM</span><h2>Great work starts<br/>with the right people<span className="accent">.</span></h2></div><p>Crevo brings AI-native talent and ambitious brands into the same room. Discover, pitch, match and collaborate in one place.</p></div><div className="feature-grid"><article><span className="feature-number">01</span><Compass size={30}/><h3>Find your fit</h3><p>Explore creators by craft, audience and platform, or get ranked suggestions for your brief.</p></article><article><span className="feature-number">02</span><WandSparkles size={30}/><h3>Make your mark</h3><p>Give your work a home with a profile and portfolio you can shape to tell your story.</p></article><article><span className="feature-number">03</span><MessageCircle size={30}/><h3>Build together</h3><p>Move from application to project conversation without losing the thread.</p></article></div></div></section>
+    <WorkProof/>
+    <section className="featured-section"><div className="container"><div className="section-heading"><div><span className="eyebrow">02 / CREATOR SPOTLIGHT</span><h2>People making<br/>things happen<span className="accent">.</span></h2></div><Link className="round-link" to="/discover" aria-label="Explore all creators"><ArrowUpRight/></Link></div><div className="creator-grid">{creators?.length ? creators.slice(0, 3).map((c,i) => <CreatorCard key={c.id} creator={c} index={i}/>) : <Empty title="A new creative community" detail="Creator spotlights will appear as members build their profiles." action={<Link className="button button-dark" to="/join">Join as a creator <ArrowRight size={16}/></Link>}/>}</div></div></section>
+    <Journey/><AudiencePaths/><LandingFaq/>
     <section className="cta-section"><div className="container cta-inner"><span className="eyebrow">YOUR NEXT BIG IDEA STARTS HERE</span><h2>Let’s make<br/><em>something matter.</em></h2><Link to="/join" className="button button-dark">Get started <ArrowUpRight/></Link><BrandMark className="cta-mark"/></div></section></>
 }
 
@@ -65,7 +110,8 @@ function CreatorCard({ creator, index }) {
 }
 
 function Discover() {
-  const [search, setSearch] = useState(''), [category, setCategory] = useState('All'), [platform, setPlatform] = useState(''), [skill, setSkill] = useState(''), [tool, setTool] = useState(''), [contentType, setContentType] = useState('')
+  const [searchParams] = useSearchParams()
+  const [search, setSearch] = useState(searchParams.get('q') || ''), [category, setCategory] = useState('All'), [platform, setPlatform] = useState(''), [skill, setSkill] = useState(''), [tool, setTool] = useState(''), [contentType, setContentType] = useState('')
   const { data, loading, error } = useRequest('/creators', [])
   const choices = useMemo(() => {
     const unique = values => [...new Set(values)].sort((a, b) => a.localeCompare(b))
