@@ -1,0 +1,14 @@
+.git
+.env
+**/.env
+node_modules
+dist
+backend/*.db
+backend/__pycache__
+backend/.pytest_cache
+backend/.venv
+backend/test_flow.py
+marketplace-prototype
+.runtime-check
+*.log
+backend/.env

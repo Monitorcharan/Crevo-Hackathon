@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+backend/.env
+backend/__pycache__/
+backend/*.db
+backend/.venv/
+backend/.pytest_cache/
+marketplace-prototype/
+.runtime-check
+*.log
