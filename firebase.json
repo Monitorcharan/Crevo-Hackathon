@@ -1,11 +1,5 @@
 {
   "auth": {
-    "authorizedDomains": [
-      "localhost",
-      "127.0.0.1",
-      "crevo-hackathon.onrender.com",
-      "crevo-marketplace-cteja.firebaseapp.com"
-    ],
     "providers": {
       "googleSignIn": {
         "oAuthBrandDisplayName": "Crevo",
