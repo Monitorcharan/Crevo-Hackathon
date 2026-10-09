@@ -99,3 +99,68 @@
 .auth-page .auth-art .logo{top:30px;left:8%}
 @media(max-width:720px){.hero-visual{right:5%;transform:scale(.5)}.auth-page .auth-art .logo{top:24px;left:6%}}
 @media(max-width:390px){.hero-visual{right:0;transform:scale(.46)}}
+
+/* Crevo wordmark study, adapted from the supplied motion reference. */
+.hero{background:#252525}
+.hero-grain{background:linear-gradient(90deg,#252525 0%,#252525 34%,rgba(37,37,37,.7) 52%,transparent 76%)}
+.hero-visual{top:23%;right:2.5%;width:min(49vw,735px);height:420px;transform:none;opacity:1;overflow:visible}
+.brand-sequence{position:relative;width:100%;height:100%;color:#e6ff45;overflow:hidden;isolation:isolate}
+.sequence-svg{display:block;width:100%;height:100%;overflow:visible}
+.sequence-svg text{font-family:'Space Grotesk',sans-serif;font-size:208px;font-weight:700;letter-spacing:-16px;dominant-baseline:auto}
+.sequence-guides{stroke:#a6a6a6;stroke-width:1;fill:none;opacity:0;animation:sequence-guides 9s linear infinite}
+.sequence-wire{stroke:#e6ff45;stroke-width:1.7;fill:none;opacity:0;animation:sequence-wire 9s linear infinite}
+.sequence-wire text{stroke-dasharray:1100;stroke-dashoffset:1100;animation:sequence-draw 9s ease-in-out infinite}
+.sequence-wire circle{fill:#e6ff45;stroke:none;animation:sequence-node 9s ease-in-out infinite}
+.sequence-wire circle:nth-of-type(2n){animation-delay:-.35s}
+.sequence-baseline{stroke:#e6ff45;stroke-width:1;stroke-dasharray:4 12;opacity:.65}
+.sequence-solid{fill:#e6ff45;opacity:0;animation:sequence-solid 9s ease-in-out infinite}
+.sequence-dots{fill:#e6ff45;opacity:0;animation:sequence-dots 9s linear infinite}
+.sequence-dots circle:nth-child(1){animation:sequence-particle-a 9s ease-in-out infinite}
+.sequence-dots circle:nth-child(2){animation:sequence-particle-b 9s ease-in-out infinite}
+.sequence-dots circle:nth-child(3){animation:sequence-particle-c 9s ease-in-out infinite}
+.sequence-dots circle:nth-child(4){animation:sequence-particle-d 9s ease-in-out infinite}
+.sequence-c-mark{position:absolute;width:125px;height:125px;left:50%;top:50%;transform:translate(-50%,-50%);color:#e6ff45;opacity:0;animation:sequence-mark 9s linear infinite}
+.sequence-c-mark .brand-mark-c{animation:none;stroke-dashoffset:0}
+.sequence-c-mark .brand-mark-dot,.sequence-c-mark .brand-mark-halo{animation:none}
+.sequence-caption{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);color:#a7a7a7;font-size:9px;letter-spacing:.21em;font-weight:700;white-space:nowrap;opacity:.75}
+@keyframes sequence-guides{0%,10%,52%,100%{opacity:0}17%,44%{opacity:.44}}
+@keyframes sequence-wire{0%,10%,52%,100%{opacity:0}18%,44%{opacity:1}}
+@keyframes sequence-draw{0%,10%{stroke-dashoffset:1100}39%,49%{stroke-dashoffset:0}52%,100%{stroke-dashoffset:1100}}
+@keyframes sequence-node{0%,25%,45%,100%{r:3}34%{r:5}}
+@keyframes sequence-solid{0%,51%,85%,100%{opacity:0}59%,78%{opacity:1}}
+@keyframes sequence-dots{0%,7%,85%,100%{opacity:1}13%,80%{opacity:0}}
+@keyframes sequence-mark{0%,44%,59%,100%{opacity:0}49%,53%{opacity:1}}
+@keyframes sequence-particle-a{0%,7%,100%{transform:translate(0,0)}13%,85%{transform:translate(-28px,-28px)}}
+@keyframes sequence-particle-b{0%,7%,100%{transform:translate(0,0)}13%,85%{transform:translate(28px,-28px)}}
+@keyframes sequence-particle-c{0%,7%,100%{transform:translate(0,0)}13%,85%{transform:translate(-28px,28px)}}
+@keyframes sequence-particle-d{0%,7%,100%{transform:translate(0,0)}13%,85%{transform:translate(28px,28px)}}
+.auth-page .auth-art{background:#252525}
+.auth-brand-visual{height:295px;width:100%;margin-top:20px}
+.auth-brand-visual:before,.auth-brand-visual:after{display:none}
+.auth-sequence{width:100%;height:100%}
+.auth-sequence .sequence-caption{bottom:0}
+@media(max-width:1100px){.hero-visual{right:-5%;width:57vw;top:23%;transform:none;opacity:1}}
+@media(max-width:720px){
+  .hero{min-height:825px}
+  .hero-visual{top:105px;left:0;right:0;width:100%;height:245px;transform:none;opacity:1}
+  .hero-grain{background:linear-gradient(0deg,#252525 0%,transparent 35%)}
+  .hero-content{padding-bottom:88px}
+  .sequence-caption{bottom:0;font-size:7px}
+  .auth-page .auth-art{background:#252525}
+  .auth-brand-visual{position:absolute;right:-87px;top:-2px;width:280px;height:175px;margin:0;opacity:.42}
+  .auth-sequence .sequence-svg{display:none}
+  .auth-sequence .sequence-c-mark{opacity:1;animation:none;width:170px;height:170px}
+  .auth-sequence .sequence-caption{display:none}
+}
+@media(max-width:390px){.hero-visual{right:0;transform:none}.hero{min-height:810px}}
+@media(prefers-reduced-motion:reduce){
+ .sequence-guides,.sequence-wire,.sequence-wire text,.sequence-wire circle,.sequence-solid,.sequence-dots,.sequence-dots circle,.sequence-c-mark{animation:none!important}
+ .sequence-solid{opacity:1}.sequence-guides,.sequence-wire,.sequence-dots,.sequence-c-mark{opacity:0}
+}
+/* Keep each reveal beat distinct and let the wordmark fill the frame. */
+.sequence-svg text{font-size:290px;letter-spacing:-20px}
+@keyframes sequence-wire{0%,10%,51%,100%{opacity:0}18%,43%{opacity:1}}
+@keyframes sequence-mark{0%,50%,62%,100%{opacity:0}54%,58%{opacity:1}}
+@keyframes sequence-solid{0%,60%,87%,100%{opacity:0}66%,81%{opacity:1}}
+@keyframes sequence-dots{0%,8%,88%,100%{opacity:1}15%,82%{opacity:0}}
+.hero-grain{display:none}
