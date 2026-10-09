@@ -2,6 +2,8 @@
 
 A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses React Three Fiber for an animated chrome ribbon. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
 
+![Crevo landing page](docs/preview.png)
+
 ## Run locally
 
 Requires Node.js 20+ and Python 3.11+.
