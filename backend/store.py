@@ -32,7 +32,7 @@ def init_local():
         return
     with connect() as db:
         db.executescript('''
-        create table if not exists users(id text primary key,email text unique not null,name text not null,role text not null,password_hash text not null,firebase_uid text unique,created_at text default current_timestamp);
+        create table if not exists users(id text primary key,email text unique not null,name text not null,role text not null,password_hash text not null,firebase_uid text unique,company_name text not null default '',logo_url text,created_at text default current_timestamp);
         create table if not exists creators(id text primary key,owner_id text unique,name text not null,title text not null,bio text not null,location text not null,categories text not null,skills text not null,platforms text not null,social_links text not null default '{}',audience integer not null,rate integer not null,avatar_url text,portfolio text not null,portfolio_source text not null,created_at text default current_timestamp);
         create table if not exists portfolio_items(id text primary key,creator_id text not null,title text not null,description text not null,media_url text not null,media_type text not null,tools text not null,workflow text not null,format text not null,commercial_use text not null,verification text not null,created_at text default current_timestamp);
         create table if not exists briefs(id text primary key,owner_id text not null,title text not null,description text not null,category text not null,skills text not null,platforms text not null,budget integer not null,location text not null,content_type text not null default '',style text not null default '',format text not null default '',commercial_use text not null default '',status text not null,created_at text default current_timestamp);
@@ -43,6 +43,11 @@ def init_local():
         if 'firebase_uid' not in {row[1] for row in db.execute('pragma table_info(users)')}:
             db.execute('alter table users add column firebase_uid text')
         db.execute('create unique index if not exists users_firebase_uid_idx on users(firebase_uid)')
+        user_columns = {row[1] for row in db.execute('pragma table_info(users)')}
+        if 'company_name' not in user_columns:
+            db.execute("alter table users add column company_name text not null default ''")
+        if 'logo_url' not in user_columns:
+            db.execute('alter table users add column logo_url text')
         if 'social_links' not in {row[1] for row in db.execute('pragma table_info(creators)')}:
             db.execute("alter table creators add column social_links text not null default '{}'")
         if db.execute('select count(*) from creators').fetchone()[0] == 0:

@@ -29,7 +29,7 @@ def test_firebase_exchange_and_account_link(tmp_path, monkeypatch):
     existing_token = make_token('firebase-existing', 'existing@example.com')
     new_token = make_token('firebase-new', 'new@example.com')
     with TestClient(main.app) as client:
-        existing = client.post('/api/auth/register', json={'name': 'Email User', 'email': 'existing@example.com', 'password': 'strong-password', 'role': 'brand'}).json()
+        existing = client.post('/api/auth/register', json={'name': 'Email User', 'company_name': 'Existing Studio', 'email': 'existing@example.com', 'password': 'strong-password', 'role': 'brand'}).json()
         assert client.post('/api/auth/firebase', json={'id_token': existing_token, 'role': 'brand'}).status_code == 409
         linked = client.post('/api/auth/firebase/link', headers={'Authorization': f"Bearer {existing['access_token']}"}, json={'id_token': existing_token})
         assert linked.status_code == 200 and linked.json()['linked']

@@ -6,12 +6,13 @@ import { firebaseConfig, firebaseSignOut, signInWithProvider } from './firebaseA
 
 const providers = [{ key: 'google', label: 'Google', Icon: SiGoogle }, { key: 'apple', label: 'Apple', Icon: SiApple }, { key: 'facebook', label: 'Facebook', Icon: SiFacebook }]
 
-export default function SocialSignIn({ role, connect = false, onAuth }) {
+export default function SocialSignIn({ role, companyName = '', connect = false, onAuth }) {
   const [enabled, setEnabled] = useState([]), [busy, setBusy] = useState(''), [error, setError] = useState(''), [notice, setNotice] = useState('')
   const navigate = useNavigate()
   useEffect(() => { firebaseConfig().then(c => setEnabled(c.providers || [])).catch(() => {}) }, [])
   if (!enabled.length) return null
   async function select(name) {
+    if (role === 'brand' && !connect && companyName.trim().length < 2) { setError('Enter your brand or company name first.'); return }
     setBusy(name); setError(''); setNotice('')
     try {
       const idToken = await signInWithProvider(name)
@@ -20,7 +21,7 @@ export default function SocialSignIn({ role, connect = false, onAuth }) {
         await firebaseSignOut()
         setNotice(`${name[0].toUpperCase() + name.slice(1)} connected. You can use it next time you sign in.`)
       } else {
-        const result = await api('/auth/firebase', { method: 'POST', body: { id_token: idToken, role } })
+        const result = await api('/auth/firebase', { method: 'POST', body: { id_token: idToken, role, company_name: role === 'brand' ? companyName.trim() : '' } })
         setToken(null); setAuthMode('firebase'); onAuth(result); navigate('/dashboard')
       }
     } catch (cause) {

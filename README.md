@@ -47,6 +47,10 @@ Demo path: create a creator account → complete the profile → add an AI work 
 
 The secret key stays in the backend only. All data mutations and reads go through FastAPI, which checks the user's role and ownership. The SQL enables RLS, revokes direct table access from browser roles, and explicitly grants the service role Data API access. Profile photo uploads use the public `portfolios` bucket created by the schema. Local mode has no storage substitute and displays an explicit upload error.
 
+## Brand registration and profile
+
+Brand registration asks for the account holder's name and a separate brand or company name. Google sign-up collects the company name before opening the provider popup. Brands can edit both names and upload a JPG, PNG, or WebP logo under 5 MB at `/brand/profile`. The company name and logo appear on the brand dashboard and on briefs that creators view. The `public.users` data model stores `company_name` (text) and `logo_url` (text); the idempotent `backend/schema.sql` adds these columns to existing Supabase projects. Logo files use a brand-specific path in the existing public `portfolios` Storage bucket. Local SQLite supports name editing; logo uploads require Supabase Storage.
+
 ## Firebase social sign-in
 
 Crevo supports Google, Apple, and Facebook via Firebase Authentication while retaining Supabase email/password sign-in and Supabase project data. Social buttons appear only for providers listed in `FIREBASE_AUTH_PROVIDERS` after they are configured. Existing email users sign in normally and use **Connect a sign-in method** on the dashboard before using a social button. A social account with an existing Crevo email is not linked automatically.

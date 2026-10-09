@@ -4,10 +4,13 @@ create table if not exists public.users (
   email text not null unique,
   name text not null,
   role text not null check (role in ('creator','brand')),
+  company_name text not null default '', logo_url text,
   firebase_uid text unique,
   created_at timestamptz not null default now()
 );
 alter table public.users add column if not exists firebase_uid text unique;
+alter table public.users add column if not exists company_name text not null default '';
+alter table public.users add column if not exists logo_url text;
 create table if not exists public.creators (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid unique references public.users(id) on delete set null,

@@ -10,11 +10,16 @@ def test_brand_creator_collaboration(tmp_path, monkeypatch):
     monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'test.db')
     monkeypatch.setattr(main, 'AI_KEY', '')
     with TestClient(app) as client:
-        brand = client.post('/api/auth/register', json={'name': 'Acme Studio', 'email': 'brand@example.com', 'password': 'a-strong-password', 'role': 'brand'})
+        brand = client.post('/api/auth/register', json={'name': 'Mira Patel', 'company_name': 'Acme Studio', 'email': 'brand@example.com', 'password': 'a-strong-password', 'role': 'brand'})
         creator = client.post('/api/auth/register', json={'name': 'Alex Rivera', 'email': 'creator@example.com', 'password': 'a-strong-password', 'role': 'creator'})
         assert brand.status_code == 200, brand.text
         assert creator.status_code == 200, creator.text
         brand_headers = {'Authorization': f"Bearer {brand.json()['access_token']}"}
+        assert brand.json()['user']['company_name'] == 'Acme Studio'
+        assert client.post('/api/auth/register', json={'name': 'Missing Brand', 'email': 'missing@example.com', 'password': 'a-strong-password', 'role': 'brand'}).status_code == 422
+        updated_brand = client.put('/api/me/brand', headers=brand_headers, json={'name': 'Mira Patel', 'company_name': 'Acme Creative'})
+        assert updated_brand.status_code == 200 and updated_brand.json()['company_name'] == 'Acme Creative'
+        assert client.get('/api/me', headers=brand_headers).json()['user']['company_name'] == 'Acme Creative'
         creator_headers = {'Authorization': f"Bearer {creator.json()['access_token']}"}
         profile = client.put('/api/me/creator', headers=creator_headers, json={'title': 'Food filmmaker', 'bio': 'I film thoughtful food stories for growing brands.', 'location': 'London', 'categories': ['Food'], 'skills': ['Video', 'Editing'], 'platforms': ['Instagram'], 'audience': 25000, 'rate': 1000, 'social_links': {'instagram': 'https://www.instagram.com/alex', 'youtube': 'https://www.youtube.com/@alex'}})
         assert profile.status_code == 200, profile.text
@@ -34,6 +39,9 @@ def test_brand_creator_collaboration(tmp_path, monkeypatch):
         assert brief.status_code == 200, brief.text
         brief_id = brief.json()['id']
         assert brief.json()['commercial_use'] == 'Paid social for six months'
+        assert client.get(f'/api/briefs/{brief_id}', headers=creator_headers).json()['brand']['company_name'] == 'Acme Creative'
+        assert client.put('/api/me/brand', headers=creator_headers, json={'name': 'Alex Rivera', 'company_name': 'Wrong Role'}).status_code == 403
+        assert client.post('/api/me/brand/logo', headers=brand_headers, files={'file': ('logo.png', b'not-an-image', 'image/png')}).status_code == 503
         matches = client.get(f'/api/briefs/{brief_id}/matches', headers=brand_headers)
         assert matches.status_code == 200, matches.text
         assert any(m['creator']['id'] == profile.json()['id'] for m in matches.json())
@@ -48,7 +56,7 @@ def test_brand_creator_collaboration(tmp_path, monkeypatch):
         assert [m['body'] for m in messages.json()] == ['Welcome to the project!']
         assert client.post('/api/briefs', headers=creator_headers, json={'title': 'Wrong role', 'description': 'This action should be forbidden to creator accounts.', 'category': 'Food', 'skills': [], 'platforms': [], 'budget': 0, 'location': ''}).status_code == 403
 
-        other_brand = client.post('/api/auth/register', json={'name': 'Other Studio', 'email': 'other-brand@example.com', 'password': 'a-strong-password', 'role': 'brand'}).json()
+        other_brand = client.post('/api/auth/register', json={'name': 'Other Manager', 'company_name': 'Other Studio', 'email': 'other-brand@example.com', 'password': 'a-strong-password', 'role': 'brand'}).json()
         other_brand_headers = {'Authorization': f"Bearer {other_brand['access_token']}"}
         assert client.get(f'/api/briefs/{brief_id}', headers=other_brand_headers).status_code == 404
         assert client.post(f'/api/briefs/{brief_id}/close', headers=other_brand_headers).status_code == 404
@@ -80,7 +88,7 @@ def test_structured_brief_draft(tmp_path, monkeypatch):
         return json.dumps({'title': 'Café launch film', 'description': 'Create a short film for a café launch.', 'category': 'Food', 'content_type': 'Film', 'style': 'Warm', 'format': '9:16', 'commercial_use': '', 'skills': ['Video'], 'platforms': ['Instagram'], 'location': ''})
     monkeypatch.setattr(main, 'generate_ai_text', fake_generate)
     with TestClient(app) as client:
-        brand = client.post('/api/auth/register', json={'name': 'Brand Studio', 'email': 'draft-brand@example.com', 'password': 'a-strong-password', 'role': 'brand'}).json()
+        brand = client.post('/api/auth/register', json={'name': 'Brand Manager', 'company_name': 'Brand Studio', 'email': 'draft-brand@example.com', 'password': 'a-strong-password', 'role': 'brand'}).json()
         headers = {'Authorization': 'Bearer ' + brand['access_token']}
         result = client.post('/api/briefs/draft', headers=headers, json={'idea': 'A warm 9:16 café launch film for Instagram.'})
         assert result.status_code == 200, result.text

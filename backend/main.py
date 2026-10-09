@@ -98,6 +98,12 @@ class Credentials(BaseModel):
 class Register(Credentials):
     name: str = Field(min_length=2, max_length=80)
     role: str
+    company_name: str = Field(default='', max_length=120)
+
+
+class BrandEdit(BaseModel):
+    name: str = Field(min_length=2, max_length=80)
+    company_name: str = Field(min_length=2, max_length=120)
 
 
 class CreatorEdit(BaseModel):
@@ -145,6 +151,7 @@ class CreatorEdit(BaseModel):
 class FirebaseExchange(BaseModel):
     id_token: str = Field(min_length=100, max_length=10000)
     role: str | None = None
+    company_name: str = Field(default='', max_length=120)
 
 
 class PortfolioItemIn(BaseModel):
@@ -269,6 +276,9 @@ def firebase_sign_in(data: FirebaseExchange):
         raise HTTPException(409, 'This email already has a Crevo account. Log in with email, then connect this provider from your dashboard.')
     if data.role not in ('creator', 'brand'):
         raise HTTPException(422, 'Choose creator or brand on the Join page first')
+    company_name = data.company_name.strip()
+    if data.role == 'brand' and len(company_name) < 2:
+        raise HTTPException(422, 'Enter your brand or company name')
     name = (claims.get('name') or email.split('@')[0]).strip()[:80] or 'Creator'
     if store.REMOTE:
         try:
@@ -278,7 +288,7 @@ def firebase_sign_in(data: FirebaseExchange):
             raise HTTPException(400, 'Could not create the Crevo account in Supabase')
     else:
         user_id = str(uuid.uuid4())
-    user_data = {'id': user_id, 'email': email, 'name': name, 'role': data.role, 'firebase_uid': uid}
+    user_data = {'id': user_id, 'email': email, 'name': name, 'role': data.role, 'firebase_uid': uid, 'company_name': company_name if data.role == 'brand' else ''}
     if not store.REMOTE:
         user_data['password_hash'] = hash_password(secrets.token_urlsafe(36))
     try:
@@ -311,6 +321,9 @@ def link_firebase_identity(data: FirebaseExchange, user=Depends(current_user)):
 def register(data: Register):
     if data.role not in ('creator', 'brand'):
         raise HTTPException(422, 'Choose creator or brand')
+    company_name = data.company_name.strip()
+    if data.role == 'brand' and len(company_name) < 2:
+        raise HTTPException(422, 'Enter your brand or company name')
     if store.one('users', {'email': data.email.lower()}):
         raise HTTPException(409, 'This email is already registered')
     try:
@@ -323,7 +336,7 @@ def register(data: Register):
         else:
             user_id = str(uuid.uuid4())
             access_token = local_token(user_id)
-        user_data = {'id': user_id, 'email': data.email.lower(), 'name': data.name.strip(), 'role': data.role}
+        user_data = {'id': user_id, 'email': data.email.lower(), 'name': data.name.strip(), 'role': data.role, 'company_name': company_name if data.role == 'brand' else ''}
         if not store.REMOTE:
             user_data['password_hash'] = hash_password(data.password)
         user = store.insert('users', user_data)
@@ -360,6 +373,33 @@ def login(data: Credentials):
 def me(user=Depends(current_user)):
     creator = store.one('creators', {'owner_id': user['id']}) if user['role'] == 'creator' else None
     return {'user': user, 'creator': creator}
+
+
+@app.put('/api/me/brand')
+def edit_brand(data: BrandEdit, user=Depends(require_role('brand'))):
+    name, company_name = data.name.strip(), data.company_name.strip()
+    if len(name) < 2 or len(company_name) < 2:
+        raise HTTPException(422, 'Enter your name and brand or company name')
+    return store.update('users', user['id'], {'name': name, 'company_name': company_name})
+
+
+@app.post('/api/me/brand/logo')
+async def upload_brand_logo(file: UploadFile = File(...), user=Depends(require_role('brand'))):
+    if not store.REMOTE:
+        raise HTTPException(503, 'Logo uploads require Supabase configuration')
+    if file.content_type not in ('image/jpeg', 'image/png', 'image/webp'):
+        raise HTTPException(422, 'Use a JPG, PNG, or WebP image')
+    content = await file.read(5_000_001)
+    if len(content) > 5_000_000:
+        raise HTTPException(422, 'Image must be under 5 MB')
+    extension = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}[file.content_type]
+    path = f"brands/{user['id']}/{uuid.uuid4()}.{extension}"
+    try:
+        store.admin.storage.from_('portfolios').upload(path, content, {'content-type': file.content_type})
+        url = store.admin.storage.from_('portfolios').get_public_url(path)
+    except Exception:
+        raise HTTPException(502, 'Logo upload failed')
+    return store.update('users', user['id'], {'logo_url': url})
 
 
 @app.get('/api/creators')
@@ -504,7 +544,8 @@ def brief_detail(brief_id: str, user=Depends(current_user)):
     brief = store.one('briefs', {'id': brief_id})
     if not brief or (user['role'] == 'creator' and brief['status'] != 'open') or (user['role'] == 'brand' and brief['owner_id'] != user['id']):
         raise HTTPException(404, 'Brief not found')
-    return brief
+    owner = store.one('users', {'id': brief['owner_id']})
+    return {**brief, 'brand': {'company_name': owner.get('company_name') or owner['name'], 'logo_url': owner.get('logo_url')} if owner else None}
 
 
 @app.post('/api/briefs/{brief_id}/close')
