@@ -1,8 +1,12 @@
 # Crevo
 
+**Live app:** https://crevo-hackathon.onrender.com
+
 A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses React Three Fiber for an animated chrome ribbon. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
 
 ![Crevo landing page](docs/preview.png)
+
+The public directory includes six explicitly labeled fictional demo creators. Their audience figures and rates are illustrative; they cannot sign in or apply to briefs. Create your own creator and brand accounts to try the full workflow.
 
 ## Run locally
 
@@ -43,7 +47,7 @@ The secret key stays in the backend only. All data mutations and reads go throug
 
 ## AI behavior
 
-Set `GEMINI_API_KEY` or `OPENAI_API_KEY` in `backend/.env` to enable real portfolio introduction generation, AI assisted brief drafting, and AI assisted match assessment. Gemini takes priority when both keys are present. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`; `OPENAI_MODEL` defaults to `gpt-4.1-mini`. These features use the providers' official text generation APIs. Match ranking gives 70% weight to transparent category, skill, platform, budget, and location rules and 30% to an AI assessment of the top eight candidates. If the AI service is unavailable, the rules ranking remains available. Without an AI API key, portfolio introductions are labeled template drafts, brief drafting returns an explicit configuration error, and match ranking is labeled weighted rules. No simulated AI response is presented as AI generated.
+Set `GEMINI_API_KEY` or `OPENAI_API_KEY` in `backend/.env` to enable real portfolio introduction generation, AI assisted brief drafting, and AI assisted match assessment. Gemini takes priority when both keys are present. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`; `OPENAI_MODEL` defaults to `gpt-4.1-mini`. These features use the providers' official text generation APIs. Match ranking gives 70% weight to transparent category, skill, platform, budget, and location rules and 30% to an AI assessment of the top eight candidates. If the AI service is unavailable, the rules ranking remains available. Google says free-tier Gemini content can be used to improve its products, so avoid putting confidential client details into AI drafts on the free tier. Without an AI API key, portfolio introductions are labeled template drafts, brief drafting returns an explicit configuration error, and match ranking is labeled weighted rules. No simulated AI response is presented as AI generated.
 
 Creators can add work samples with a media URL, AI tools/models, production workflow, output format, and commercial-use terms. Those claims are marked **creator reported**, since this MVP has no independent verification service. Briefs include content type, style, format/aspect ratio and commercial-use requirements. Media URLs must be publicly accessible; Supabase Storage currently handles profile photos only.
 
@@ -57,7 +61,7 @@ pytest -q
 
 The test covers account creation, profile editing, AI work portfolio metadata, structured brief publishing, ranked discovery, applying, accepting, messaging, duplicate application handling, and role access. It uses an isolated local database.
 
-**Validation status:** `npm run build` passes and `python -m pytest -q` passes (1 end-to-end test). The running frontend returns HTTP 200, and `/api/health` reports `database: supabase` when configured. A temporary live Supabase smoke test passed Auth login, profile updates, portfolio items, avatar Storage upload, briefs, matching, applications, messaging, and project completion; all temporary records and files were removed. Browser checks passed at desktop and mobile sizes, including navigation to discovery and signup. `npm audit --omit=dev` reports zero production dependency vulnerabilities. The 3D hero loads separately, though its chunk still produces a build size warning. Email confirmation remains to be tested with a real inbox.
+**Validation status:** `npm run build` passes and `python -m pytest -q` passes (1 end-to-end test). The running frontend returns HTTP 200, and `/api/health` reports `database: supabase` when configured. A temporary live Supabase smoke test passed Auth login, profile updates, portfolio items, avatar Storage upload, briefs, matching, applications, messaging, and project completion; all temporary records and files were removed. Browser checks passed at desktop and mobile sizes, including navigation to discovery and signup. `npm audit --omit=dev` reports zero production dependency vulnerabilities. The 3D hero loads separately, though its chunk still produces a build size warning. The deployed Render service passed a temporary end-to-end test covering Supabase Auth, creator profiles, portfolio work and Gemini introduction generation, Storage upload, Gemini brief drafting, AI assessed matching, applications, project messages, and completion. Test accounts, records, and files were removed. Email confirmation still needs a real inbox check.
 
 ## Current scope
 
