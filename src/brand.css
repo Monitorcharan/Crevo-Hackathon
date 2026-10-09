@@ -1,0 +1,101 @@
+/* Crevo identity: an open C, with a living dot that completes the connection. */
+.logo{gap:8px;letter-spacing:-.075em;text-decoration:none;white-space:nowrap}
+.logo-mark{width:29px;height:29px;flex:none;color:currentColor}
+.logo-word{display:inline-block}
+.brand-mark{display:block;overflow:visible}
+.brand-mark-c{stroke-dasharray:190;stroke-dashoffset:190;animation:crevo-draw 1.25s cubic-bezier(.2,.75,.2,1) both}
+.brand-mark-dot{transform-box:fill-box;transform-origin:center;animation:crevo-dot 2.8s ease-in-out infinite}
+.brand-mark-halo{opacity:.06;transform-box:fill-box;transform-origin:center;animation:crevo-halo 2.8s ease-in-out infinite}
+.logo:hover .brand-mark-dot{animation-duration:1.3s}
+@keyframes crevo-draw{to{stroke-dashoffset:0}}
+@keyframes crevo-dot{0%,100%{transform:translateX(-5px) scale(.84)}48%{transform:translateX(0) scale(1.08)}}
+@keyframes crevo-halo{0%,100%{opacity:.04;transform:scale(.7)}48%{opacity:.22;transform:scale(1.4)}}
+
+/* The hero shows the actual Crevo flow: a creator, a brief and a match. */
+.hero{background:radial-gradient(circle at 74% 42%,#24252a 0,#151519 31%,#0a0b0d 67%,#070809 100%)}
+.hero-content{z-index:4}
+.hero-content>div{max-width:660px}
+.hero h1{font-size:clamp(65px,7.6vw,112px)}
+.hero-grain{z-index:2;background:linear-gradient(90deg,#08090a 0%,rgba(8,9,10,.96) 27%,rgba(8,9,10,.5) 51%,transparent 74%)}
+.hero-visual{position:absolute;z-index:1;right:4.4%;top:17%;width:min(47vw,680px);height:min(69vh,610px);pointer-events:none;isolation:isolate}
+.hero-visual-glow{position:absolute;inset:9% 3% 5% 4%;border-radius:50%;background:radial-gradient(circle,#b5d35926 0%,#886bbd20 28%,transparent 69%);filter:blur(20px)}
+.hero-orbit{position:absolute;border:1px dashed rgba(225,232,215,.17);border-radius:50%;transform:rotate(-17deg)}
+.hero-orbit-outer{inset:7% 1% 8% 2%;animation:crevo-orbit 35s linear infinite}
+.hero-orbit-inner{inset:21% 17% 22% 15%;border-color:rgba(213,251,85,.16);animation:crevo-orbit 28s linear infinite reverse}
+@keyframes crevo-orbit{to{transform:rotate(343deg)}}
+.hero-connection{position:absolute;height:1px;background:linear-gradient(90deg,transparent,#d5fb55a3,transparent);filter:drop-shadow(0 0 7px #d5fb55);opacity:.7}
+.hero-connection-a{width:40%;left:31%;top:45%;transform:rotate(-27deg)}
+.hero-connection-b{width:38%;left:37%;top:67%;transform:rotate(30deg)}
+.hero-visual-center{position:absolute;left:45%;top:43%;width:135px;height:135px;border:1px solid #ffffff38;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;background:rgba(18,19,22,.84);backdrop-filter:blur(12px);box-shadow:0 0 0 12px #d5fb5509,0 0 70px #d5fb5520;z-index:4;transform:translate(-50%,-50%)}
+.hero-center-mark{width:65px;height:65px;color:#fff}
+.hero-visual-center>span{font-size:7px;line-height:1.3;text-align:center;letter-spacing:.18em;font-weight:700;color:#c0c5b9}
+.hero-tile{position:absolute;z-index:3;border:1px solid rgba(255,255,255,.15);box-shadow:0 32px 70px #0009,0 8px 25px #0005;overflow:hidden}
+.hero-tile-label{font-size:9px;letter-spacing:.18em;font-weight:700;display:flex;align-items:center;gap:7px}
+.hero-status-dot{width:6px;height:6px;border-radius:50%;background:#d5fb55;box-shadow:0 0 10px #d5fb55}
+.hero-tile-creator{left:0;top:0;width:274px;background:#e9e7de;color:#171819;padding:18px;transform:rotate(-7deg);animation:crevo-float-a 6s ease-in-out infinite}
+.hero-artwork{height:230px;margin:17px 0 16px;position:relative;overflow:hidden;background:linear-gradient(145deg,#ffc6a6 0%,#f1a9af 43%,#996da5 100%)}
+.hero-artwork-sun{position:absolute;width:170px;height:170px;border-radius:50%;right:-22px;top:-34px;background:linear-gradient(145deg,#fff1c7,#ffd5a0 55%,#f9a8a3);box-shadow:0 0 45px #fff5cf80}
+.hero-artwork-arch{position:absolute;width:155px;height:230px;left:26px;bottom:-63px;border-radius:90px 90px 35px 35px;background:linear-gradient(117deg,#5c384b 6%,#9c697b 42%,#e9b2a9 51%,#6c466b 71%,#2b263c 100%);box-shadow:20px 15px 40px #3b263c77;transform:rotate(-17deg)}
+.hero-artwork-shine{position:absolute;width:145px;height:240px;left:91px;bottom:-59px;border-radius:80px 80px 20px 20px;background:linear-gradient(125deg,transparent 15%,#ffffff70 27%,transparent 37%,#4e344d 76%);transform:rotate(19deg);mix-blend-mode:screen;opacity:.8}
+.hero-tile-foot{display:flex;justify-content:space-between;align-items:end;font-size:11px;line-height:1.45}
+.hero-tile-foot strong{display:block;font-size:18px;line-height:1.2;font-weight:700}
+.hero-tile-arrow{font-size:20px}
+.hero-tile-brief{right:0;top:13%;width:244px;min-height:244px;background:#c4b6f2;color:#1d1830;padding:20px;transform:rotate(7deg);animation:crevo-float-b 7s ease-in-out infinite}
+.hero-tile-brief .hero-tile-label{justify-content:space-between}
+.hero-tile-brief .hero-tile-label span{color:#546039;font-size:8px}
+.hero-brief-icon{display:flex;align-items:end;gap:5px;height:65px;margin-top:13px}
+.hero-brief-icon span{width:24px;background:#241b3e;border-radius:24px 24px 5px 5px}
+.hero-brief-icon span:nth-child(1){height:28px;transform:rotate(-12deg)}
+.hero-brief-icon span:nth-child(2){height:53px;background:#d5fb55;transform:rotate(11deg)}
+.hero-brief-icon span:nth-child(3){height:38px;transform:rotate(-8deg)}
+.hero-tile-brief>strong{display:block;font-size:23px;line-height:1.08;letter-spacing:-.04em;margin:8px 0 25px}
+.hero-brief-bottom{display:flex;justify-content:space-between;border-top:1px solid #1d18303b;padding-top:10px;font-size:9px;letter-spacing:.1em;font-weight:700}
+.hero-brief-bottom span:last-child{font-size:15px}
+.hero-tile-match{right:9%;bottom:1%;width:315px;background:#d5fb55;color:#17200c;padding:20px 22px 19px;transform:rotate(-5deg);animation:crevo-float-c 5.5s ease-in-out infinite}
+.hero-match-row{display:flex;align-items:center;gap:13px;margin:18px 0 16px}
+.hero-match-score{font-size:57px;font-weight:700;letter-spacing:-.09em;line-height:.9}
+.hero-match-score>span{font-size:23px;letter-spacing:0;margin-left:3px}
+.hero-match-row>div:last-child strong{display:block;font-size:20px;letter-spacing:-.05em}
+.hero-match-row>div:last-child span{display:block;font-size:9px;margin-top:5px;color:#4a6030}
+.hero-match-meter{height:4px;background:#30451b29;border-radius:4px;overflow:hidden}
+.hero-match-meter span{display:block;width:96%;height:100%;background:#243a0d;border-radius:4px;transform-origin:left;animation:crevo-meter 2s ease-out both}
+.hero-spark{position:absolute;color:#d5fb55;font-size:23px;opacity:.9;animation:crevo-twinkle 3s ease-in-out infinite}
+.hero-spark-one{left:31%;top:7%}.hero-spark-two{right:8%;bottom:25%;animation-delay:1.2s;font-size:14px}
+@keyframes crevo-float-a{50%{transform:translateY(-12px) rotate(-5deg)}}
+@keyframes crevo-float-b{50%{transform:translateY(12px) rotate(5deg)}}
+@keyframes crevo-float-c{50%{transform:translateY(-10px) rotate(-3deg)}}
+@keyframes crevo-meter{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes crevo-twinkle{50%{opacity:.25;transform:scale(.7)}}
+
+/* A larger living C anchors the login and join artwork. */
+.auth-page .auth-art{background:radial-gradient(circle at 54% 69%,#252a23 0,#14171a 42%,#0c0e10 75%)}
+.auth-art-inner{z-index:2;top:21%}
+.auth-art-inner h2{position:relative;z-index:2}
+.auth-brand-visual{position:relative;height:330px;margin-top:12px}
+.auth-brand-visual:before,.auth-brand-visual:after{content:"";position:absolute;border:1px dashed #d5fb5545;border-radius:50%;width:330px;height:235px;left:3%;top:8%;transform:rotate(-25deg);animation:crevo-orbit 29s linear infinite}
+.auth-brand-visual:after{width:240px;height:190px;left:13%;top:13%;border-color:#ffffff24;animation-direction:reverse}
+.auth-brand-mark{width:260px;height:260px;color:#f6f5f1;position:absolute;left:10%;top:1%;filter:drop-shadow(0 0 35px #d5fb5530)}
+.auth-connect-label{position:absolute;z-index:2;display:flex;justify-content:space-between;gap:28px;padding:10px 13px;background:#d5fb55;color:#1a220b;font-size:9px;letter-spacing:.15em;font-weight:700;box-shadow:0 12px 30px #0007;transform:rotate(-8deg)}
+.auth-connect-label b{font-weight:700}
+.auth-connect-one{left:-2%;top:20%}.auth-connect-two{right:-1%;bottom:20%;transform:rotate(7deg);background:#c4b6f2;color:#251f39}
+.cta-mark{position:absolute;right:3%;bottom:-110px;width:410px;height:410px;color:#27331a;opacity:.25;pointer-events:none}
+.cta-mark .brand-mark-dot,.cta-mark .brand-mark-halo{fill:#b5e443}
+.boot{display:flex;align-items:center;justify-content:center;gap:12px}
+.boot-mark{width:44px;height:44px;color:#d5fb55}
+
+@media(max-width:1100px){.hero-visual{right:-6%;width:620px;transform:scale(.78);transform-origin:top right;opacity:.82}.hero-content>div{max-width:600px}.hero h1{font-size:clamp(65px,7vw,88px)}}
+@media(max-width:720px){
+  .logo-mark{width:26px;height:26px}.logo{font-size:27px}
+  .hero{min-height:810px;max-height:none}.hero-visual{top:9%;right:-6%;width:620px;height:520px;transform:scale(.55);opacity:.88}.hero-grain{background:linear-gradient(0deg,#08090a 7%,rgba(8,9,10,.98) 24%,transparent 58%)}
+  .hero-content{align-items:flex-end;padding-bottom:91px}.hero-content>div{max-width:100%}.hero h1{font-size:clamp(52px,12vw,70px);margin-bottom:19px}.hero p{max-width:440px;font-size:15px}.hero-actions{margin-top:22px}
+  .auth-page{display:flex;flex-direction:column}.auth-page .auth-art{display:block;height:230px;min-height:230px;padding:25px 6%;overflow:hidden}.auth-page .auth-art .logo{top:24px;left:6%}.auth-art-inner{top:64px}.auth-art-inner .eyebrow{font-size:9px}.auth-art-inner h2{font-size:34px;margin:11px 0}.auth-brand-visual{position:absolute;width:200px;top:-15px;right:-22px;opacity:.65}.auth-brand-mark{width:180px;height:180px;left:0}.auth-brand-visual:before,.auth-brand-visual:after,.auth-connect-label{display:none}.auth-panel{padding:53px 25px 75px}
+  .cta-mark{width:270px;height:270px;bottom:-60px;right:-60px}
+}
+@media(max-width:390px){.hero-visual{right:-14%;transform:scale(.5)}.hero h1{font-size:51px}.hero{min-height:800px}.hero-actions .button{padding-inline:17px}}
+@media(prefers-reduced-motion:reduce){.brand-mark-c,.brand-mark-dot,.brand-mark-halo,.hero-orbit,.hero-tile,.hero-spark,.hero-match-meter span,.auth-brand-visual:before,.auth-brand-visual:after{animation:none!important}.brand-mark-c{stroke-dashoffset:0}}
+
+/* Give sign-in its own clear header and keep the mobile hero artwork in frame. */
+.auth-page{min-height:100vh}
+.auth-page .auth-art .logo{top:30px;left:8%}
+@media(max-width:720px){.hero-visual{right:5%;transform:scale(.5)}.auth-page .auth-art .logo{top:24px;left:6%}}
+@media(max-width:390px){.hero-visual{right:0;transform:scale(.46)}}

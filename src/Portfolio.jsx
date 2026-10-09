@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandMark.jsx'
 import { useEffect, useState } from 'react'
 import { Link, Routes, Route, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, CirclePlus } from 'lucide-react'
@@ -9,7 +10,7 @@ import BriefDetail from './BriefDetail.jsx'
 const split = value => value.split(',').map(x => x.trim()).filter(Boolean)
 
 function PortfolioShell({ children }) {
-  return <div className="portfolio-page"><header className="portfolio-nav"><Link to="/" className="logo"><span className="logo-symbol">✳</span>crevo<span className="logo-dot">.</span></Link><Link to="/discover">Discover creators <ArrowUpRight size={16}/></Link></header>{children}</div>
+  return <div className="portfolio-page"><header className="portfolio-nav"><BrandLogo/><Link to="/discover">Discover creators <ArrowUpRight size={16}/></Link></header>{children}</div>
 }
 
 function WorkCard({ item }) {
