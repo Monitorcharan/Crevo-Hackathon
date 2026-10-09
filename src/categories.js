@@ -1,10 +1,12 @@
 export const categories = [
   'All',
+  'AI Filmmaking', 'Motion Design', 'AI Photography', 'Social Media Content',
+  'AI Animation', '3D & CGI', 'Generative Art', 'Product Visualization',
+  'Advertising Creative', 'AR & VFX', 'Virtual Influencers',
   'Lifestyle', 'Fashion', 'Beauty', 'Travel', 'Food', 'Design', 'Technology', 'Culture',
-  'AI Filmmaking', 'AI Animation', 'Motion Design', '3D & CGI', 'Generative Art',
-  'Product Visualization', 'AI Photography', 'Social Media Content', 'UGC',
+  'UGC',
   'Graphic Design', 'Brand Identity', 'Illustration', 'Music & Audio',
-  'Voice & Dubbing', 'Copywriting', 'Advertising Creative', 'Virtual Influencers', 'AR & VFX',
+  'Voice & Dubbing', 'Copywriting',
 ]
 
 export const briefCategories = categories.slice(1)
