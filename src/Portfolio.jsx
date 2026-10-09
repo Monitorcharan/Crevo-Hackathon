@@ -14,8 +14,12 @@ function PortfolioShell({ children }) {
 }
 
 function WorkCard({ item }) {
-  return <article className="work-card"><a className="work-media" href={item.media_url} target="_blank" rel="noopener noreferrer">{item.media_type === 'image' ? <img src={item.media_url} alt={item.title}/> : <div className="work-placeholder"><span>{item.media_type === 'video' ? '▶' : '↗'}</span><small>OPEN {item.media_type.toUpperCase()}</small></div>}</a><div className="work-info"><div className="work-overline">{item.format || item.media_type} · {item.verification === 'self-reported' ? 'CREATOR REPORTED' : item.verification}</div><h3>{item.title}</h3><p>{item.description}</p><div className="work-detail"><strong>TOOLS & MODELS</strong><span>{item.tools.join(', ') || 'Not specified'}</span></div><div className="work-detail"><strong>WORKFLOW</strong><span>{item.workflow || 'Not specified'}</span></div><div className="work-detail"><strong>COMMERCIAL USE</strong><span>{item.commercial_use || 'Ask creator for terms'}</span></div></div></article>
+  const directVideo = item.media_type === 'video' && /[.](mp4|webm|ogg)([?]|$)/i.test(item.media_url)
+  return <article className="work-card"><div className="work-media">
+    {item.media_type === 'image' ? <a href={item.media_url} target="_blank" rel="noopener noreferrer"><img src={item.media_url} alt={item.title}/></a> : directVideo ? <video src={item.media_url} controls preload="metadata" aria-label={item.title}/> : <a className="work-placeholder" href={item.media_url} target="_blank" rel="noopener noreferrer"><span>{item.media_type === 'video' ? '▶' : '↗'}</span><small>OPEN {item.media_type.toUpperCase()}</small></a>}
+  </div><div className="work-info"><div className="work-overline">{item.format || item.media_type} · {item.verification === 'self-reported' ? 'CREATOR REPORTED' : item.verification}</div><h3>{item.title}</h3><p>{item.description}</p><div className="work-detail"><strong>TOOLS & MODELS</strong><span>{item.tools.join(', ') || 'Not specified'}</span></div><div className="work-detail"><strong>WORKFLOW</strong><span>{item.workflow || 'Not specified'}</span></div><div className="work-detail"><strong>COMMERCIAL USE</strong><span>{item.commercial_use || 'Ask creator for terms'}</span></div></div></article>
 }
+
 
 export function PublicPortfolio() {
   const { id } = useParams()

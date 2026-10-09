@@ -41,3 +41,24 @@ for name, title, location, categories, skills, platforms, audience, rate in SAMP
     added += 1
 
 print(f'Added {added} demo creators')
+
+
+# One original AI-generated image gives public visitors a real portfolio example.
+demo_creator = store.one('creators', {'name': '[Demo] Leo Martínez'})
+if demo_creator:
+    title = '[Demo] Golden-hour café concept'
+    existing = store.one('portfolio_items', {'creator_id': demo_creator['id'], 'title': title})
+    if not existing:
+        store.insert('portfolio_items', {
+            'creator_id': demo_creator['id'],
+            'title': title,
+            'description': 'Illustrative concept artwork generated for the Crevo hackathon demo, not a real client campaign.',
+            'media_url': 'https://crevo-hackathon.onrender.com/demo/cafe-concept.png',
+            'media_type': 'image',
+            'tools': ['OpenAI image generation'],
+            'workflow': 'Prompted a café scene, reviewed the generated result, and selected this concept still for demonstration.',
+            'format': '16:9 landscape',
+            'commercial_use': 'Demo only; licensing for client use has not been established.',
+            'verification': 'illustrative demo',
+        })
+        print('Added one original demo portfolio item')

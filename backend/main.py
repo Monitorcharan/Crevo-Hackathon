@@ -258,16 +258,24 @@ def me(user=Depends(current_user)):
 
 
 @app.get('/api/creators')
-def creators(q: str = '', category: str = '', platform: str = ''):
-    results = store.all_rows('creators', order='created_at')
+def creators(q: str = '', category: str = '', platform: str = '', skill: str = '', tool: str = '', content_type: str = ''):
+    portfolio_by_creator = {}
+    for item in store.all_rows('portfolio_items'):
+        portfolio_by_creator.setdefault(item['creator_id'], []).append(item)
+    enriched = []
+    for creator in store.all_rows('creators', order='created_at'):
+        work = portfolio_by_creator.get(creator['id'], [])
+        enriched.append({**creator,
+            'portfolio_tools': sorted({name for item in work for name in item['tools']}, key=str.lower),
+            'content_types': sorted({item['media_type'] for item in work}),
+        })
     query = q.lower().strip()
     if query:
-        results = [c for c in results if query in ' '.join([c['name'],c['title'],c['bio'],c['location'],*c['skills'],*c['categories']]).lower()]
-    if category:
-        results = [c for c in results if category.lower() in [x.lower() for x in c['categories']]]
-    if platform:
-        results = [c for c in results if platform.lower() in [x.lower() for x in c['platforms']]]
-    return results
+        enriched = [c for c in enriched if query in ' '.join([c['name'], c['title'], c['bio'], c['location'], *c['skills'], *c['categories'], *c['portfolio_tools']]).lower()]
+    for field, value in (('categories', category), ('platforms', platform), ('skills', skill), ('portfolio_tools', tool), ('content_types', content_type)):
+        if value:
+            enriched = [c for c in enriched if value.lower() in {entry.lower() for entry in c[field]}]
+    return enriched
 
 
 @app.get('/api/creators/{creator_id}')
@@ -351,10 +359,31 @@ def briefs(user=Depends(current_user)):
 async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
     if not AI_PROVIDER:
         raise HTTPException(503, 'Add GEMINI_API_KEY or OPENAI_API_KEY to enable AI brief drafting')
-    prompt = 'Turn this rough campaign idea into a concise creative brief description. Include goal, deliverables, tone, audience, and success criteria only when present in the idea. Do not invent facts. Ask for missing information at the end. Return plain text, 120 words maximum. Idea: ' + data.idea
+    prompt = (
+        'Turn this rough campaign idea into an editable structured creative brief. '
+        'Return only a JSON object with keys title, description, category, content_type, style, format, '
+        'commercial_use, skills, platforms, location. Skills and platforms must be arrays of strings; '
+        'all other fields must be strings. Category must be one of Lifestyle, Fashion, Beauty, Travel, '
+        'Food, Design, Technology, Culture or empty. Use only facts clearly stated in the idea. '
+        'For missing details use an empty string or empty array; never invent budgets, licensing terms, '
+        'deliverables, audience, or campaign goals. Keep the description under 120 words. Idea: ' + data.idea
+    )
     try:
-        description = await generate_ai_text(prompt)
-        return {'description': description, 'source': AI_PROVIDER}
+        answer = await generate_ai_text(prompt, json_mode=True)
+        fence = chr(96) * 3
+        draft = json.loads(answer.replace(fence + 'json', '').replace(fence, '').strip())
+        if not isinstance(draft, dict):
+            raise ValueError('AI draft must be an object')
+        fields = ('title', 'description', 'category', 'content_type', 'style', 'format', 'commercial_use', 'location')
+        result = {field: str(draft.get(field) or '').strip()[:3000 if field == 'description' else 500] for field in fields}
+        if not result['description']:
+            raise ValueError('AI draft has no description')
+        if result['category'] not in ('Lifestyle', 'Fashion', 'Beauty', 'Travel', 'Food', 'Design', 'Technology', 'Culture'):
+            result['category'] = ''
+        for field in ('skills', 'platforms'):
+            values = draft.get(field)
+            result[field] = [str(value).strip()[:80] for value in values[:12] if str(value).strip()] if isinstance(values, list) else []
+        return {**result, 'source': AI_PROVIDER}
     except Exception as exc:
         log_ai_failure('brief_draft', exc)
         raise HTTPException(502, 'AI brief drafting is temporarily unavailable')

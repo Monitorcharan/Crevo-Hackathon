@@ -21,6 +21,11 @@ def test_brand_creator_collaboration(tmp_path, monkeypatch):
         work = client.post('/api/me/portfolio/items', headers=creator_headers, json={'title': 'Food stories', 'description': 'A short food film.', 'media_url': 'https://example.com/food-film', 'media_type': 'link', 'tools': ['Runway', 'After Effects'], 'workflow': 'Storyboard, generate, edit and color grade.', 'format': '9:16 video', 'commercial_use': 'Ask for license terms'})
         assert work.status_code == 200, work.text
         assert client.get(f"/api/creators/{profile.json()['id']}/portfolio").json()[0]['tools'] == ['Runway', 'After Effects']
+        filtered = client.get('/api/creators', params={'skill': 'Video', 'tool': 'Runway', 'content_type': 'link'})
+        assert filtered.status_code == 200 and any(c['id'] == profile.json()['id'] for c in filtered.json())
+        assert client.get('/api/creators', params={'tool': 'No such tool'}).json() == []
+        assert client.get('/api/creators', params={'q': 'Runway'}).json()[0]['id'] == profile.json()['id']
+
         brief = client.post('/api/briefs', headers=brand_headers, json={'title': 'Restaurant launch films', 'description': 'Create three short films for our new restaurant opening in London.', 'category': 'Food', 'skills': ['Video'], 'platforms': ['Instagram'], 'budget': 2000, 'location': 'London', 'content_type': 'AI-assisted film', 'style': 'Warm and cinematic', 'format': '9:16 vertical', 'commercial_use': 'Paid social for six months'})
         assert brief.status_code == 200, brief.text
         brief_id = brief.json()['id']
@@ -59,3 +64,23 @@ def test_brand_creator_collaboration(tmp_path, monkeypatch):
         assert closed.status_code == 200 and closed.json()['status'] == 'closed'
         assert client.get(f'/api/briefs/{brief_id}', headers=creator_headers).status_code == 404
         assert client.post(f'/api/briefs/{brief_id}/apply', headers=creator_headers, json={'note': 'I would love to join this project and help make it happen.'}).status_code == 404
+
+
+def test_structured_brief_draft(tmp_path, monkeypatch):
+    import json
+    monkeypatch.setattr(store, 'REMOTE', False)
+    monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'draft.db')
+    monkeypatch.setattr(main, 'AI_PROVIDER', 'gemini')
+    async def fake_generate(prompt, json_mode=False):
+        assert json_mode and 'commercial_use' in prompt
+        return json.dumps({'title': 'Café launch film', 'description': 'Create a short film for a café launch.', 'category': 'Food', 'content_type': 'Film', 'style': 'Warm', 'format': '9:16', 'commercial_use': '', 'skills': ['Video'], 'platforms': ['Instagram'], 'location': ''})
+    monkeypatch.setattr(main, 'generate_ai_text', fake_generate)
+    with TestClient(app) as client:
+        brand = client.post('/api/auth/register', json={'name': 'Brand Studio', 'email': 'draft-brand@example.com', 'password': 'a-strong-password', 'role': 'brand'}).json()
+        headers = {'Authorization': 'Bearer ' + brand['access_token']}
+        result = client.post('/api/briefs/draft', headers=headers, json={'idea': 'A warm 9:16 café launch film for Instagram.'})
+        assert result.status_code == 200, result.text
+        assert result.json()['title'] == 'Café launch film'
+        assert result.json()['format'] == '9:16'
+        assert result.json()['commercial_use'] == ''
+        assert result.json()['skills'] == ['Video']
