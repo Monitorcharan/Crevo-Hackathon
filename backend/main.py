@@ -22,6 +22,7 @@ from supabase import create_client
 
 load_dotenv()
 import store
+import firebase_identity
 
 SECRET = os.getenv('LOCAL_JWT_SECRET', 'replace-me-for-any-shared-environment')
 AI_KEY = os.getenv('OPENAI_API_KEY', '')
@@ -141,6 +142,11 @@ class CreatorEdit(BaseModel):
         return clean
 
 
+class FirebaseExchange(BaseModel):
+    id_token: str = Field(min_length=100, max_length=10000)
+    role: str | None = None
+
+
 class PortfolioItemIn(BaseModel):
     title: str = Field(min_length=3, max_length=120)
     description: str = Field(max_length=1000)
@@ -206,12 +212,19 @@ def current_user(authorization: str = Header(default='')):
         raise HTTPException(401, 'Sign in to continue')
     token = authorization[7:]
     try:
-        if store.REMOTE:
+        if firebase_identity.PROJECT_ID and token.count('.') == 2:
+            unverified_issuer = jwt.decode(token, options={'verify_signature': False}).get('iss', '')
+        else:
+            unverified_issuer = ''
+        if unverified_issuer == f'https://securetoken.google.com/{firebase_identity.PROJECT_ID}':
+            claims = firebase_identity.verify_id_token(token)
+            user = store.one('users', {'firebase_uid': claims['sub']})
+        elif store.REMOTE:
             result = store.admin.auth.get_user(token)
-            user_id = result.user.id
+            user = store.one('users', {'id': str(result.user.id)})
         else:
             user_id = jwt.decode(token, SECRET, algorithms=['HS256'])['sub']
-        user = store.one('users', {'id': str(user_id)})
+            user = store.one('users', {'id': str(user_id)})
         if not user:
             raise HTTPException(401, 'Account not found')
         return user
@@ -231,7 +244,67 @@ def require_role(role):
 
 @app.get('/api/health')
 def health():
-    return {'ok': True, 'database': 'supabase' if store.REMOTE else 'local', 'ai_enabled': bool(AI_PROVIDER), 'ai_provider': AI_PROVIDER}
+    return {'ok': True, 'database': 'supabase' if store.REMOTE else 'local', 'ai_enabled': bool(AI_PROVIDER), 'ai_provider': AI_PROVIDER, 'firebase_enabled': firebase_identity.public_config()['enabled']}
+
+
+@app.get('/api/auth/firebase/config')
+def firebase_config():
+    return firebase_identity.public_config()
+
+
+@app.post('/api/auth/firebase')
+def firebase_sign_in(data: FirebaseExchange):
+    try:
+        claims = firebase_identity.verify_id_token(data.id_token)
+    except firebase_identity.FirebaseIdentityError as exc:
+        raise HTTPException(401, str(exc))
+    uid = claims['sub']
+    user = store.one('users', {'firebase_uid': uid})
+    if user:
+        return {'user': user, 'mode': 'firebase'}
+    email = (claims.get('email') or '').strip().lower()
+    if not email or not claims.get('email_verified'):
+        raise HTTPException(422, 'This provider must share a verified email address')
+    if store.one('users', {'email': email}):
+        raise HTTPException(409, 'This email already has a Crevo account. Log in with email, then connect this provider from your dashboard.')
+    if data.role not in ('creator', 'brand'):
+        raise HTTPException(422, 'Choose creator or brand on the Join page first')
+    name = (claims.get('name') or email.split('@')[0]).strip()[:80] or 'Creator'
+    if store.REMOTE:
+        try:
+            auth_user = store.admin.auth.admin.create_user({'email': email, 'password': secrets.token_urlsafe(36), 'email_confirm': True})
+            user_id = str(auth_user.user.id)
+        except Exception:
+            raise HTTPException(400, 'Could not create the Crevo account in Supabase')
+    else:
+        user_id = str(uuid.uuid4())
+    user_data = {'id': user_id, 'email': email, 'name': name, 'role': data.role, 'firebase_uid': uid}
+    if not store.REMOTE:
+        user_data['password_hash'] = hash_password(secrets.token_urlsafe(36))
+    try:
+        user = store.insert('users', user_data)
+        if data.role == 'creator':
+            store.insert('creators', {'owner_id': user_id, 'name': name, 'title': 'Creator', 'bio': '', 'location': '', 'categories': [], 'skills': [], 'platforms': [], 'audience': 0, 'rate': 0, 'avatar_url': None, 'portfolio': '', 'portfolio_source': 'manual'})
+    except Exception:
+        if store.REMOTE:
+            store.admin.auth.admin.delete_user(user_id)
+        raise HTTPException(400, 'Could not finish creating the Crevo account')
+    return {'user': user, 'mode': 'firebase'}
+
+
+@app.post('/api/auth/firebase/link')
+def link_firebase_identity(data: FirebaseExchange, user=Depends(current_user)):
+    try:
+        claims = firebase_identity.verify_id_token(data.id_token)
+    except firebase_identity.FirebaseIdentityError as exc:
+        raise HTTPException(401, str(exc))
+    existing = store.one('users', {'firebase_uid': claims['sub']})
+    if existing and existing['id'] != user['id']:
+        raise HTTPException(409, 'This social account is already connected to another Crevo account')
+    if user.get('firebase_uid') and user['firebase_uid'] != claims['sub']:
+        raise HTTPException(409, 'A different social account is already connected')
+    store.update('users', user['id'], {'firebase_uid': claims['sub']})
+    return {'linked': True}
 
 
 @app.post('/api/auth/register')
