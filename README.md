@@ -2,7 +2,7 @@
 
 **Live app:** https://crevo-hackathon.onrender.com
 
-A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses a four-dot to Crevo wordmark animation with construction lines. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
+A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses a five-dot wave that transforms into the CREVO wordmark. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
 
 ![Crevo landing page](docs/preview.png)
 
