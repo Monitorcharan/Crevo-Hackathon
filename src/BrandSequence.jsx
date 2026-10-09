@@ -1,24 +1,36 @@
-import { useId } from 'react'
 import { BrandMark } from './BrandMark.jsx'
 
-const positions = [178, 319, 460, 601, 742]
+const letters = [
+  { glyph: 'C', dotX: 178, letterX: 226 },
+  { glyph: 'R', dotX: 319, letterX: 347 },
+  { glyph: 'E', dotX: 460, letterX: 460 },
+  { glyph: 'V', dotX: 601, letterX: 570 },
+  { glyph: 'O', dotX: 742, letterX: 691 },
+]
 
 export default function BrandSequence({ className = '' }) {
-  const maskId = `crevo-loader-${useId().replace(/:/g, '')}`
   return <div className={`brand-sequence ${className}`} aria-hidden="true">
     <svg className="loader-svg" viewBox="0 0 920 430" preserveAspectRatio="xMidYMid meet" focusable="false">
-      <defs>
-        <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="920" height="430">
-          <rect width="920" height="430" fill="black" />
-          {positions.map((cx, index) => <circle className="loader-reveal" key={cx} cx={cx} cy="215" r="0" fill="white" style={{ animationDelay: `${3.05 + index * .16}s` }} />)}
-        </mask>
-      </defs>
-      <text className="loader-word" x="460" y="282" textAnchor="middle" mask={`url(#${maskId})`}>CREVO</text>
+      <g className="loader-letters">
+        {letters.map(({ glyph, dotX, letterX }, index) => <text
+          className="loader-letter"
+          key={glyph}
+          x={letterX}
+          y="282"
+          textAnchor="middle"
+          style={{
+            '--origin-shift': `${dotX - letterX}px`,
+            animationDelay: `${3.04 + index * .12}s`,
+          }}
+        >{glyph}</text>)}
+      </g>
       <g className="loader-dots">
-        {positions.map((cx, index) => <circle className="loader-dot" key={cx} cx={cx} cy="215" r="17" style={{
+        {letters.map(({ dotX, letterX }, index) => <circle className="loader-dot" key={dotX} cx={dotX} cy="215" r="17" style={{
           '--slope': `${(index - 2) * 14}px`,
           '--opposite': `${(2 - index) * 14}px`,
-          animationDelay: `${index * .13}s, ${3.05 + index * .16}s`,
+          '--travel-mid': `${(letterX - dotX) * .7}px`,
+          '--travel': `${letterX - dotX}px`,
+          animationDelay: `${index * .13}s, ${3.04 + index * .12}s`,
         }} />)}
       </g>
     </svg>

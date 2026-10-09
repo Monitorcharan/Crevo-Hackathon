@@ -205,13 +205,12 @@
 }
 .sequence-reveal{animation-timing-function:cubic-bezier(.65,0,.35,1)}
 
-/* Five-dot loader: arrive, wave, align, then become CREVO. */
+/* Five dots glide into the centers of five letters, then resolve into CREVO. */
 .logo-word{font-size:.93em;font-weight:700;letter-spacing:-.075em}
 .brand-mark-point:nth-child(5){animation-delay:.6s}
 .loader-svg{display:block;width:100%;height:100%;overflow:visible}
-.loader-word{fill:#e6ff45;font-family:'Space Grotesk',sans-serif;font-size:190px;font-weight:700;letter-spacing:0}
-.loader-dot{fill:#e6ff45;opacity:0;transform-box:fill-box;transform-origin:center;animation:loader-wave 2.55s cubic-bezier(.42,0,.24,1) forwards,loader-dot-morph .7s cubic-bezier(.32,0,.22,1) forwards}
-.loader-reveal{animation:loader-letter-reveal .7s cubic-bezier(.42,0,.22,1) forwards}
+.loader-letter{fill:#e6ff45;font-family:'Space Grotesk',sans-serif;font-size:190px;font-weight:700;opacity:0;transform-box:fill-box;transform-origin:center;animation:loader-letter-morph 1.02s cubic-bezier(.22,1,.36,1) forwards}
+.loader-dot{fill:#e6ff45;opacity:0;transform-box:fill-box;transform-origin:center;animation:loader-wave 2.55s cubic-bezier(.42,0,.24,1) forwards,loader-dot-morph .88s cubic-bezier(.22,1,.36,1) forwards}
 @keyframes loader-wave{
   0%{opacity:0;transform:translateY(-18px) scale(.4)}
   11%{opacity:1;transform:translateY(0) scale(1)}
@@ -222,13 +221,19 @@
   100%{opacity:1;transform:translateY(0) scale(1)}
 }
 @keyframes loader-dot-morph{
-  0%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 0 #e6ff45)}
-  42%{opacity:1;transform:scale(1.18);filter:drop-shadow(0 0 13px #e6ff45)}
-  100%{opacity:0;transform:scale(1.65);filter:drop-shadow(0 0 0 #e6ff45)}
+  0%{opacity:1;transform:translateX(0) scale(1);filter:drop-shadow(0 0 0 #e6ff45)}
+  34%{opacity:1;transform:translateX(var(--travel-mid)) scale(1.12);filter:drop-shadow(0 0 9px #e6ff45)}
+  72%{opacity:.32;transform:translateX(var(--travel)) scale(.66);filter:drop-shadow(0 0 6px #e6ff45)}
+  100%{opacity:0;transform:translateX(var(--travel)) scale(.2);filter:drop-shadow(0 0 0 #e6ff45)}
 }
-@keyframes loader-letter-reveal{0%{r:0}100%{r:120}}
+@keyframes loader-letter-morph{
+  0%{opacity:0;transform:translateX(var(--origin-shift)) scale(.13);filter:blur(7px)}
+  24%{opacity:.28;transform:translateX(calc(var(--origin-shift) * .55)) scale(.31);filter:blur(5px)}
+  66%{opacity:.96;transform:translateX(0) scale(.94);filter:blur(1px)}
+  100%{opacity:1;transform:translateX(0) scale(1);filter:blur(0)}
+}
 @media(max-width:720px){.auth-sequence .loader-svg{display:none}.auth-sequence .sequence-mobile-mark{display:block}}
 @media(prefers-reduced-motion:reduce){
- .loader-dot,.loader-reveal{animation:none!important}
- .loader-dot{opacity:0}.loader-reveal{r:120}
+ .loader-dot,.loader-letter{animation:none!important}
+ .loader-dot{opacity:0}.loader-letter{opacity:1;filter:none;transform:none}
 }
