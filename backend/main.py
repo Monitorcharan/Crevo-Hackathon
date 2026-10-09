@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import hmac
 import json
@@ -25,7 +26,7 @@ SECRET = os.getenv('LOCAL_JWT_SECRET', 'replace-me-for-any-shared-environment')
 AI_KEY = os.getenv('OPENAI_API_KEY', '')
 AI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
 GEMINI_KEY = os.getenv('GEMINI_API_KEY', '')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash-lite')
 AI_PROVIDER = 'gemini' if GEMINI_KEY else 'openai' if AI_KEY else None
 
 
@@ -35,10 +36,14 @@ async def generate_ai_text(prompt: str, json_mode: bool = False) -> str:
             body = {'contents': [{'parts': [{'text': prompt}]}]}
             if json_mode:
                 body['generationConfig'] = {'responseMimeType': 'application/json'}
-            response = await client.post(
-                f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent',
-                headers={'x-goog-api-key': GEMINI_KEY}, json=body,
-            )
+            for attempt in range(2):
+                response = await client.post(
+                    f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent',
+                    headers={'x-goog-api-key': GEMINI_KEY}, json=body,
+                )
+                if response.status_code != 503 or attempt == 1:
+                    break
+                await asyncio.sleep(1)
             response.raise_for_status()
             result = response.json()
             text = ''.join(part.get('text', '') for candidate in result.get('candidates', [])
