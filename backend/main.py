@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import secrets
 import uuid
@@ -23,6 +24,19 @@ import store
 SECRET = os.getenv('LOCAL_JWT_SECRET', 'replace-me-for-any-shared-environment')
 AI_KEY = os.getenv('OPENAI_API_KEY', '')
 AI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
+
+
+def log_ai_failure(operation, exc):
+    """Record a safe upstream error code without logging keys or user prompts."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        try:
+            error = exc.response.json().get('error') or {}
+            code = error.get('code') or error.get('type') or 'unknown'
+        except (ValueError, AttributeError):
+            code = 'unknown'
+        logging.warning('OpenAI %s failed: HTTP %s, code=%s', operation, exc.response.status_code, code)
+    else:
+        logging.warning('OpenAI %s failed: %s', operation, type(exc).__name__)
 
 
 @asynccontextmanager
@@ -264,7 +278,8 @@ async def generate_portfolio(user=Depends(require_role('creator'))):
             if not text:
                 raise ValueError('AI service returned no text')
             source = 'openai'
-        except Exception:
+        except Exception as exc:
+            log_ai_failure('portfolio', exc)
             raise HTTPException(502, 'AI portfolio generation is temporarily unavailable')
     else:
         text = f"I'm {creator['name']}, a {creator['title'].lower()} based in {creator['location'] or 'my community'}. {creator['bio'].strip()} My work brings together {', '.join(creator['skills'][:3])}."
@@ -313,7 +328,8 @@ async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
         if not description:
             raise ValueError('No draft text')
         return {'description': description, 'source': 'openai'}
-    except Exception:
+    except Exception as exc:
+        log_ai_failure('brief_draft', exc)
         raise HTTPException(502, 'AI brief drafting is temporarily unavailable')
 
 
@@ -380,7 +396,8 @@ async def matches(brief_id: str, user=Depends(require_role('brand'))):
                     x['ai_reason'] = str(suggestion.get('reason', ''))[:300]
                     x['method'] = '70% weighted rules + 30% AI assessment'
             results.sort(key=lambda x: x['score'], reverse=True)
-        except Exception:
+        except Exception as exc:
+            log_ai_failure('matching', exc)
             pass  # Keep the transparent rules ranking if the optional AI service fails.
     return results
 
