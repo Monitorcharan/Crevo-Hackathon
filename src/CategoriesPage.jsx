@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Aperture, AudioLines, BookOpenText, Box, Brush, Camera, Clapperboard, Code2, Film, Globe2, Heart, Layers3, Megaphone, Mic2, MonitorPlay, Package, Palette, PenTool, Plane, ScanFace, Search, Shirt, Sparkles, Utensils, Video, WandSparkles, X } from 'lucide-react'
 import { briefCategories } from './categories.js'
+import CrevoCompanion from './CrevoCompanion.jsx'
 
 const details = {
   Lifestyle: ['Everyday stories with feeling', Heart],
@@ -38,7 +39,7 @@ export default function CategoriesPage() {
   const matches = term ? briefCategories.filter(name => `${name} ${details[name]?.[0] || ''}`.toLowerCase().includes(term)) : briefCategories
 
   return <main className="categories-page page-light"><div className="container">
-    <div className="landing-section-head categories-heading"><div><span className="eyebrow">EXPLORE BY CRAFT / {briefCategories.length} CATEGORIES</span><h1>Find the kind of<br/><em>magic you need.</em></h1></div><p>From a cinematic launch film to a scroll-stopping campaign, start with the work you want to make.</p></div>
+    <div className="landing-section-head categories-heading"><div><span className="eyebrow">EXPLORE BY CRAFT / {briefCategories.length} CATEGORIES</span><h1>Find the kind of<br/><em>magic you need.</em></h1></div><div className="categories-intro-side"><p>From a cinematic launch film to a scroll-stopping campaign, start with the work you want to make.</p><CrevoCompanion size={118} mood="happy"/></div></div>
     <div className="category-search-row"><label className="category-search"><Search size={21} aria-hidden="true"/><input type="search" aria-label="Search categories" placeholder="Search categories — try filmmaking, beauty, motion…" value={query} onChange={event => setQuery(event.target.value)}/>{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear category search"><X size={19}/></button>}</label><span className="category-search-count" aria-live="polite">{term ? `${matches.length} OF ${briefCategories.length} CATEGORIES` : `${briefCategories.length} CREATIVE CATEGORIES`}</span></div>
     {matches.length ? <div className="craft-grid category-page-grid">{matches.map(name => {
       const index = briefCategories.indexOf(name)

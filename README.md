@@ -98,6 +98,7 @@ The tests cover Firebase identity verification and account linking, account crea
 - A project begins when a brand accepts an application. Milestones, payments, and file sharing are not yet part of this MVP.
 - Local auth is for development. Use Supabase Auth and a strong server secret for shared deployments.
 - The animated hero and logo respect reduced-motion settings and do not require WebGL.
+- The lemon-green Crevo mascot from the owner's `crevo_avatar` project appears on the landing page, Categories page, and sign-in artwork. Its 3D scene is code split, pauses off-screen, respects reduced motion, and uses the supplied CSS fallback when WebGL is unavailable.
 
 
 ## Public deployment
