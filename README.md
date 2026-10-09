@@ -6,6 +6,8 @@ A React and FastAPI MVP for AI creator discovery and brand collaboration. The la
 
 ![Crevo landing page](docs/preview.png)
 
+[Hackathon demo guide](docs/demo-guide.md)
+
 The public directory includes six explicitly labeled fictional demo creators. Their audience figures and rates are illustrative; they cannot sign in or apply to briefs. Create your own creator and brand accounts to try the full workflow.
 
 ## Run locally
@@ -61,7 +63,7 @@ pytest -q
 
 The test covers account creation, profile editing, AI work portfolio metadata, structured brief publishing, ranked discovery, applying, accepting, messaging, duplicate application handling, and role access. It uses an isolated local database.
 
-**Validation status:** `npm run build` passes and `python -m pytest -q` passes (1 end-to-end test). The running frontend returns HTTP 200, and `/api/health` reports `database: supabase` when configured. A temporary live Supabase smoke test passed Auth login, profile updates, portfolio items, avatar Storage upload, briefs, matching, applications, messaging, and project completion; all temporary records and files were removed. Browser checks passed at desktop and mobile sizes, including navigation to discovery and signup. `npm audit --omit=dev` reports zero production dependency vulnerabilities. The hero uses lightweight CSS animation and does not require WebGL. The deployed Render service passed a temporary end-to-end test covering Supabase Auth, creator profiles, portfolio work and Gemini introduction generation, Storage upload, Gemini brief drafting, AI assessed matching, applications, project messages, and completion. Test accounts, records, and files were removed. Email confirmation still needs a real inbox check.
+**Validation status:** `npm run build` passes and `python -m pytest -q` passes (1 end-to-end test). The running frontend returns HTTP 200, and `/api/health` reports `database: supabase` when configured. A temporary live Supabase smoke test passed Auth login, profile updates, portfolio items, avatar Storage upload, briefs, matching, applications, messaging, and project completion; all temporary records and files were removed. Browser checks passed at desktop and mobile sizes, including navigation to discovery and signup. `npm audit --omit=dev` reports zero production dependency vulnerabilities. The hero uses lightweight CSS animation and does not require WebGL. The deployed Render service passed a temporary end-to-end test covering Supabase Auth, creator profiles, portfolio work and Gemini introduction generation, Storage upload, Gemini brief drafting, AI assessed matching, applications, project messages, and completion. Test accounts, records, and files were removed. A real-inbox signup, confirmation link, and login were verified by the project owner on 2026-10-09.
 
 ## Current scope
 
