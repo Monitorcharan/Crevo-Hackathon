@@ -24,6 +24,40 @@ import store
 SECRET = os.getenv('LOCAL_JWT_SECRET', 'replace-me-for-any-shared-environment')
 AI_KEY = os.getenv('OPENAI_API_KEY', '')
 AI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
+GEMINI_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash-lite')
+AI_PROVIDER = 'gemini' if GEMINI_KEY else 'openai' if AI_KEY else None
+
+
+async def generate_ai_text(prompt: str, json_mode: bool = False) -> str:
+    async with httpx.AsyncClient(timeout=40) as client:
+        if AI_PROVIDER == 'gemini':
+            body = {'contents': [{'parts': [{'text': prompt}]}]}
+            if json_mode:
+                body['generationConfig'] = {'responseMimeType': 'application/json'}
+            response = await client.post(
+                f'https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent',
+                headers={'x-goog-api-key': GEMINI_KEY}, json=body,
+            )
+            response.raise_for_status()
+            result = response.json()
+            text = ''.join(part.get('text', '') for candidate in result.get('candidates', [])
+                           for part in candidate.get('content', {}).get('parts', []))
+        elif AI_PROVIDER == 'openai':
+            response = await client.post(
+                'https://api.openai.com/v1/responses',
+                headers={'Authorization': f'Bearer {AI_KEY}'},
+                json={'model': AI_MODEL, 'input': prompt},
+            )
+            response.raise_for_status()
+            result = response.json()
+            text = ''.join(part.get('text', '') for output in result.get('output', [])
+                           for part in output.get('content', []) if part.get('type') == 'output_text')
+        else:
+            raise ValueError('No AI provider configured')
+    if not text.strip():
+        raise ValueError('AI provider returned no text')
+    return text.strip()
 
 
 def log_ai_failure(operation, exc):
@@ -34,9 +68,9 @@ def log_ai_failure(operation, exc):
             code = error.get('code') or error.get('type') or 'unknown'
         except (ValueError, AttributeError):
             code = 'unknown'
-        logging.warning('OpenAI %s failed: HTTP %s, code=%s', operation, exc.response.status_code, code)
+        logging.warning('%s %s failed: HTTP %s, code=%s', AI_PROVIDER or 'AI', operation, exc.response.status_code, code)
     else:
-        logging.warning('OpenAI %s failed: %s', operation, type(exc).__name__)
+        logging.warning('%s %s failed: %s', AI_PROVIDER or 'AI', operation, type(exc).__name__)
 
 
 @asynccontextmanager
@@ -160,7 +194,7 @@ def require_role(role):
 
 @app.get('/api/health')
 def health():
-    return {'ok': True, 'database': 'supabase' if store.REMOTE else 'local', 'ai_enabled': bool(AI_KEY)}
+    return {'ok': True, 'database': 'supabase' if store.REMOTE else 'local', 'ai_enabled': bool(AI_PROVIDER), 'ai_provider': AI_PROVIDER}
 
 
 @app.post('/api/auth/register')
@@ -267,17 +301,11 @@ async def generate_portfolio(user=Depends(require_role('creator'))):
     creator = store.one('creators', {'owner_id': user['id']})
     if not creator['bio'].strip() or not creator['skills']:
         raise HTTPException(422, 'Add a bio and skills to your profile first')
-    if AI_KEY:
+    if AI_PROVIDER:
         prompt = f"Write a concise 100-word first-person portfolio introduction for this creator. Use only supplied facts; do not invent clients, awards, metrics, or projects. Name: {creator['name']}. Title: {creator['title']}. Bio: {creator['bio']}. Skills: {', '.join(creator['skills'])}. Categories: {', '.join(creator['categories'])}."
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.post('https://api.openai.com/v1/responses', headers={'Authorization': f'Bearer {AI_KEY}'}, json={'model': AI_MODEL, 'input': prompt})
-                response.raise_for_status()
-                result = response.json()
-            text = ''.join(part.get('text', '') for output in result.get('output', []) for part in output.get('content', []) if part.get('type') == 'output_text').strip()
-            if not text:
-                raise ValueError('AI service returned no text')
-            source = 'openai'
+            text = await generate_ai_text(prompt)
+            source = AI_PROVIDER
         except Exception as exc:
             log_ai_failure('portfolio', exc)
             raise HTTPException(502, 'AI portfolio generation is temporarily unavailable')
@@ -316,18 +344,12 @@ def briefs(user=Depends(current_user)):
 
 @app.post('/api/briefs/draft')
 async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
-    if not AI_KEY:
-        raise HTTPException(503, 'Add OPENAI_API_KEY to enable AI brief drafting')
+    if not AI_PROVIDER:
+        raise HTTPException(503, 'Add GEMINI_API_KEY or OPENAI_API_KEY to enable AI brief drafting')
     prompt = 'Turn this rough campaign idea into a concise creative brief description. Include goal, deliverables, tone, audience, and success criteria only when present in the idea. Do not invent facts. Ask for missing information at the end. Return plain text, 120 words maximum. Idea: ' + data.idea
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.post('https://api.openai.com/v1/responses', headers={'Authorization': f'Bearer {AI_KEY}'}, json={'model': AI_MODEL, 'input': prompt})
-            response.raise_for_status()
-            raw = response.json()
-        description = ''.join(part.get('text', '') for output in raw.get('output', []) for part in output.get('content', []) if part.get('type') == 'output_text').strip()
-        if not description:
-            raise ValueError('No draft text')
-        return {'description': description, 'source': 'openai'}
+        description = await generate_ai_text(prompt)
+        return {'description': description, 'source': AI_PROVIDER}
     except Exception as exc:
         log_ai_failure('brief_draft', exc)
         raise HTTPException(502, 'AI brief drafting is temporarily unavailable')
@@ -377,15 +399,11 @@ async def matches(brief_id: str, user=Depends(require_role('brand'))):
         if location_hit: factors.append('location match')
         results.append({'creator': creator, 'score': round(score), 'factors': factors, 'method': 'weighted rules', 'ai_reason': None})
     results.sort(key=lambda x: x['score'], reverse=True)
-    if AI_KEY and results:
+    if AI_PROVIDER and results:
         candidates = [{'id': x['creator']['id'], 'name': x['creator']['name'], 'title': x['creator']['title'], 'bio': x['creator']['bio'], 'skills': x['creator']['skills'], 'categories': x['creator']['categories'], 'platforms': x['creator']['platforms'], 'rate': x['creator']['rate'], 'portfolio': [{'title': p['title'], 'tools': p['tools'], 'format': p['format'], 'workflow': p['workflow']} for p in store.all_rows('portfolio_items', {'creator_id': x['creator']['id']})[:5]], 'rule_score': x['score']} for x in results[:8]]
         prompt = 'Assess fit for a creator campaign. Use only supplied facts. Return JSON object with key matches, an array of objects with id, score (integer 0-100), and reason (one factual sentence). No markdown. Brief: ' + json.dumps({'title': brief['title'], 'description': brief['description'], 'category': brief['category'], 'skills': brief['skills'], 'platforms': brief['platforms'], 'budget': brief['budget'], 'content_type': brief['content_type'], 'style': brief['style'], 'format': brief['format'], 'commercial_use': brief['commercial_use']}) + ' Candidates: ' + json.dumps(candidates)
         try:
-            async with httpx.AsyncClient(timeout=30) as client:
-                response = await client.post('https://api.openai.com/v1/responses', headers={'Authorization': f'Bearer {AI_KEY}'}, json={'model': AI_MODEL, 'input': prompt})
-                response.raise_for_status()
-                raw = response.json()
-            answer = ''.join(part.get('text', '') for output in raw.get('output', []) for part in output.get('content', []) if part.get('type') == 'output_text').strip()
+            answer = await generate_ai_text(prompt, json_mode=True)
             answer = answer.removeprefix('```json').removesuffix('```').strip()
             items = {x['id']: x for x in json.loads(answer)['matches']}
             for x in results[:8]:
