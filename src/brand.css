@@ -164,3 +164,43 @@
 @keyframes sequence-solid{0%,60%,87%,100%{opacity:0}66%,81%{opacity:1}}
 @keyframes sequence-dots{0%,8%,88%,100%{opacity:1}15%,82%{opacity:0}}
 .hero-grain{display:none}
+
+/* The four dots travel into the wordmark before its letterforms are revealed. */
+.logo-word{display:inline-block}
+.nav:not(.nav-dark) .logo,.auth-art .logo,.footer .logo{color:#e6ff45}
+.nav-dark .logo,.portfolio-nav .logo,.brief-builder-nav .logo,.brief-view-nav .logo{color:#111}
+.brand-mark-point{fill:currentColor;transform-box:fill-box;transform-origin:center;animation:brand-point 2.7s ease-in-out infinite}
+.brand-mark-point:nth-child(2){animation-delay:.15s}.brand-mark-point:nth-child(3){animation-delay:.3s}.brand-mark-point:nth-child(4){animation-delay:.45s}
+@keyframes brand-point{0%,100%{transform:scale(.94)}45%{transform:scale(1.09)}}
+.sequence-svg text{font-size:290px;letter-spacing:-20px}
+.sequence-guides{animation:sequence-guides-smooth 9.6s linear infinite}
+.sequence-wire{transform-origin:460px 215px;animation:sequence-wire-smooth 9.6s cubic-bezier(.4,0,.6,1) infinite}
+.sequence-wire text{animation:sequence-draw-smooth 9.6s ease-in-out infinite}
+.sequence-solid{animation:sequence-solid-smooth 9.6s ease-in-out infinite}
+.sequence-reveal{animation:sequence-reveal 9.6s cubic-bezier(.2,.75,.2,1) infinite}
+.sequence-dots{animation:sequence-dots-smooth 9.6s linear infinite}
+.sequence-dots circle:nth-child(1){animation:sequence-travel-a 9.6s cubic-bezier(.36,.01,.22,1) infinite}
+.sequence-dots circle:nth-child(2){animation:sequence-travel-b 9.6s cubic-bezier(.36,.01,.22,1) infinite}
+.sequence-dots circle:nth-child(3){animation:sequence-travel-c 9.6s cubic-bezier(.36,.01,.22,1) infinite}
+.sequence-dots circle:nth-child(4){animation:sequence-travel-d 9.6s cubic-bezier(.36,.01,.22,1) infinite}
+.sequence-mobile-mark{display:none}
+@keyframes sequence-guides-smooth{0%,14%,51%,100%{opacity:0}19%,45%{opacity:.42}}
+@keyframes sequence-wire-smooth{0%,14%{opacity:0;transform:translateX(16%) scale(1.28)}19%{opacity:1;transform:translateX(13%) scale(1.28)}45%{opacity:1;transform:translateX(-13%) scale(1.28)}51%,100%{opacity:0;transform:translateX(-17%) scale(1.28)}}
+@keyframes sequence-draw-smooth{0%,14%{stroke-dashoffset:1100}26%{stroke-dashoffset:450}42%,100%{stroke-dashoffset:0}}
+@keyframes sequence-solid-smooth{0%,13%{opacity:1}18%,83%{opacity:0}88%,100%{opacity:1}}
+@keyframes sequence-reveal{0%,16%{r:165}20%,83%{r:0}85%{r:5}94%,100%{r:165}}
+@keyframes sequence-dots-smooth{0%,52%{opacity:0}57%,87%{opacity:1}94%,100%{opacity:0}}
+@keyframes sequence-travel-a{0%,70%{transform:translate(0,0)}84%,100%{transform:translate(-233px,18px)}}
+@keyframes sequence-travel-b{0%,70%{transform:translate(0,0)}84%,100%{transform:translate(-100px,18px)}}
+@keyframes sequence-travel-c{0%,70%{transform:translate(0,0)}84%,100%{transform:translate(101px,-16px)}}
+@keyframes sequence-travel-d{0%,70%{transform:translate(0,0)}84%,100%{transform:translate(234px,-16px)}}
+@media(max-width:720px){
+ .auth-sequence .sequence-svg{display:none}
+ .auth-sequence .sequence-mobile-mark{display:block;position:absolute;width:175px;height:175px;left:50%;top:50%;transform:translate(-50%,-50%);color:#d5fb55}
+}
+@media(prefers-reduced-motion:reduce){
+ .brand-mark-point,.sequence-guides,.sequence-wire,.sequence-wire text,.sequence-wire circle,.sequence-solid,.sequence-reveal,.sequence-dots,.sequence-dots circle{animation:none!important}
+ .sequence-guides,.sequence-wire,.sequence-dots{opacity:0}
+ .sequence-solid{opacity:1}.sequence-reveal{r:165}
+}
+.sequence-reveal{animation-timing-function:cubic-bezier(.65,0,.35,1)}
