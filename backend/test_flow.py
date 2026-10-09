@@ -16,8 +16,12 @@ def test_brand_creator_collaboration(tmp_path, monkeypatch):
         assert creator.status_code == 200, creator.text
         brand_headers = {'Authorization': f"Bearer {brand.json()['access_token']}"}
         creator_headers = {'Authorization': f"Bearer {creator.json()['access_token']}"}
-        profile = client.put('/api/me/creator', headers=creator_headers, json={'title': 'Food filmmaker', 'bio': 'I film thoughtful food stories for growing brands.', 'location': 'London', 'categories': ['Food'], 'skills': ['Video', 'Editing'], 'platforms': ['Instagram'], 'audience': 25000, 'rate': 1000})
+        profile = client.put('/api/me/creator', headers=creator_headers, json={'title': 'Food filmmaker', 'bio': 'I film thoughtful food stories for growing brands.', 'location': 'London', 'categories': ['Food'], 'skills': ['Video', 'Editing'], 'platforms': ['Instagram'], 'audience': 25000, 'rate': 1000, 'social_links': {'instagram': 'https://www.instagram.com/alex', 'youtube': 'https://www.youtube.com/@alex'}})
         assert profile.status_code == 200, profile.text
+        assert profile.json()['social_links']['instagram'] == 'https://www.instagram.com/alex'
+        assert client.get(f"/api/creators/{profile.json()['id']}").json()['social_links']['youtube'] == 'https://www.youtube.com/@alex'
+        bad_profile = client.put('/api/me/creator', headers=creator_headers, json={**profile.json(), 'social_links': {'instagram': 'https://instagram.com.evil.test/alex'}})
+        assert bad_profile.status_code == 422
         work = client.post('/api/me/portfolio/items', headers=creator_headers, json={'title': 'Food stories', 'description': 'A short food film.', 'media_url': 'https://example.com/food-film', 'media_type': 'link', 'tools': ['Runway', 'After Effects'], 'workflow': 'Storyboard, generate, edit and color grade.', 'format': '9:16 video', 'commercial_use': 'Ask for license terms'})
         assert work.status_code == 200, work.text
         assert client.get(f"/api/creators/{profile.json()['id']}/portfolio").json()[0]['tools'] == ['Runway', 'After Effects']

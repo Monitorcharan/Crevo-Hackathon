@@ -17,7 +17,7 @@ REMOTE = bool(SUPABASE_URL and PUBLIC_KEY and SECRET_KEY)
 if os.getenv('CREVO_REQUIRE_SUPABASE') == '1' and not REMOTE:
     raise RuntimeError('Hosted Crevo requires Supabase credentials')
 admin = create_client(SUPABASE_URL, SECRET_KEY) if REMOTE else None
-JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools'}
+JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links'}
 
 
 def connect():
@@ -33,13 +33,15 @@ def init_local():
     with connect() as db:
         db.executescript('''
         create table if not exists users(id text primary key,email text unique not null,name text not null,role text not null,password_hash text not null,created_at text default current_timestamp);
-        create table if not exists creators(id text primary key,owner_id text unique,name text not null,title text not null,bio text not null,location text not null,categories text not null,skills text not null,platforms text not null,audience integer not null,rate integer not null,avatar_url text,portfolio text not null,portfolio_source text not null,created_at text default current_timestamp);
+        create table if not exists creators(id text primary key,owner_id text unique,name text not null,title text not null,bio text not null,location text not null,categories text not null,skills text not null,platforms text not null,social_links text not null default '{}',audience integer not null,rate integer not null,avatar_url text,portfolio text not null,portfolio_source text not null,created_at text default current_timestamp);
         create table if not exists portfolio_items(id text primary key,creator_id text not null,title text not null,description text not null,media_url text not null,media_type text not null,tools text not null,workflow text not null,format text not null,commercial_use text not null,verification text not null,created_at text default current_timestamp);
         create table if not exists briefs(id text primary key,owner_id text not null,title text not null,description text not null,category text not null,skills text not null,platforms text not null,budget integer not null,location text not null,content_type text not null default '',style text not null default '',format text not null default '',commercial_use text not null default '',status text not null,created_at text default current_timestamp);
         create table if not exists applications(id text primary key,brief_id text not null,creator_id text not null,note text not null,status text not null,created_at text default current_timestamp,unique(brief_id,creator_id));
         create table if not exists projects(id text primary key,brief_id text not null,creator_id text not null,brand_id text not null,status text not null,created_at text default current_timestamp,unique(brief_id,creator_id));
         create table if not exists messages(id text primary key,project_id text not null,sender_id text not null,body text not null,created_at text default current_timestamp);
         ''')
+        if 'social_links' not in {row[1] for row in db.execute('pragma table_info(creators)')}:
+            db.execute("alter table creators add column social_links text not null default '{}'")
         if db.execute('select count(*) from creators').fetchone()[0] == 0:
             samples = [
                 ('Maya Chen','Visual storyteller & creative director','Making everyday moments feel cinematic. I create thoughtful short form films for lifestyle brands.','Brooklyn, NY',['Lifestyle','Fashion'],['Video','Art Direction','Photography'],['Instagram','TikTok'],128000,1800),

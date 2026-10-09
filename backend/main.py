@@ -9,6 +9,7 @@ import uuid
 from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlsplit
 
 import httpx
 import jwt
@@ -16,7 +17,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from supabase import create_client
 
 load_dotenv()
@@ -107,6 +108,37 @@ class CreatorEdit(BaseModel):
     platforms: list[str] = Field(max_length=8)
     audience: int = Field(ge=0)
     rate: int = Field(ge=0)
+    social_links: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator('social_links')
+    @classmethod
+    def validate_social_links(cls, links):
+        allowed = {
+            'instagram': {'instagram.com', 'www.instagram.com'},
+            'facebook': {'facebook.com', 'www.facebook.com', 'm.facebook.com', 'fb.com'},
+            'x': {'x.com', 'www.x.com', 'twitter.com', 'www.twitter.com'},
+            'youtube': {'youtube.com', 'www.youtube.com', 'm.youtube.com'},
+            'reddit': {'reddit.com', 'www.reddit.com', 'old.reddit.com'},
+        }
+        clean = {}
+        for platform, raw in links.items():
+            if platform not in allowed:
+                raise ValueError('Unsupported social platform')
+            url = raw.strip()
+            if not url:
+                continue
+            try:
+                parsed = urlsplit(url)
+                valid = (len(url) <= 500 and parsed.scheme == 'https'
+                         and parsed.hostname in allowed[platform]
+                         and not parsed.username and not parsed.password and not parsed.port
+                         and bool(parsed.path.strip('/')))
+            except ValueError:
+                valid = False
+            if not valid:
+                raise ValueError(f'Enter a valid {platform} profile URL')
+            clean[platform] = url
+        return clean
 
 
 class PortfolioItemIn(BaseModel):

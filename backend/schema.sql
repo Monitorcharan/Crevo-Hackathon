@@ -12,10 +12,12 @@ create table if not exists public.creators (
   name text not null, title text not null default '', bio text not null default '',
   location text not null default '', categories jsonb not null default '[]'::jsonb,
   skills jsonb not null default '[]'::jsonb, platforms jsonb not null default '[]'::jsonb,
+  social_links jsonb not null default '{}'::jsonb,
   audience integer not null default 0, rate integer not null default 0,
   avatar_url text, portfolio text not null default '', portfolio_source text not null default 'manual',
   created_at timestamptz not null default now()
 );
+alter table public.creators add column if not exists social_links jsonb not null default '{}'::jsonb;
 create table if not exists public.portfolio_items (
   id uuid primary key default gen_random_uuid(),
   creator_id uuid not null references public.creators(id) on delete cascade,
