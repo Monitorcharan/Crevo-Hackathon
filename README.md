@@ -2,7 +2,7 @@
 
 **Live app:** https://crevo-hackathon.onrender.com
 
-A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses an animated connection portal and a custom C and dot identity. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
+A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses animated creator, brief and match cards, plus a custom C and dot identity. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
 
 ![Crevo landing page](docs/preview.png)
 
@@ -81,5 +81,3 @@ The repository includes a single-service Render Docker deployment. The container
 4. Check `/api/health` for `database: supabase` and `ai_enabled: true` (when the AI key is set). Complete a real creator and brand signup, confirm emails, and walk through a brief, application, acceptance, and project message.
 
 Render's Free web service spins down after idle time, so the first visit may take about a minute. Supabase's default email service is intended for testing; configure SMTP before broad public use.
-
-\n
