@@ -1,0 +1,94 @@
+from fastapi.testclient import TestClient
+
+import main
+import store
+
+
+def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
+    monkeypatch.setattr(store, 'REMOTE', False)
+    monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'marketplace.db')
+    monkeypatch.setattr(main, 'ADMIN_EMAILS', {'admin@example.com'})
+
+    with TestClient(main.app) as client:
+        def register(name, email, role, company_name=''):
+            response = client.post('/api/auth/register', json={
+                'name': name, 'email': email, 'password': 'strong-password',
+                'role': role, 'company_name': company_name,
+            })
+            assert response.status_code == 200, response.text
+            return response.json()
+
+        brand = register('Brand Owner', 'brand@example.com', 'brand', 'North Studio')
+        another = register('Other Brand', 'other@example.com', 'brand', 'South Studio')
+        admin = register('Admin', 'admin@example.com', 'brand', 'Crevo Team')
+        creator = register('Creator', 'creator@example.com', 'creator')
+        brand_headers = {'Authorization': f"Bearer {brand['access_token']}"}
+        another_headers = {'Authorization': f"Bearer {another['access_token']}"}
+        admin_headers = {'Authorization': f"Bearer {admin['access_token']}"}
+        creator_headers = {'Authorization': f"Bearer {creator['access_token']}"}
+        creator_id = client.get('/api/me', headers=creator_headers).json()['creator']['id']
+
+        edit = client.put('/api/me/creator', headers=creator_headers, json={
+            'title': 'AI filmmaker', 'bio': 'Films for thoughtful launches', 'location': 'Mumbai',
+            'categories': ['AI Filmmaking'], 'skills': ['Video'], 'platforms': ['Instagram'],
+            'audience': 0, 'rate': 500, 'social_links': {}, 'contact_email': 'hello@creator.example',
+        })
+        assert edit.status_code == 200, edit.text
+        assert client.get(f'/api/creators/{creator_id}').json()['contact_email'] == 'hello@creator.example'
+
+        quote = client.post(f'/api/creators/{creator_id}/contact', headers=brand_headers, json={
+            'creator_id': creator_id, 'kind': 'quote', 'subject': 'Campaign film',
+            'message': 'We need a cinematic vertical film for our product launch.',
+            'budget': 1500, 'timeline': 'Within two weeks',
+        })
+        assert quote.status_code == 200, quote.text
+        thread_id = quote.json()['id']
+        assert client.get('/api/contact/threads', headers=creator_headers).json()[0]['brand_name'] == 'North Studio'
+        assert client.get(f'/api/contact/threads/{thread_id}', headers=another_headers).status_code == 404
+        reply = client.post(f'/api/contact/threads/{thread_id}/messages', headers=creator_headers,
+                            json={'body': 'I can share an approach tomorrow.'})
+        assert reply.status_code == 200, reply.text
+        assert len(client.get(f'/api/contact/threads/{thread_id}', headers=brand_headers).json()['messages']) == 1
+
+        work = client.post('/api/me/portfolio/items', headers=creator_headers, json={
+            'title': 'Launch film', 'description': 'A sample film', 'media_url': 'https://example.com/film',
+            'media_type': 'video', 'tools': ['Runway'], 'workflow': 'Storyboard and edit',
+            'format': '9:16', 'commercial_use': 'Available for paid social',
+        })
+        assert work.status_code == 200, work.text
+        request = client.post('/api/me/verification', headers=creator_headers, json={
+            'evidence_url': 'https://example.com/film',
+            'statement': 'This is my original work. I created the storyboards and edited the final film.',
+        })
+        assert request.status_code == 200, request.text
+        request_id = request.json()['id']
+        assert client.get('/api/admin/verifications', headers=brand_headers).status_code == 403
+        assert len(client.get('/api/admin/verifications', headers=admin_headers).json()) == 1
+        approved = client.post(f'/api/admin/verifications/{request_id}/decision', headers=admin_headers,
+                               json={'approve': True, 'note': 'Portfolio evidence reviewed.'})
+        assert approved.status_code == 200, approved.text
+        assert client.get(f'/api/creators/{creator_id}').json()['verified_at']
+        assert client.post('/api/me/verification', headers=creator_headers, json={
+            'evidence_url': 'https://example.com/film',
+            'statement': 'I made this project and can show the full workflow and files.',
+        }).status_code == 409
+
+        brief = client.post('/api/briefs', headers=brand_headers, json={
+            'title': 'Launch campaign', 'description': 'Create a new vertical campaign film for our launch.',
+            'category': 'AI Filmmaking', 'skills': ['Video'], 'platforms': ['Instagram'],
+            'budget': 1500, 'location': 'Mumbai',
+        }).json()
+        application = client.post(f"/api/briefs/{brief['id']}/apply", headers=creator_headers,
+                                  json={'note': 'I can make a cinematic vertical film for this launch.'}).json()
+        project = client.post(f"/api/applications/{application['id']}/accept", headers=brand_headers).json()
+        review_url = f"/api/projects/{project['id']}/review"
+        review_data = {'rating': 5, 'body': 'Thoughtful process, clear communication, and a strong final film.'}
+        assert client.post(review_url, headers=brand_headers, json=review_data).status_code == 409
+        client.post(f"/api/projects/{project['id']}/complete", headers=brand_headers)
+        assert client.post(review_url, headers=another_headers, json=review_data).status_code == 404
+        review = client.post(review_url, headers=brand_headers, json=review_data)
+        assert review.status_code == 200, review.text
+        assert client.post(review_url, headers=brand_headers, json=review_data).status_code == 409
+        public = client.get(f'/api/creators/{creator_id}').json()
+        assert public['review_count'] == 1 and public['rating_average'] == 5.0
+        assert client.get(f'/api/creators/{creator_id}/reviews').json()[0]['brand_name'] == 'North Studio'

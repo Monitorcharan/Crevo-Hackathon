@@ -30,6 +30,12 @@ AI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
 GEMINI_KEY = os.getenv('GEMINI_API_KEY', '')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash-lite')
 AI_PROVIDER = 'gemini' if GEMINI_KEY else 'openai' if AI_KEY else None
+ADMIN_EMAILS = {email.strip().lower() for email in os.getenv('CREVO_ADMIN_EMAILS', '').split(',') if email.strip()}
+BRIEF_CATEGORIES = ('Lifestyle', 'Fashion', 'Beauty', 'Travel', 'Food', 'Design', 'Technology', 'Culture',
+                    'AI Filmmaking', 'AI Animation', 'Motion Design', '3D & CGI', 'Generative Art',
+                    'Product Visualization', 'AI Photography', 'Social Media Content', 'UGC',
+                    'Graphic Design', 'Brand Identity', 'Illustration', 'Music & Audio',
+                    'Voice & Dubbing', 'Copywriting', 'Advertising Creative', 'Virtual Influencers', 'AR & VFX')
 
 
 async def generate_ai_text(prompt: str, json_mode: bool = False) -> str:
@@ -116,6 +122,7 @@ class CreatorEdit(BaseModel):
     audience: int = Field(ge=0)
     rate: int = Field(ge=0)
     social_links: dict[str, str] = Field(default_factory=dict)
+    contact_email: EmailStr | None = None
 
     @field_validator('social_links')
     @classmethod
@@ -191,6 +198,34 @@ class MessageIn(BaseModel):
     body: str = Field(min_length=1, max_length=3000)
 
 
+class ContactIn(BaseModel):
+    creator_id: str
+    kind: str
+    subject: str = Field(default='', max_length=140)
+    message: str = Field(min_length=10, max_length=2500)
+    budget: int | None = Field(default=None, ge=0)
+    timeline: str = Field(default='', max_length=80)
+
+
+class ContactMessageIn(BaseModel):
+    body: str = Field(min_length=1, max_length=3000)
+
+
+class ReviewIn(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    body: str = Field(min_length=20, max_length=1200)
+
+
+class VerificationIn(BaseModel):
+    evidence_url: str = Field(min_length=12, max_length=1000)
+    statement: str = Field(min_length=30, max_length=1500)
+
+
+class VerificationDecision(BaseModel):
+    approve: bool
+    note: str = Field(default='', max_length=500)
+
+
 def hash_password(password):
     salt = secrets.token_hex(16)
     digest = hashlib.pbkdf2_hmac('sha256', password.encode(), bytes.fromhex(salt), 260000).hex()
@@ -206,8 +241,12 @@ def verify_password(password, encoded):
         return False
 
 
+def is_admin(user):
+    return bool(ADMIN_EMAILS and user['email'].lower() in ADMIN_EMAILS)
+
+
 def auth_result(user, token):
-    return {'user': user, 'access_token': token, 'mode': 'supabase' if store.REMOTE else 'local'}
+    return {'user': user, 'access_token': token, 'mode': 'supabase' if store.REMOTE else 'local', 'is_admin': is_admin(user)}
 
 
 def local_token(user_id):
@@ -268,7 +307,7 @@ def firebase_sign_in(data: FirebaseExchange):
     uid = claims['sub']
     user = store.one('users', {'firebase_uid': uid})
     if user:
-        return {'user': user, 'mode': 'firebase'}
+        return {'user': user, 'mode': 'firebase', 'is_admin': is_admin(user)}
     email = (claims.get('email') or '').strip().lower()
     if not email or not claims.get('email_verified'):
         raise HTTPException(422, 'This provider must share a verified email address')
@@ -299,7 +338,7 @@ def firebase_sign_in(data: FirebaseExchange):
         if store.REMOTE:
             store.admin.auth.admin.delete_user(user_id)
         raise HTTPException(400, 'Could not finish creating the Crevo account')
-    return {'user': user, 'mode': 'firebase'}
+    return {'user': user, 'mode': 'firebase', 'is_admin': is_admin(user)}
 
 
 @app.post('/api/auth/firebase/link')
@@ -372,7 +411,7 @@ def login(data: Credentials):
 @app.get('/api/me')
 def me(user=Depends(current_user)):
     creator = store.one('creators', {'owner_id': user['id']}) if user['role'] == 'creator' else None
-    return {'user': user, 'creator': creator}
+    return {'user': user, 'creator': creator, 'is_admin': is_admin(user)}
 
 
 @app.put('/api/me/brand')
@@ -410,7 +449,9 @@ def creators(q: str = '', category: str = '', platform: str = '', skill: str = '
     enriched = []
     for creator in store.all_rows('creators', order='created_at'):
         work = portfolio_by_creator.get(creator['id'], [])
-        enriched.append({**creator,
+        reviews = store.all_rows('reviews', {'creator_id': creator['id']})
+        enriched.append({**creator, 'review_count': len(reviews),
+            'rating_average': round(sum(r['rating'] for r in reviews) / len(reviews), 1) if reviews else None,
             'portfolio_tools': sorted({name for item in work for name in item['tools']}, key=str.lower),
             'content_types': sorted({item['media_type'] for item in work}),
         })
@@ -428,7 +469,9 @@ def creator_detail(creator_id: str):
     creator = store.one('creators', {'id': creator_id})
     if not creator:
         raise HTTPException(404, 'Creator not found')
-    return creator
+    reviews = store.all_rows('reviews', {'creator_id': creator_id})
+    return {**creator, 'review_count': len(reviews),
+            'rating_average': round(sum(r['rating'] for r in reviews) / len(reviews), 1) if reviews else None}
 
 
 @app.get('/api/creators/{creator_id}/portfolio')
@@ -508,8 +551,8 @@ async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
         'Turn this rough campaign idea into an editable structured creative brief. '
         'Return only a JSON object with keys title, description, category, content_type, style, format, '
         'commercial_use, skills, platforms, location. Skills and platforms must be arrays of strings; '
-        'all other fields must be strings. Category must be one of Lifestyle, Fashion, Beauty, Travel, '
-        'Food, Design, Technology, Culture or empty. Use only facts clearly stated in the idea. '
+        f'all other fields must be strings. Category must be one of {", ".join(BRIEF_CATEGORIES)} or empty. '
+        'Use only facts clearly stated in the idea. '
         'For missing details use an empty string or empty array; never invent budgets, licensing terms, '
         'deliverables, audience, or campaign goals. Keep the description under 120 words. Idea: ' + data.idea
     )
@@ -523,7 +566,7 @@ async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
         result = {field: str(draft.get(field) or '').strip()[:3000 if field == 'description' else 500] for field in fields}
         if not result['description']:
             raise ValueError('AI draft has no description')
-        if result['category'] not in ('Lifestyle', 'Fashion', 'Beauty', 'Travel', 'Food', 'Design', 'Technology', 'Culture'):
+        if result['category'] not in BRIEF_CATEGORIES:
             result['category'] = ''
         for field in ('skills', 'platforms'):
             values = draft.get(field)
@@ -685,6 +728,151 @@ def messages(project_id: str, user=Depends(current_user)):
 def send_message(project_id: str, data: MessageIn, user=Depends(current_user)):
     permitted_project(project_id, user)
     return store.insert('messages', {'project_id': project_id, 'sender_id': user['id'], 'body': data.body.strip()})
+
+
+
+@app.get('/api/creators/{creator_id}/reviews')
+def creator_reviews(creator_id: str):
+    if not store.one('creators', {'id': creator_id}):
+        raise HTTPException(404, 'Creator not found')
+    rows = store.all_rows('reviews', {'creator_id': creator_id}, order='created_at')
+    result = []
+    for review in rows:
+        brand = store.one('users', {'id': review['brand_id']})
+        project = store.one('projects', {'id': review['project_id']})
+        brief = store.one('briefs', {'id': project['brief_id']}) if project else None
+        result.append({**review, 'brand_name': (brand.get('company_name') or brand['name']) if brand else 'Brand',
+                       'project_title': brief['title'] if brief else 'Completed project'})
+    return result
+
+
+@app.post('/api/creators/{creator_id}/contact')
+def start_contact(creator_id: str, data: ContactIn, user=Depends(require_role('brand'))):
+    creator = store.one('creators', {'id': creator_id})
+    if not creator or not creator.get('owner_id') or data.creator_id != creator_id:
+        raise HTTPException(404, 'Creator not available for contact')
+    if data.kind not in ('question', 'quote'):
+        raise HTTPException(422, 'Choose a question or quote request')
+    subject = data.subject.strip() or ('Quote request' if data.kind == 'quote' else 'Question')
+    if not data.message.strip() or len(data.message.strip()) < 10:
+        raise HTTPException(422, 'Describe what you need')
+    return store.insert('contact_threads', {
+        'brand_id': user['id'], 'creator_id': creator_id, 'kind': data.kind,
+        'subject': subject, 'message': data.message.strip(),
+        'budget': data.budget, 'timeline': data.timeline.strip(),
+    })
+
+
+def contact_thread_for_user(thread_id, user):
+    thread = store.one('contact_threads', {'id': thread_id})
+    creator = store.one('creators', {'id': thread['creator_id']}) if thread else None
+    if not thread or (thread['brand_id'] != user['id'] and (not creator or creator['owner_id'] != user['id'])):
+        raise HTTPException(404, 'Conversation not found')
+    return thread, creator
+
+
+def contact_thread_view(thread):
+    creator = store.one('creators', {'id': thread['creator_id']})
+    brand = store.one('users', {'id': thread['brand_id']})
+    return {**thread, 'creator_name': creator['name'] if creator else 'Creator',
+            'creator_avatar_url': creator.get('avatar_url') if creator else None,
+            'brand_name': (brand.get('company_name') or brand['name']) if brand else 'Brand',
+            'brand_logo_url': brand.get('logo_url') if brand else None}
+
+
+@app.get('/api/contact/threads')
+def contact_threads(user=Depends(current_user)):
+    if user['role'] == 'brand':
+        rows = store.all_rows('contact_threads', {'brand_id': user['id']}, order='created_at')
+    else:
+        creator = store.one('creators', {'owner_id': user['id']})
+        rows = store.all_rows('contact_threads', {'creator_id': creator['id']}, order='created_at') if creator else []
+    return [contact_thread_view(row) for row in rows]
+
+
+@app.get('/api/contact/threads/{thread_id}')
+def contact_thread_detail(thread_id: str, user=Depends(current_user)):
+    thread, _ = contact_thread_for_user(thread_id, user)
+    return {**contact_thread_view(thread),
+            'messages': store.all_rows('contact_messages', {'thread_id': thread_id}, order='created_at')}
+
+
+@app.post('/api/contact/threads/{thread_id}/messages')
+def contact_reply(thread_id: str, data: ContactMessageIn, user=Depends(current_user)):
+    contact_thread_for_user(thread_id, user)
+    if not data.body.strip():
+        raise HTTPException(422, 'Write a message first')
+    return store.insert('contact_messages', {'thread_id': thread_id, 'sender_id': user['id'], 'body': data.body.strip()})
+
+
+@app.post('/api/projects/{project_id}/review')
+def review_project(project_id: str, data: ReviewIn, user=Depends(require_role('brand'))):
+    project = permitted_project(project_id, user)
+    if project['status'] != 'completed':
+        raise HTTPException(409, 'Complete the project before reviewing the creator')
+    if store.one('reviews', {'project_id': project_id}):
+        raise HTTPException(409, 'This project already has a review')
+    return store.insert('reviews', {'project_id': project_id, 'brand_id': user['id'],
+                                    'creator_id': project['creator_id'], 'rating': data.rating,
+                                    'body': data.body.strip()})
+
+
+@app.get('/api/projects/{project_id}/review')
+def project_review(project_id: str, user=Depends(current_user)):
+    permitted_project(project_id, user)
+    return store.one('reviews', {'project_id': project_id})
+
+
+@app.get('/api/me/verification')
+def my_verification(user=Depends(require_role('creator'))):
+    creator = store.one('creators', {'owner_id': user['id']})
+    rows = store.all_rows('verification_requests', {'creator_id': creator['id']}, order='created_at')
+    return {'verified_at': creator.get('verified_at'), 'request': rows[-1] if rows else None}
+
+
+@app.post('/api/me/verification')
+def request_verification(data: VerificationIn, user=Depends(require_role('creator'))):
+    creator = store.one('creators', {'owner_id': user['id']})
+    if creator.get('verified_at'):
+        raise HTTPException(409, 'This profile is already Crevo Verified')
+    rows = store.all_rows('verification_requests', {'creator_id': creator['id']})
+    if any(row['status'] == 'pending' for row in rows):
+        raise HTTPException(409, 'A verification request is already pending')
+    parsed = urlsplit(data.evidence_url.strip())
+    if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password:
+        raise HTTPException(422, 'Provide a public HTTPS link to your work or workflow')
+    if not store.all_rows('portfolio_items', {'creator_id': creator['id']}):
+        raise HTTPException(422, 'Add at least one portfolio project before requesting verification')
+    return store.insert('verification_requests', {'creator_id': creator['id'],
+        'evidence_url': data.evidence_url.strip(), 'statement': data.statement.strip(), 'status': 'pending'})
+
+
+def admin_user(user=Depends(current_user)):
+    if not is_admin(user):
+        raise HTTPException(403, 'Crevo administrator access required')
+    return user
+
+
+@app.get('/api/admin/verifications')
+def pending_verifications(user=Depends(admin_user)):
+    rows = store.all_rows('verification_requests', {'status': 'pending'}, order='created_at')
+    return [{**row, 'creator': store.one('creators', {'id': row['creator_id']})} for row in rows]
+
+
+@app.post('/api/admin/verifications/{request_id}/decision')
+def decide_verification(request_id: str, data: VerificationDecision, user=Depends(admin_user)):
+    request = store.one('verification_requests', {'id': request_id})
+    if not request:
+        raise HTTPException(404, 'Verification request not found')
+    if request['status'] != 'pending':
+        raise HTTPException(409, 'This request has already been reviewed')
+    status = 'approved' if data.approve else 'rejected'
+    now = datetime.now(timezone.utc).isoformat()
+    result = store.update('verification_requests', request_id, {'status': status,
+                           'decision_note': data.note.strip(), 'reviewed_by': user['id'], 'reviewed_at': now})
+    if data.approve:
+        store.update('creators', request['creator_id'], {'verified_at': now})
+    return result
 
 
 # The Docker deployment serves the Vite build from the same origin as the API.

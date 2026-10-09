@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, Sparkles } from 'lucide-react'
 import { api } from './api.js'
+import { briefCategories } from './categories.js'
 
 const csv = text => text.split(',').map(x => x.trim()).filter(Boolean)
-const categories = ['Lifestyle', 'Fashion', 'Beauty', 'Travel', 'Food', 'Design', 'Technology', 'Culture']
 const initialForm = { title: '', description: '', category: '', skills: '', platforms: '', budget: '', location: '', content_type: '', style: '', format: '', commercial_use: '' }
 
 export default function BriefBuilder() {
@@ -101,7 +101,7 @@ export default function BriefBuilder() {
           <label>Project title<input required minLength={4} value={form.title} onChange={event => set('title', event.target.value)} placeholder="A clear name for your campaign"/></label>
           <label>Description {draftSource && <small>AI assisted draft · please review every detail</small>}<textarea required minLength={20} rows={6} value={form.description} onChange={event => set('description', event.target.value)} placeholder="Goal, deliverables, tone and audience"/></label>
           <div className="form-two">
-            <label>Category<select required value={form.category} onChange={event => set('category', event.target.value)}><option value="">Choose a category</option>{categories.map(category => <option key={category}>{category}</option>)}</select></label>
+            <label>Category<select required value={form.category} onChange={event => set('category', event.target.value)}><option value="">Choose a category</option>{briefCategories.map(category => <option key={category}>{category}</option>)}</select></label>
             <label>Budget (USD)<input required type="number" min="0" value={form.budget} onChange={event => set('budget', event.target.value)} placeholder="2500"/></label>
           </div>
           <div className="form-two">

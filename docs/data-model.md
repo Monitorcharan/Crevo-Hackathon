@@ -4,11 +4,14 @@ Crevo stores accounts in Supabase Auth. Its application tables are in PostgreSQL
 
 | Record | Main fields | Why it matters |
 | --- | --- | --- |
-| Creator profile | Name, title, bio, location, categories/specialization, skills, platforms, optional social profile URLs, audience, starting rate, avatar, portfolio introduction | Gives brands a searchable summary of the creator’s focus and availability. |
-| Portfolio item | Creator ID, title, description, media URL, media type (image/video/link), tools and models, workflow, format, commercial-use terms, verification label | Shows an AI work sample and the process behind it. Tool and work claims are marked **creator reported**; Crevo does not present them as independently verified. |
+| Creator profile | Name, title, bio, location, categories/specialization, skills, platforms, optional social profile URLs and opt-in contact email, audience, starting rate, avatar, portfolio introduction, verified-at time | Gives brands a searchable summary of the creator’s focus and availability. |
+| Portfolio item | Creator ID, title, description, media URL, media type (image/video/link), tools and models, workflow, format, commercial-use terms, verification label | Shows an AI work sample and the process behind it. Tool and work claims are marked **creator reported**. A separate Crevo Verified badge means an administrator reviewed submitted portfolio evidence. |
 | Brief | Brand owner, title, description, category, skills, platforms, budget, location, content type, style, format/aspect ratio, commercial-use requirements, status | Captures the deliverable and usage context needed for a useful creator match. |
 | Application | Brief, creator, proposal note, status | Connects a creator to a specific brief. |
+| Contact thread and message | Brand, creator, question/quote type, requirements, optional budget/timeline, sender, message body | Enables private conversation before hiring. |
 | Project and message | Accepted brief, creator, brand, project status, sender, message body | Keeps collaboration attached to the accepted engagement. |
+| Review | Completed project, brand, creator, rating, review body | Shows feedback tied to real Crevo collaborations. |
+| Verification request | Creator, evidence URL, statement, review decision and reviewer | Supports manual approval before a Crevo Verified badge appears. |
 
 Discovery searches creator text, skills, specialization, and portfolio tools. Filters cover category, platform, skill, tool/model, and portfolio media type. Match suggestions combine transparent category, skill, platform, budget, and location rules with an optional Gemini assessment. The AI brief helper suggests structured fields from a rough idea; the brand reviews and completes them before publishing.
 
