@@ -59,18 +59,26 @@ def init_local():
             db.execute('alter table creators add column contact_email text')
         if 'verified_at' not in creator_columns:
             db.execute('alter table creators add column verified_at text')
-        if db.execute('select count(*) from creators').fetchone()[0] == 0:
-            samples = [
-                ('Maya Chen','Visual storyteller & creative director','Making everyday moments feel cinematic. I create thoughtful short form films for lifestyle brands.','Brooklyn, NY',['Lifestyle','Fashion'],['Video','Art Direction','Photography'],['Instagram','TikTok'],128000,1800),
-                ('Jordan Rivera','Motion designer & 3D artist','Fluid worlds, bold type, and motion that stays with you.','Austin, TX',['Design','Technology'],['3D','Motion','Animation'],['Instagram','YouTube'],82000,1500),
-                ('Amara Okafor','Beauty creator & photographer','Colorful beauty stories rooted in real routines and honest recommendations.','London, UK',['Beauty','Lifestyle'],['Photography','UGC','Video'],['Instagram','TikTok'],245000,2300),
-                ('Leo Martínez','Food filmmaker','Films that make you taste the story. Recipes, restaurants and everything between.','Los Angeles, CA',['Food','Lifestyle'],['Video','Photography','Editing'],['TikTok','YouTube'],97000,1400),
-                ('Priya Shah','Travel writer & creator','Human stories from the places we go, made for people who travel with curiosity.','Mumbai, India',['Travel','Lifestyle'],['Writing','Video','Photography'],['Instagram','YouTube'],161000,1900),
-                ('Noah Brooks','Culture & streetwear creator','Building visual culture at the intersection of fashion, music and city life.','New York, NY',['Fashion','Culture'],['UGC','Video','Art Direction'],['Instagram','TikTok'],114000,1700),
-            ]
-            for name,title,bio,location,categories,skills,platforms,audience,rate in samples:
-                db.execute('insert into creators(id,owner_id,name,title,bio,location,categories,skills,platforms,audience,rate,avatar_url,portfolio,portfolio_source) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                    (str(uuid.uuid4()),None,name,title,bio,location,json.dumps(categories),json.dumps(skills),json.dumps(platforms),audience,rate,None,'','manual'))
+        legacy_names = ('Maya Chen', 'Jordan Rivera', 'Amara Okafor', 'Leo Martínez', 'Priya Shah', 'Noah Brooks')
+        for name in legacy_names:
+            row = db.execute('select id from creators where name=? and owner_id is null', (name,)).fetchone()
+            if row and not db.execute('select 1 from projects where creator_id=? union select 1 from applications where creator_id=?', (row['id'], row['id'])).fetchone():
+                db.execute('delete from portfolio_items where creator_id=?', (row['id'],))
+                db.execute('delete from creators where id=?', (row['id'],))
+        samples = [
+            ('[Demo] Aria Vale', 'AI filmmaker & campaign director', ['AI Filmmaking', 'Advertising Creative', 'Product Visualization'], ['Creative Direction', 'Storyboarding'], ['Instagram', 'YouTube'], 'night-drive.png', 'After Dark / launch film concept'),
+            ('[Demo] Kian Mercer', '3D motion & generative artist', ['Motion Design', '3D & CGI', 'Generative Art'], ['3D Art Direction', 'Motion Concepts'], ['Instagram', 'YouTube'], 'glass-motion.png', 'Glass Orbit / motion concept'),
+            ('[Demo] Solana Park', 'AI product & beauty visual artist', ['Beauty', 'AI Photography', 'Product Visualization'], ['Product Imagery', 'Art Direction'], ['Instagram', 'TikTok'], 'skincare-still.png', 'Soft Light / skincare still life'),
+            ('[Demo] Niko Lane', 'Fashion editorial & social creator', ['Fashion', 'Social Media Content', 'AI Photography'], ['Editorial Imagery', 'Social Campaigns'], ['Instagram', 'TikTok'], 'fashion-editorial.png', 'Electric Blue / fashion editorial'),
+        ]
+        for name, title, categories, skills, platforms, image, work_title in samples:
+            if db.execute('select 1 from creators where name=?', (name,)).fetchone():
+                continue
+            creator_id = str(uuid.uuid4())
+            db.execute('insert into creators(id,owner_id,name,title,bio,location,categories,skills,platforms,audience,rate,avatar_url,portfolio,portfolio_source) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+                (creator_id, None, name, title, 'Fictional sample profile with original AI-generated concept art and illustrative feedback. No real client work is represented.', 'Creative studio · worldwide', json.dumps(categories), json.dumps(skills), json.dumps(platforms), 0, 0, None, 'Illustrative Crevo demo portfolio.', 'demo'))
+            db.execute('insert into portfolio_items(id,creator_id,title,description,media_url,media_type,tools,workflow,format,commercial_use,verification) values(?,?,?,?,?,?,?,?,?,?,?)',
+                (str(uuid.uuid4()), creator_id, work_title, 'Illustrative AI-generated concept artwork for the Crevo demo, not a real client campaign.', f'https://crevo-hackathon.onrender.com/demo/{image}', 'image', json.dumps(['OpenAI image generation']), 'Generated a fictional campaign image and selected the final concept.', '16:9 landscape', 'Demo only; no client license is represented.', 'illustrative demo'))
 
 
 def normalize(row):

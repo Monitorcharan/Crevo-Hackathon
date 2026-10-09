@@ -10,7 +10,7 @@ import BriefDetail from './BriefDetail.jsx'
 const split = value => value.split(',').map(x => x.trim()).filter(Boolean)
 
 function PortfolioShell({ children }) {
-  return <div className="portfolio-page"><header className="portfolio-nav"><BrandLogo/><Link to="/discover">Discover creators <ArrowUpRight size={16}/></Link></header>{children}</div>
+  return <div className="portfolio-page"><header className="portfolio-nav"><BrandLogo/><div className="portfolio-nav-links"><Link to="/categories">Categories</Link><Link to="/discover">Discover creators <ArrowUpRight size={16}/></Link></div></header>{children}</div>
 }
 
 function WorkCard({ item }) {
@@ -25,7 +25,7 @@ export function PublicPortfolio() {
   const { id } = useParams()
   const [creator, setCreator] = useState(null), [items, setItems] = useState([]), [error, setError] = useState('')
   useEffect(() => { let live = true; Promise.all([api(`/creators/${id}`), api(`/creators/${id}/portfolio`)]).then(([c, work]) => { if (live) { setCreator(c); setItems(work) } }).catch(e => live && setError(e.message)); return () => { live = false } }, [id])
-  return <PortfolioShell><main className="portfolio-content"><Link className="back-link" to={`/creators/${id}`}>← Creator profile</Link>{error ? <div className="alert">{error}</div> : !creator ? <p>Loading portfolio…</p> : <><span className="eyebrow">THE WORK / {creator.name.toUpperCase()}</span><h1>Ideas made <em>real.</em></h1><p className="portfolio-lead">A closer look at {creator.name}'s work, tools and production process. Details are creator reported unless independently verified.</p>{items.length ? <div className="work-grid">{items.map(item => <WorkCard item={item} key={item.id}/>)}</div> : <div className="empty"><h3>No work added yet</h3><p>{creator.name} is still building this portfolio.</p></div>}</>}</main></PortfolioShell>
+  return <PortfolioShell><main className="portfolio-content"><Link className="back-link" to={`/creators/${id}`}>← Creator profile</Link>{error ? <div className="alert">{error}</div> : !creator ? <p>Loading portfolio…</p> : <><span className="eyebrow">THE WORK / {creator.name.toUpperCase()}</span><h1>Ideas made <em>real.</em></h1><p className="portfolio-lead">{creator.portfolio_source === 'demo' ? 'Illustrative AI-generated concept artwork for the Crevo demo. This is a fictional portfolio, not a real creator or client campaign.' : `A closer look at ${creator.name}'s work, tools and production process. Details are creator reported unless independently verified.`}</p>{items.length ? <div className="work-grid">{items.map(item => <WorkCard item={item} key={item.id}/>)}</div> : <div className="empty"><h3>No work added yet</h3><p>{creator.name} is still building this portfolio.</p></div>}</>}</main></PortfolioShell>
 }
 
 export function PortfolioManager() {

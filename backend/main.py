@@ -452,6 +452,7 @@ def creators(q: str = '', category: str = '', platform: str = '', skill: str = '
         reviews = store.all_rows('reviews', {'creator_id': creator['id']})
         enriched.append({**creator, 'review_count': len(reviews),
             'rating_average': round(sum(r['rating'] for r in reviews) / len(reviews), 1) if reviews else None,
+            'portfolio_image': next((item['media_url'] for item in work if item['media_type'] == 'image'), None),
             'portfolio_tools': sorted({name for item in work for name in item['tools']}, key=str.lower),
             'content_types': sorted({item['media_type'] for item in work}),
         })
@@ -470,7 +471,9 @@ def creator_detail(creator_id: str):
     if not creator:
         raise HTTPException(404, 'Creator not found')
     reviews = store.all_rows('reviews', {'creator_id': creator_id})
+    work = store.all_rows('portfolio_items', {'creator_id': creator_id}, order='created_at')
     return {**creator, 'review_count': len(reviews),
+            'portfolio_image': next((item['media_url'] for item in work if item['media_type'] == 'image'), None),
             'rating_average': round(sum(r['rating'] for r in reviews) / len(reviews), 1) if reviews else None}
 
 

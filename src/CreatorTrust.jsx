@@ -8,11 +8,13 @@ export function VerifiedBadge({ verifiedAt }) {
   return <span className="crevo-verified" title="Crevo reviewed portfolio evidence submitted by this creator. This does not guarantee project outcomes."><BadgeCheck size={17}/> Crevo Verified</span>
 }
 
-export function CreatorReviews({ creatorId, rating, count }) {
+export function CreatorReviews({ creatorId, rating, count, demoReviews = [] }) {
   const [reviews, setReviews] = useState([])
   useEffect(() => { api(`/creators/${creatorId}/reviews`).then(setReviews).catch(() => {}) }, [creatorId])
-  return <section className="creator-reviews container"><div className="creator-reviews-head"><div><span className="eyebrow">BRAND FEEDBACK</span><h2>Work that speaks for itself.</h2></div><div className="creator-rating">{count ? <><Star size={24} fill="currentColor"/><strong>{rating?.toFixed(1)}</strong><span>{count} review{count === 1 ? '' : 's'} from completed Crevo projects</span></> : <span>No project reviews yet</span>}</div></div>
-    {reviews.length ? <div className="review-list">{reviews.map(review => <article key={review.id} className="review-card"><div className="review-card-top"><strong>{review.brand_name}</strong><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div><small>{review.project_title} · {new Date(review.created_at).toLocaleDateString()}</small><p>{review.body}</p></article>)}</div> : <p className="muted">Reviews appear here after brands complete projects with this creator.</p>}
+  const illustrative = demoReviews.length > 0
+  const visible = illustrative ? demoReviews : reviews
+  return <section className="creator-reviews container"><div className="creator-reviews-head"><div><span className="eyebrow">{illustrative ? 'ILLUSTRATIVE DEMO FEEDBACK' : 'BRAND FEEDBACK'}</span><h2>Work that speaks for itself.</h2></div><div className="creator-rating">{illustrative ? <span>Fictional examples · not verified client reviews</span> : count ? <><Star size={24} fill="currentColor"/><strong>{rating?.toFixed(1)}</strong><span>{count} review{count === 1 ? '' : 's'} from completed Crevo projects</span></> : <span>No project reviews yet</span>}</div></div>
+    {visible.length ? <div className="review-list">{visible.map((review, index) => <article key={review.id || index} className="review-card"><div className="review-card-top"><strong>{review.brand_name}</strong><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div><small>{review.project_title}{review.created_at ? ` · ${new Date(review.created_at).toLocaleDateString()}` : ' · Demo example'}</small><p>{review.body}</p></article>)}</div> : <p className="muted">Reviews appear here after brands complete projects with this creator.</p>}
   </section>
 }
 

@@ -8,7 +8,7 @@ A React and FastAPI MVP for AI creator discovery and brand collaboration. The la
 
 [Hackathon demo guide](docs/demo-guide.md) · [Challenge slides](docs/challenge-deck.pptx) · [Data model note](docs/data-model.md)
 
-The public directory includes six explicitly labeled fictional demo creators. Their audience figures and rates are illustrative; they cannot sign in or apply to briefs. Create your own creator and brand accounts to try the full workflow.
+The public directory includes four clearly labeled fictional demo portfolios with original AI-generated concept images and illustrative sample feedback. Demo feedback is never counted as a completed-project review; the demo profiles cannot sign in or apply to briefs. Create your own creator and brand accounts to try the full workflow.
 
 ## Run locally
 
@@ -33,7 +33,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The API is at `http://localhost:8000`, with interactive API docs at `/docs`. Local mode creates `backend/crevo.db` and six sample creator profiles on first launch. Create one brand account and one creator account to try the full workflow.
+Open `http://localhost:5173`. The API is at `http://localhost:8000`, with interactive API docs at `/docs`. Local mode creates `backend/crevo.db` and four illustrated sample portfolios. Create one brand account and one creator account to try the full workflow.
 
 Demo path: create a creator account → complete the profile → add an AI work sample with tools and usage terms → create a brand account → publish a structured brief → review ranked matches → return as the creator and apply → accept the application as the brand → exchange project messages → mark the project complete.
 
@@ -42,7 +42,7 @@ Demo path: create a creator account → complete the profile → add an AI work 
 1. Create a Supabase project and run [`backend/schema.sql`](backend/schema.sql) in its SQL editor.
 2. Copy `backend/.env.example` to `backend/.env` and set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY`. Legacy anon and service-role variable names remain supported for existing projects.
 3. Restart FastAPI. `/api/health` will report `database: supabase`.
-4. Add creator accounts or data in Supabase. For a hackathon walkthrough, run `python backend/seed_demo.py` from the project root to add six clearly labeled fictional sample profiles. Their audience and rates are illustrative; they have no login accounts and cannot apply to briefs. Run the script again safely; it skips existing samples.
+4. Add creator accounts or data in Supabase. For a hackathon walkthrough, run `python backend/seed_demo.py` from the project root to replace the old unowned demo profiles with four clearly labeled fictional portfolios. It preserves real creator accounts and any legacy demo referenced by a project or application. Re-running it refreshes only the demo work samples.
 5. In Supabase Auth URL configuration, set your app URL as the site URL. If email confirmation is enabled, users must confirm their email before logging in.
 
 The secret key stays in the backend only. All data mutations and reads go through FastAPI, which checks the user's role and ownership. The SQL enables RLS, revokes direct table access from browser roles, and explicitly grants the service role Data API access. Profile photo uploads use the public `portfolios` bucket created by the schema. Local mode has no storage substitute and displays an explicit upload error.
@@ -70,6 +70,7 @@ Firebase client ID tokens are verified on the server against Google's signing ce
 - A creator with at least one portfolio item can submit a public work or workflow link and a statement for verification. A profile shows **Crevo Verified** only after a configured administrator reviews and approves the request. It means submitted portfolio evidence was reviewed, not that every tool claim or outcome is guaranteed. Pending and rejected requests never show the badge.
 - Set `CREVO_ADMIN_EMAILS` in the backend or Render environment to a comma-separated list of account emails permitted to approve requests. Those accounts see **Verifications** in navigation and can review requests at `/admin/verifications`. Leave this unset to disable approvals.
 - Discovery and brief creation now include 26 creative categories, including AI filmmaking, animation, 3D/CGI, generative art, product visualization, voice, copywriting, and VFX.
+- All 26 categories have their own visual cards at `/categories`, linked from the glass navbar. A card opens discovery with that category selected. The four demo portfolios use generated concept artwork and prominently label their fictional feedback.
 
 The idempotent `backend/schema.sql` adds contact threads/messages, completed-project reviews, verification requests, and the creator opt-in email/approval fields. Apply it to an existing Supabase project before deploying this version. All new tables have RLS enabled and direct browser roles revoked; FastAPI enforces record ownership and uses its server-side Supabase client.
 
