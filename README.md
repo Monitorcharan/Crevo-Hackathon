@@ -36,7 +36,7 @@ Demo path: create a creator account → complete the profile → add an AI work 
 1. Create a Supabase project and run [`backend/schema.sql`](backend/schema.sql) in its SQL editor.
 2. Copy `backend/.env.example` to `backend/.env` and set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY`. Legacy anon and service-role variable names remain supported for existing projects.
 3. Restart FastAPI. `/api/health` will report `database: supabase`.
-4. Add creator accounts or data in Supabase. The local sample creators are intentionally not copied into your production database.
+4. Add creator accounts or data in Supabase. For a hackathon walkthrough, run `python backend/seed_demo.py` from the project root to add six clearly labeled fictional sample profiles. Their audience and rates are illustrative; they have no login accounts and cannot apply to briefs. Run the script again safely; it skips existing samples.
 5. In Supabase Auth URL configuration, set your app URL as the site URL. If email confirmation is enabled, users must confirm their email before logging in.
 
 The secret key stays in the backend only. All data mutations and reads go through FastAPI, which checks the user's role and ownership. The SQL enables RLS, revokes direct table access from browser roles, and explicitly grants the service role Data API access. Profile photo uploads use the public `portfolios` bucket created by the schema. Local mode has no storage substitute and displays an explicit upload error.
