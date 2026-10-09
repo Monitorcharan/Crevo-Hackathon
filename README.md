@@ -6,7 +6,7 @@ A React and FastAPI MVP for AI creator discovery and brand collaboration. The la
 
 ![Crevo landing page](docs/preview.png)
 
-[Hackathon demo guide](docs/demo-guide.md) · [Data model note](docs/data-model.md)
+[Hackathon demo guide](docs/demo-guide.md) · [Challenge slides](docs/challenge-deck.pptx) · [Data model note](docs/data-model.md)
 
 The public directory includes six explicitly labeled fictional demo creators. Their audience figures and rates are illustrative; they cannot sign in or apply to briefs. Create your own creator and brand accounts to try the full workflow.
 
