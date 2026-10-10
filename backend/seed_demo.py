@@ -104,4 +104,7 @@ for sample in SAMPLES:
         'verification': 'illustrative demo',
     })
 
+from demo_gigs import ensure_demo_gigs  # noqa: E402
+
+ensure_demo_gigs()
 print(f'Removed {removed} legacy demo profiles and installed {len(SAMPLES)} new illustrative portfolios')
