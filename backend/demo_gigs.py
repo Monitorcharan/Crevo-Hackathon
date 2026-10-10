@@ -1,0 +1,50 @@
+"""Install illustrative service listings for the five known demo creators only."""
+
+import store
+
+
+SAMPLES = {
+    '[Demo] Aria Vale': ('AI launch film concept and visual direction', 'night-drive.png',
+        'I will shape your early campaign idea into an AI-assisted launch film concept. We will define the story, visual references, key scenes and a production plan before any final deliverables are agreed. This is an illustrative Crevo demo listing, not a claim of completed client work.',
+        'Discovery call; moodboard and story direction; sample keyframes; review and revision plan.',
+        '16:9 film concept', ['AI filmmaking', 'Storyboarding', 'Creative direction']),
+    '[Demo] Kian Mercer': ('3D motion concept for your next campaign', 'glass-motion.png',
+        'I will explore a distinctive 3D visual direction for a campaign, product launch or social sequence. The gig covers concept development, material and lighting studies, and a clear path toward motion production. The cover is a static illustrative demo image.',
+        'Creative brief review; style frames; material and lighting study; delivery plan and feedback round.',
+        '16:9 motion concept', ['3D design', 'Motion direction', 'Generative art']),
+    '[Demo] Solana Park': ('AI product imagery and beauty art direction', 'skincare-still.png',
+        'I will develop a visual concept for your product with carefully directed lighting, composition and brand mood. We can plan still images for a launch, social campaign or e-commerce use. The pictured product is fictional demo artwork.',
+        'Product and audience review; visual references; still-life concepts; selected final direction.',
+        '1:1 or 4:5 imagery', ['AI photography', 'Product imagery', 'Art direction']),
+    '[Demo] Niko Lane': ('Fashion editorial concepts for social campaigns', 'fashion-editorial.png',
+        'I will plan an editorial visual direction for a fashion or lifestyle campaign, from mood and composition to final concept frames. The image shown is fictional AI-generated demo art and does not represent a commissioned campaign.',
+        'Moodboard; editorial style exploration; campaign concept frames; feedback and selection.',
+        '4:5 social imagery', ['Fashion concepts', 'Editorial imagery', 'Social creative']),
+    '[Demo] Crevo Creator': ('AI campaign concept from idea to visual storyboard', 'night-drive.png',
+        'I can turn a rough brand idea into a clear AI-assisted campaign concept. Share your audience, goal and references; I will outline a story, develop a visual direction and prepare illustrative frames for review. This shared account is for hackathon evaluation, and its artwork is demo content.',
+        'Brief discovery; concept and moodboard; storyboard outline; sample visual frames; one review round.',
+        '9:16 or 16:9 concept', ['Creative direction', 'Storyboarding', 'AI filmmaking']),
+}
+
+
+def ensure_demo_gigs():
+    for creator in store.all_rows('creators'):
+        sample = SAMPLES.get(creator['name'])
+        if not sample:
+            continue
+        owner = store.one('users', {'id': creator['owner_id']}) if creator.get('owner_id') else None
+        if owner:
+            if owner['email'] != 'creator.demo.crevo@example.com':
+                continue
+        elif creator.get('portfolio_source') != 'demo':
+            continue
+        if any(item['media_type'] == 'gig' for item in store.all_rows('portfolio_items', {'creator_id': creator['id']})):
+            continue
+        title, image, description, workflow, output_format, tools = sample
+        store.insert('portfolio_items', {
+            'creator_id': creator['id'], 'title': f'[Demo] {title}', 'description': description,
+            'media_url': f'https://crevo-hackathon.onrender.com/demo/{image}', 'media_type': 'gig',
+            'tools': tools, 'workflow': workflow, 'format': output_format,
+            'commercial_use': 'Illustrative demo only. Licensing, scope and price are agreed before a real engagement.',
+            'verification': 'illustrative demo',
+        })

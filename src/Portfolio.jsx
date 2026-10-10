@@ -9,6 +9,7 @@ import BriefDetail from './BriefDetail.jsx'
 import CrevoAssistant from './CrevoAssistant.jsx'
 import FormatPicker from './FormatPicker.jsx'
 import { NotificationBellAuto } from './NotificationBell.jsx'
+import { GigDetail, GigManager } from './Gig.jsx'
 
 const split = value => value.split(',').map(x => x.trim()).filter(Boolean)
 
@@ -87,5 +88,5 @@ export function PortfolioManager() {
 }
 
 export default function PortfolioApp() {
-  return <><SiteMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant/></>
+  return <><SiteMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/gigs/manage" element={<GigManager/>}/><Route path="/gigs/:id" element={<GigDetail/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant/></>
 }

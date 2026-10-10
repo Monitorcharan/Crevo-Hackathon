@@ -24,6 +24,7 @@ from supabase import create_client
 load_dotenv()
 import store
 import firebase_identity
+from demo_gigs import ensure_demo_gigs
 
 SECRET = os.getenv('LOCAL_JWT_SECRET', 'replace-me-for-any-shared-environment')
 AI_KEY = os.getenv('OPENAI_API_KEY', '')
@@ -90,6 +91,7 @@ def log_ai_failure(operation, exc):
 @asynccontextmanager
 async def lifespan(app):
     store.init_local()
+    ensure_demo_gigs()
     yield
 
 
@@ -171,6 +173,24 @@ class PortfolioItemIn(BaseModel):
     workflow: str = Field(max_length=1000)
     format: str = Field(max_length=100)
     commercial_use: str = Field(max_length=300)
+
+
+class GigIn(BaseModel):
+    title: str = Field(min_length=8, max_length=120)
+    description: str = Field(min_length=40, max_length=4000)
+    media_url: str = Field(min_length=8, max_length=1000)
+    tools: list[str] = Field(default_factory=list, max_length=15)
+    workflow: str = Field(min_length=15, max_length=1500)
+    format: str = Field(min_length=2, max_length=100)
+    commercial_use: str = Field(min_length=10, max_length=500)
+
+    @field_validator('media_url')
+    @classmethod
+    def validate_cover(cls, value):
+        parsed = urlsplit(value.strip())
+        if parsed.scheme != 'https' or not parsed.hostname or parsed.username or parsed.password:
+            raise ValueError('Use a full HTTPS image URL for the gig cover')
+        return value.strip()
 
 
 class BriefIn(BaseModel):
@@ -481,6 +501,8 @@ async def upload_brand_logo(file: UploadFile = File(...), user=Depends(require_r
 def creators(q: str = '', category: str = '', platform: str = '', skill: str = '', tool: str = '', content_type: str = ''):
     portfolio_by_creator = {}
     for item in store.all_rows('portfolio_items'):
+        if item['media_type'] == 'gig':
+            continue
         portfolio_by_creator.setdefault(item['creator_id'], []).append(item)
     enriched = []
     for creator in store.all_rows('creators', order='created_at'):
@@ -507,7 +529,7 @@ def creator_detail(creator_id: str):
     if not creator:
         raise HTTPException(404, 'Creator not found')
     reviews = store.all_rows('reviews', {'creator_id': creator_id})
-    work = store.all_rows('portfolio_items', {'creator_id': creator_id}, order='created_at')
+    work = [item for item in store.all_rows('portfolio_items', {'creator_id': creator_id}, order='created_at') if item['media_type'] != 'gig']
     return {**creator, 'review_count': len(reviews),
             'portfolio_image': next((item['media_url'] for item in work if item['media_type'] == 'image'), None),
             'rating_average': round(sum(r['rating'] for r in reviews) / len(reviews), 1) if reviews else None}
@@ -517,7 +539,7 @@ def creator_detail(creator_id: str):
 def creator_portfolio(creator_id: str):
     if not store.one('creators', {'id': creator_id}):
         raise HTTPException(404, 'Creator not found')
-    return store.all_rows('portfolio_items', {'creator_id': creator_id}, order='created_at')
+    return [item for item in store.all_rows('portfolio_items', {'creator_id': creator_id}, order='created_at') if item['media_type'] != 'gig']
 
 
 @app.post('/api/me/portfolio/items')
@@ -528,6 +550,83 @@ def add_portfolio_item(data: PortfolioItemIn, user=Depends(require_role('creator
         raise HTTPException(422, 'Provide a full http or https URL')
     creator = store.one('creators', {'owner_id': user['id']})
     return store.insert('portfolio_items', {'creator_id': creator['id'], **data.model_dump(), 'verification': 'self-reported'})
+
+
+def gig_view(item):
+    return {'id': item['id'], 'creator_id': item['creator_id'], 'title': item['title'],
+            'description': item['description'], 'cover_url': item['media_url'], 'tools': item['tools'],
+            'workflow': item['workflow'], 'format': item['format'], 'commercial_use': item['commercial_use'],
+            'verification': item['verification'], 'created_at': item['created_at']}
+
+
+@app.get('/api/creators/{creator_id}/gigs')
+def creator_gigs(creator_id: str):
+    if not store.one('creators', {'id': creator_id}):
+        raise HTTPException(404, 'Creator not found')
+    return [gig_view(item) for item in store.all_rows('portfolio_items', {'creator_id': creator_id}, order='created_at') if item['media_type'] == 'gig']
+
+
+@app.get('/api/gigs/{gig_id}')
+def gig_detail(gig_id: str):
+    item = store.one('portfolio_items', {'id': gig_id})
+    if not item or item['media_type'] != 'gig':
+        raise HTTPException(404, 'Gig not found')
+    creator = creator_detail(item['creator_id'])
+    return {**gig_view(item), 'creator': creator}
+
+
+@app.get('/api/me/gigs')
+def my_gigs(user=Depends(require_role('creator'))):
+    creator = store.one('creators', {'owner_id': user['id']})
+    return creator_gigs(creator['id'])
+
+
+@app.post('/api/me/gigs')
+def create_gig(data: GigIn, user=Depends(require_role('creator'))):
+    creator = store.one('creators', {'owner_id': user['id']})
+    item = store.insert('portfolio_items', {'creator_id': creator['id'], **data.model_dump(),
+                                            'media_type': 'gig', 'verification': 'self-reported'})
+    return gig_view(item)
+
+
+@app.post('/api/me/gigs/cover')
+async def upload_gig_cover(file: UploadFile = File(...), user=Depends(require_role('creator'))):
+    if not store.REMOTE:
+        raise HTTPException(503, 'Cover uploads require Supabase configuration')
+    if file.content_type not in ('image/jpeg', 'image/png', 'image/webp'):
+        raise HTTPException(422, 'Use a JPG, PNG, or WebP image')
+    content = await file.read(5_000_001)
+    if len(content) > 5_000_000:
+        raise HTTPException(422, 'Image must be under 5 MB')
+    extension = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}[file.content_type]
+    path = f"gigs/{user['id']}/{uuid.uuid4()}.{extension}"
+    try:
+        store.admin.storage.from_('portfolios').upload(path, content, {'content-type': file.content_type})
+        url = store.admin.storage.from_('portfolios').get_public_url(path)
+    except Exception:
+        raise HTTPException(502, 'Gig cover upload failed')
+    return {'url': url}
+
+
+def owned_gig(gig_id, user):
+    creator = store.one('creators', {'owner_id': user['id']})
+    item = store.one('portfolio_items', {'id': gig_id})
+    if not item or item['media_type'] != 'gig' or item['creator_id'] != creator['id']:
+        raise HTTPException(404, 'Gig not found')
+    return item
+
+
+@app.put('/api/me/gigs/{gig_id}')
+def update_gig(gig_id: str, data: GigIn, user=Depends(require_role('creator'))):
+    owned_gig(gig_id, user)
+    return gig_view(store.update('portfolio_items', gig_id, data.model_dump()))
+
+
+@app.delete('/api/me/gigs/{gig_id}')
+def delete_gig(gig_id: str, user=Depends(require_role('creator'))):
+    owned_gig(gig_id, user)
+    store.delete('portfolio_items', gig_id)
+    return {'deleted': True}
 
 
 @app.put('/api/me/creator')

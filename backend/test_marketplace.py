@@ -4,6 +4,39 @@ import main
 import store
 
 
+def test_gig_editor_public_view_and_owner_access(tmp_path, monkeypatch):
+    monkeypatch.setattr(store, 'REMOTE', False)
+    monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'gigs.db')
+    with TestClient(main.app) as client:
+        demo_creators = [creator for creator in client.get('/api/creators').json() if creator['portfolio_source'] == 'demo']
+        assert len(demo_creators) >= 4
+        assert all(client.get(f"/api/creators/{creator['id']}/gigs").json() for creator in demo_creators)
+
+        first = client.post('/api/auth/register', json={'name': 'Gig Creator', 'email': 'gig-creator@example.com', 'password': 'strong-password', 'role': 'creator'}).json()
+        second = client.post('/api/auth/register', json={'name': 'Other Creator', 'email': 'other-gig@example.com', 'password': 'strong-password', 'role': 'creator'}).json()
+        brand = client.post('/api/auth/register', json={'name': 'Brand', 'company_name': 'Brand Studio', 'email': 'gig-brand@example.com', 'password': 'strong-password', 'role': 'brand'}).json()
+        headers = {'Authorization': 'Bearer ' + first['access_token']}
+        other_headers = {'Authorization': 'Bearer ' + second['access_token']}
+        brand_headers = {'Authorization': 'Bearer ' + brand['access_token']}
+        creator_id = client.get('/api/me', headers=headers).json()['creator']['id']
+        payload = {'title': 'I will create AI product visuals', 'description': 'I develop a visual concept and deliver polished product images for a new campaign.',
+                   'media_url': 'https://example.com/cover.jpg', 'tools': ['Runway', 'Photoshop'],
+                   'workflow': 'Moodboard, visual concepts, revisions and final image files.',
+                   'format': 'Still image · 4:5', 'commercial_use': 'Paid social use after agreed licensing terms.'}
+        created = client.post('/api/me/gigs', headers=headers, json=payload)
+        assert created.status_code == 200, created.text
+        gig_id = created.json()['id']
+        assert client.get(f'/api/gigs/{gig_id}').json()['creator']['id'] == creator_id
+        assert len(client.get(f'/api/creators/{creator_id}/gigs').json()) == 1
+        assert client.get(f'/api/creators/{creator_id}/portfolio').json() == []
+        assert client.put(f'/api/me/gigs/{gig_id}', headers=other_headers, json=payload).status_code == 404
+        assert client.delete(f'/api/me/gigs/{gig_id}', headers=brand_headers).status_code == 403
+        updated = client.put(f'/api/me/gigs/{gig_id}', headers=headers, json={**payload, 'title': 'I will create campaign product visuals'})
+        assert updated.status_code == 200 and updated.json()['title'] == 'I will create campaign product visuals'
+        assert client.delete(f'/api/me/gigs/{gig_id}', headers=headers).status_code == 200
+        assert client.get(f'/api/gigs/{gig_id}').status_code == 404
+
+
 def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
     monkeypatch.setattr(store, 'REMOTE', False)
     monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'marketplace.db')

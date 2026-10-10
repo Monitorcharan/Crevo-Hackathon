@@ -137,3 +137,11 @@ def update(table, row_id, data):
     with connect() as db:
         db.execute(f'update {table} set {assignments} where id=?', (*encoded.values(), row_id))
     return one(table, {'id': row_id})
+
+
+def delete(table, row_id):
+    if REMOTE:
+        admin.table(table).delete().eq('id', row_id).execute()
+        return
+    with connect() as db:
+        db.execute(f'delete from {table} where id=?', (row_id,))
