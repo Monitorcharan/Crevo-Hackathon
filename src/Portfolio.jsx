@@ -1,6 +1,6 @@
 import { BrandLogo } from './BrandMark.jsx'
 import { useEffect, useState } from 'react'
-import { Link, Routes, Route, useNavigate, useParams } from 'react-router-dom'
+import { Link, Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, CirclePlus } from 'lucide-react'
 import { api, token } from './api.js'
 import App from './App.jsx'
@@ -8,6 +8,51 @@ import BriefBuilder from './BriefBuilder.jsx'
 import BriefDetail from './BriefDetail.jsx'
 
 const split = value => value.split(',').map(x => x.trim()).filter(Boolean)
+
+const revealTargets = [
+  '.category-page-grid .craft-card', '.directory-grid .creator-card',
+  '.featured-section .creator-card', '.work-grid .work-card',
+  '.brief-list .brief-row', '.project-grid .project-card',
+  '.application-grid .application-card', '.dash-stats > div',
+  '.dashboard-two > div', '.portfolio-layout > *',
+  '.brand-profile-layout > *', '.brief-builder-grid > *',
+  '.brief-view-grid > *', '.profile-layout > *',
+  '.inbox-layout > *', '.inbox-sidebar .inbox-thread',
+  '.faq-list > details',
+].join(',')
+
+function SiteMotion() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const seen = new WeakSet()
+    const observer = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue
+        entry.target.classList.add('is-visible')
+        observer.unobserve(entry.target)
+      }
+    }, { threshold: .08, rootMargin: '0px 0px 55px 0px' })
+    let frame = 0
+    const scan = () => {
+      frame = 0
+      document.querySelectorAll(revealTargets).forEach(element => {
+        if (seen.has(element)) return
+        seen.add(element)
+        element.style.setProperty('--reveal-delay', `${(Array.prototype.indexOf.call(element.parentElement.children, element) % 4) * 55}ms`)
+        element.dataset.motionReveal = ''
+        observer.observe(element)
+      })
+    }
+    const changes = new MutationObserver(() => {
+      if (!frame) frame = requestAnimationFrame(scan)
+    })
+    changes.observe(document.body, { childList: true, subtree: true })
+    frame = requestAnimationFrame(scan)
+    return () => { cancelAnimationFrame(frame); changes.disconnect(); observer.disconnect() }
+  }, [pathname])
+  return null
+}
 
 function PortfolioShell({ children }) {
   return <div className="portfolio-page"><header className="portfolio-nav"><BrandLogo/><div className="portfolio-nav-links"><Link to="/categories">Categories</Link><Link to="/discover">Discover creators <ArrowUpRight size={16}/></Link></div></header>{children}</div>
@@ -39,5 +84,5 @@ export function PortfolioManager() {
 }
 
 export default function PortfolioApp() {
-  return <Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes>
+  return <><SiteMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes></>
 }

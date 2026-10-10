@@ -228,3 +228,24 @@
 
 .demo-login{margin-top:30px;padding:22px;background:#1e211d;color:#f4f5ed;border-radius:4px}.demo-login .eyebrow{color:#d5fb55}.demo-login-heading p{margin:9px 0 18px;color:#bec3b6;font-size:12px;line-height:1.55}.demo-login-options{display:grid;gap:8px}.demo-login-option{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:9px 13px;text-align:left;background:#30352d;color:#f5f6ef;border:1px solid #50584a;border-radius:3px;transition:background .2s,color .2s,transform .2s}.demo-login-option>svg:first-child{flex:none;color:#d5fb55}.demo-login-option>svg:last-child{flex:none;margin-left:auto}.demo-login-option span{min-width:0}.demo-login-option strong,.demo-login-option small{display:block}.demo-login-option strong{font-size:13px}.demo-login-option small{margin-top:3px;color:#c3c9bb;font-size:11px;overflow-wrap:anywhere}.demo-login-option:hover,.demo-login-option:focus-visible{background:#d5fb55;color:#111;transform:translateX(3px)}.demo-login-option:hover svg,.demo-login-option:focus-visible svg,.demo-login-option:hover small,.demo-login-option:focus-visible small{color:#111}.demo-login-option:disabled{cursor:wait;opacity:.6;transform:none}.demo-login-password{display:block;margin-top:15px;color:#bfc4b9;font-size:11px;line-height:1.5}.demo-login-password strong{color:#e6ff45;user-select:all}
 @media(max-width:480px){.categories-intro-side p{max-width:220px}.categories-intro-side .crevo-mascot{transform:scale(.75);margin:-15px}}
+
+/* Shared motion for discovery, dashboards, briefs, portfolios, and inbox. */
+@keyframes crevo-page-enter{from{opacity:.35}to{opacity:1}}
+@keyframes crevo-reveal{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes crevo-message-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+:where(.page-light,.portfolio-page,.brief-builder,.brief-view,.auth-page){animation:crevo-page-enter .46s ease-out both}
+[data-motion-reveal]{opacity:0}
+[data-motion-reveal].is-visible{animation:crevo-reveal .7s cubic-bezier(.22,1,.36,1) var(--reveal-delay,0ms) both}
+:where(.notice,.alert,.brief-draft-notice,.brief-form-status,.brief-published-notice,.inbox-message,.message){animation:crevo-message-enter .4s cubic-bezier(.22,1,.36,1) both}
+:where(.button,.round-link,.social-signin-button,.demo-login-option,.category-search button,.message-form button):active:not(:disabled){transform:translateY(1px) scale(.98)}
+:where(.button,.round-link,.portfolio-card-link,.craft-footer a,.nav-links a) svg{transition:transform .24s ease}
+:where(.button,.round-link,.portfolio-card-link,.craft-footer a,.nav-links a):hover svg{transform:translate(3px,-2px)}
+:where(.auth-box,.editor-form,.portfolio-form,.brief-builder,.inbox-compose,.category-search,.search-box) :is(input,textarea,select){transition:border-color .22s ease,box-shadow .22s ease,background-color .22s ease}
+:where(.auth-box,.editor-form,.portfolio-form,.brief-builder,.inbox-compose,.category-search,.search-box) :is(input,textarea,select):focus{box-shadow:0 0 0 3px #d5fb5573}
+@media(hover:hover) and (pointer:fine){
+  :where(.creator-card,.work-card,.project-card,.brief-row,.application-card,.dash-panel,.inbox-thread){transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s ease,background-color .28s ease}
+  :where(.creator-card,.work-card,.project-card,.brief-row,.application-card,.dash-panel,.inbox-thread):hover{transform:translateY(-4px);box-shadow:0 16px 34px #1112}
+  :where(.card-image,.work-media) img{transition:transform .6s cubic-bezier(.22,1,.36,1)}
+  :where(.card-image,.work-media):hover img{transform:scale(1.045)}
+}
+@media(prefers-reduced-motion:reduce){[data-motion-reveal]{opacity:1!important}[data-motion-reveal].is-visible{animation:none!important}:where(.creator-card,.work-card,.project-card,.brief-row,.application-card,.dash-panel,.inbox-thread):hover{transform:none}}
