@@ -10,6 +10,8 @@ A React and FastAPI MVP for AI creator discovery and brand collaboration. The la
 
 The public directory includes four clearly labeled fictional demo portfolios with original AI-generated concept images and illustrative sample feedback. Demo feedback is never counted as a completed-project review; the demo profiles cannot sign in or apply to briefs. Create your own creator and brand accounts to try the full workflow.
 
+For a quick hackathon walkthrough, `/login` also offers one-click access to separate **shared demo creator** and **shared demo brand** accounts. Their email addresses and common demo password are intentionally displayed on that page. The creator has an illustrative portfolio item, and the brand has a sample published brief. These accounts are not administrators; anything a visitor changes in them is visible to the next visitor. To provision the accounts in a fresh Supabase project, run `python backend/seed_login_demo.py` after configuring `backend/.env`. Never reuse these public credentials for a personal account.
+
 ## Run locally
 
 Requires Node.js 20+ and Python 3.11+.

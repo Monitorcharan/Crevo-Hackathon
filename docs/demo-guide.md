@@ -5,8 +5,7 @@
 ## Before recording
 
 - Open the live app once and let the free Render service wake up.
-- Have a confirmed creator account with a completed profile and one portfolio item. Use a public media URL for the sample.
-- Have a confirmed brand account ready in a separate browser profile.
+- Open `/login` and use the one-click shared creator and brand demo accounts, ideally in separate browser profiles. The creator already has an illustrative portfolio item; the brand has a sample brief. Shared-account edits persist and are visible to other visitors.
 - Prepare a short campaign idea, such as: “Launch a new café with a 15-second vertical film showing the space, signature drinks, and people behind it.”
 
 ## 90-second walkthrough
