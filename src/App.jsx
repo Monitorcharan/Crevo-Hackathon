@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { ArrowRight, ArrowUpRight, Aperture, Box, BriefcaseBusiness, Check, ChevronDown, CirclePlus, Clapperboard, Compass, Film, Instagram, Layers3, Menu, MessageCircle, Search, Send, Sparkles, UserRound, WandSparkles, X } from 'lucide-react'
@@ -9,6 +9,7 @@ import SocialSignIn from './SocialSignIn.jsx'
 import BrandProfile from './BrandProfile.jsx'
 import CreatorContact from './CreatorContact.jsx'
 import Inbox from './Inbox.jsx'
+import useConversationLive from './useConversationLive.js'
 import { AdminVerifications, CreatorReviews, ProjectReview, VerificationRequestPanel, VerifiedBadge } from './CreatorTrust.jsx'
 import { categories } from './categories.js'
 import { demoFeedbackFor } from './demoReviews.js'
@@ -301,8 +302,10 @@ function Project({ session }) {
   const [messages, setMessages] = useState([]), [body, setBody] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false), [completed, setCompleted] = useState(false)
   const project = projects?.find(p => p.id === id)
   const projectStatus = completed ? 'completed' : project?.status
-  useEffect(() => { if (project) api(`/projects/${id}/messages`).then(setMessages).catch(e => setError(e.message)) }, [project?.id])
-  async function send(e) { e.preventDefault(); setBusy(true); setError(''); try { const message = await api(`/projects/${id}/messages`, { method: 'POST', body: { body } }); setMessages(m => [...m, message]); setBody('') } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  const refreshMessages = useCallback(() => api(`/projects/${id}/messages`).then(setMessages).catch(e => setError(e.message)), [id])
+  useEffect(() => { if (project) refreshMessages() }, [project?.id, refreshMessages])
+  const liveStatus = useConversationLive('project', id, refreshMessages, Boolean(project))
+  async function send(e) { e.preventDefault(); setBusy(true); setError(''); try { const message = await api(`/projects/${id}/messages`, { method: 'POST', body: { body } }); setMessages(m => m.some(item => item.id === message.id) ? m : [...m, message]); setBody('') } catch (e) { setError(e.message) } finally { setBusy(false) } }
   async function complete() { setBusy(true); setError(''); try { await api(`/projects/${id}/complete`, { method: 'POST' }); setCompleted(true) } catch (e) { setError(e.message) } finally { setBusy(false) } }
   if (loading) return <main className="page-light loading">Loading project…</main>
   if (!project) return <main className="page-light loading"><Alert error="Project not found"/></main>

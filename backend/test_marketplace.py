@@ -43,11 +43,19 @@ def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
         })
         assert quote.status_code == 200, quote.text
         thread_id = quote.json()['id']
+        brand_user = brand['user']
+        creator_user = creator['user']
+        other_user = another['user']
+        before_reply = main.conversation_version('inbox', thread_id, brand_user)
+        assert thread_id in main.conversation_version('inbox', '', creator_user)
+        assert client.get('/api/conversations/live', params={'scope': 'inbox', 'id': thread_id}).status_code == 401
+        assert client.get('/api/conversations/live', params={'scope': 'inbox', 'id': thread_id}, headers=another_headers).status_code == 404
         assert client.get('/api/contact/threads', headers=creator_headers).json()[0]['brand_name'] == 'North Studio'
         assert client.get(f'/api/contact/threads/{thread_id}', headers=another_headers).status_code == 404
         reply = client.post(f'/api/contact/threads/{thread_id}/messages', headers=creator_headers,
                             json={'body': 'I can share an approach tomorrow.'})
         assert reply.status_code == 200, reply.text
+        assert main.conversation_version('inbox', thread_id, brand_user) != before_reply
         assert len(client.get(f'/api/contact/threads/{thread_id}', headers=brand_headers).json()['messages']) == 1
 
         work = client.post('/api/me/portfolio/items', headers=creator_headers, json={
@@ -81,6 +89,11 @@ def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
         application = client.post(f"/api/briefs/{brief['id']}/apply", headers=creator_headers,
                                   json={'note': 'I can make a cinematic vertical film for this launch.'}).json()
         project = client.post(f"/api/applications/{application['id']}/accept", headers=brand_headers).json()
+        before_project_message = main.conversation_version('project', project['id'], brand_user)
+        assert main.conversation_version('project', project['id'], creator_user) == before_project_message
+        assert client.get('/api/conversations/live', params={'scope': 'project', 'id': project['id']}, headers=another_headers).status_code == 404
+        client.post(f"/api/projects/{project['id']}/messages", headers=creator_headers, json={'body': 'The first cut is ready for review.'})
+        assert main.conversation_version('project', project['id'], brand_user) != before_project_message
         review_url = f"/api/projects/{project['id']}/review"
         review_data = {'rating': 5, 'body': 'Thoughtful process, clear communication, and a strong final film.'}
         assert client.post(review_url, headers=brand_headers, json=review_data).status_code == 409

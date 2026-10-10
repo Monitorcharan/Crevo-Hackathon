@@ -14,9 +14,9 @@ from urllib.parse import urlsplit
 import httpx
 import jwt
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from supabase import create_client
 
@@ -806,6 +806,58 @@ def contact_reply(thread_id: str, data: ContactMessageIn, user=Depends(current_u
     if not data.body.strip():
         raise HTTPException(422, 'Write a message first')
     return store.insert('contact_messages', {'thread_id': thread_id, 'sender_id': user['id'], 'body': data.body.strip()})
+
+
+def conversation_version(scope, conversation_id, user):
+    """Return only identifiers from conversations this user can read."""
+    if scope == 'project':
+        permitted_project(conversation_id, user)
+        rows = store.all_rows('messages', {'project_id': conversation_id}, order='created_at')
+        return tuple(row['id'] for row in rows)
+    if scope != 'inbox':
+        raise HTTPException(422, 'Unknown conversation scope')
+    if user['role'] == 'brand':
+        threads = store.all_rows('contact_threads', {'brand_id': user['id']}, order='created_at')
+    else:
+        creator = store.one('creators', {'owner_id': user['id']})
+        threads = store.all_rows('contact_threads', {'creator_id': creator['id']}, order='created_at') if creator else []
+    thread_ids = tuple(row['id'] for row in threads)
+    if not conversation_id:
+        return thread_ids
+    if conversation_id not in thread_ids:
+        raise HTTPException(404, 'Conversation not found')
+    messages = store.all_rows('contact_messages', {'thread_id': conversation_id}, order='created_at')
+    return thread_ids, tuple(row['id'] for row in messages)
+
+
+@app.get('/api/conversations/live')
+async def live_conversations(request: Request, scope: str, id: str = '', user=Depends(current_user)):
+    # Check access before opening a long-lived response, so errors retain HTTP status codes.
+    version = await asyncio.to_thread(conversation_version, scope, id, user)
+
+    async def events():
+        previous = version
+        yield 'event: ready\ndata: {}\n\n'
+        ticks = 0
+        while not await request.is_disconnected():
+            await asyncio.sleep(1.5)
+            try:
+                latest = await asyncio.to_thread(conversation_version, scope, id, user)
+            except HTTPException:
+                break
+            except Exception:
+                logging.exception('Conversation live update failed')
+                break
+            if latest != previous:
+                previous = latest
+                yield 'event: changed\ndata: {}\n\n'
+            ticks += 1
+            if ticks % 10 == 0:
+                yield ': heartbeat\n\n'
+
+    return StreamingResponse(events(), media_type='text/event-stream', headers={
+        'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no',
+    })
 
 
 @app.post('/api/projects/{project_id}/review')

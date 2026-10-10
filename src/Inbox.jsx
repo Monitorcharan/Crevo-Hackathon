@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowRight, MessageCircle, Send } from 'lucide-react'
 import { api } from './api.js'
+import useConversationLive from './useConversationLive.js'
 
 export default function Inbox({ session }) {
   const { threadId } = useParams()
@@ -13,24 +14,17 @@ export default function Inbox({ session }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    let active = true
-    api('/contact/threads').then(rows => { if (active) setThreads(rows.slice().reverse()) })
-      .catch(cause => { if (active) setError(cause.message) })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+  const refresh = useCallback(() => {
+    api('/contact/threads').then(rows => { setThreads(rows.slice().reverse()); setLoading(false) })
+      .catch(cause => { setError(cause.message); setLoading(false) })
+    if (threadId) api(`/contact/threads/${threadId}`).then(setThread).catch(cause => setError(cause.message))
   }, [threadId])
+  const liveStatus = useConversationLive('inbox', threadId, refresh)
 
   useEffect(() => {
-    if (!threadId) { setThread(null); return }
-    let active = true
-    const refresh = () => api(`/contact/threads/${threadId}`)
-      .then(data => { if (active) setThread(data) })
-      .catch(cause => { if (active) setError(cause.message) })
+    if (!threadId) setThread(null)
     refresh()
-    const timer = window.setInterval(refresh, 10000)
-    return () => { active = false; window.clearInterval(timer) }
-  }, [threadId])
+  }, [refresh, threadId])
 
   async function send(event) {
     event.preventDefault()
@@ -38,14 +32,14 @@ export default function Inbox({ session }) {
     setBusy(true); setError('')
     try {
       const message = await api(`/contact/threads/${threadId}/messages`, { method: 'POST', body: { body } })
-      setThread(current => ({ ...current, messages: [...(current?.messages || []), message] }))
+      setThread(current => current ? ({ ...current, messages: current.messages.some(item => item.id === message.id) ? current.messages : [...current.messages, message] }) : current)
       setBody('')
     } catch (cause) { setError(cause.message) }
     finally { setBusy(false) }
   }
 
   return <main className="page-light inbox-page"><div className="container">
-    <span className="eyebrow">CREVO CONVERSATIONS</span><h1>Your inbox<span className="accent">.</span></h1>
+    <span className="eyebrow">CREVO CONVERSATIONS</span><h1>Your inbox<span className="accent">.</span></h1><small role="status">{liveStatus === 'live' ? '● Live updates on' : '○ Reconnecting · messages refresh automatically'}</small>
     <p className="inbox-lead">Discuss project ideas and quote requests before you begin working together.</p>
     {location.state?.sent && <div className="notice" role="status">Message sent. Your conversation is ready here.</div>}
     {error && <div className="alert" role="alert">{error}</div>}
