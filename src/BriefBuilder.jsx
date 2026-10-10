@@ -5,6 +5,7 @@ import { ArrowRight, Check, Sparkles } from 'lucide-react'
 import { api } from './api.js'
 import { briefCategories } from './categories.js'
 import FormatPicker, { formatComplete, normalizeFormat } from './FormatPicker.jsx'
+import { NotificationBellAuto } from './NotificationBell.jsx'
 
 const csv = text => text.split(',').map(x => x.trim()).filter(Boolean)
 const initialForm = { title: '', description: '', category: '', skills: '', platforms: '', budget: '', location: '', content_type: '', style: '', format: '', commercial_use: '' }
@@ -75,7 +76,7 @@ export default function BriefBuilder() {
   }
 
   return <main className="brief-builder">
-    <div className="brief-builder-nav"><BrandLogo/><Link to="/dashboard">← Dashboard</Link></div>
+    <div className="brief-builder-nav"><BrandLogo/><div className="standalone-nav-actions"><NotificationBellAuto/><Link to="/dashboard">← Dashboard</Link></div></div>
     <div className="brief-builder-content">
       <span className="eyebrow">BRAND STUDIO / NEW BRIEF</span>
       <h1>Start with an <em>idea.</em></h1>

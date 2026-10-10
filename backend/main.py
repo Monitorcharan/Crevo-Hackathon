@@ -844,6 +844,75 @@ def contact_reply(thread_id: str, data: ContactMessageIn, user=Depends(current_u
     return store.insert('contact_messages', {'thread_id': thread_id, 'sender_id': user['id'], 'body': data.body.strip()})
 
 
+def notifications_for_user(user):
+    """Build a private activity feed from durable marketplace records."""
+    feed = []
+    user_id = user['id']
+    creator = store.one('creators', {'owner_id': user_id}) if user['role'] == 'creator' else None
+    creator_id = creator['id'] if creator else None
+
+    def add(kind, row, title, body, href, when=None):
+        feed.append({'id': f"{kind}:{row['id']}", 'kind': kind, 'title': title,
+                     'body': body[:180], 'href': href, 'created_at': when or row['created_at']})
+
+    if user['role'] == 'brand':
+        briefs = store.all_rows('briefs', {'owner_id': user_id})
+        brief_titles = {brief['id']: brief['title'] for brief in briefs}
+        for application in store.all_rows('applications'):
+            if application['brief_id'] not in brief_titles:
+                continue
+            applicant = store.one('creators', {'id': application['creator_id']})
+            add('application', application, 'New creator application',
+                f"{applicant['name'] if applicant else 'A creator'} applied to {brief_titles[application['brief_id']]}",
+                f"/briefs/{application['brief_id']}")
+        threads = store.all_rows('contact_threads', {'brand_id': user_id})
+        projects = store.all_rows('projects', {'brand_id': user_id})
+    else:
+        threads = store.all_rows('contact_threads', {'creator_id': creator_id}) if creator_id else []
+        projects = store.all_rows('projects', {'creator_id': creator_id}) if creator_id else []
+        for thread in threads:
+            add('contact', thread, 'New message from a brand', thread['subject'], f"/inbox/{thread['id']}")
+        if creator_id:
+            focus = {value.lower() for value in (creator.get('categories') or []) + (creator.get('skills') or [])}
+            if focus:
+                for brief in store.all_rows('briefs'):
+                    if brief['status'] == 'open' and (brief['category'].lower() in focus or focus.intersection(value.lower() for value in brief['skills'])):
+                        add('opportunity', brief, 'New brief matching your work', brief['title'], f"/briefs/{brief['id']}")
+            for application in store.all_rows('applications', {'creator_id': creator_id}):
+                if application['status'] == 'declined':
+                    brief = store.one('briefs', {'id': application['brief_id']})
+                    add('declined', application, 'Application update',
+                        f"Your application to {brief['title'] if brief else 'a brief'} was declined.", '/dashboard')
+            for project in projects:
+                brief = store.one('briefs', {'id': project['brief_id']})
+                add('project', project, 'Your application was accepted',
+                    f"Your collaboration for {brief['title'] if brief else 'a brief'} is ready.", f"/projects/{project['id']}")
+            for review in store.all_rows('reviews', {'creator_id': creator_id}):
+                add('review', review, 'New project review', 'A brand left a review of your work.', f"/projects/{review['project_id']}")
+            for request in store.all_rows('verification_requests', {'creator_id': creator_id}):
+                if request['status'] in ('approved', 'rejected'):
+                    add('verification', request, 'Verification update',
+                        f"Your verification request was {request['status']}.", '/profile/edit', request.get('reviewed_at'))
+
+    for thread in threads:
+        for message in store.all_rows('contact_messages', {'thread_id': thread['id']}):
+            if message['sender_id'] != user_id:
+                add('contact_reply', message, 'New conversation reply',
+                    f"Reply in {thread['subject']}: {message['body']}", f"/inbox/{thread['id']}")
+    for project in projects:
+        brief = store.one('briefs', {'id': project['brief_id']})
+        for message in store.all_rows('messages', {'project_id': project['id']}):
+            if message['sender_id'] != user_id:
+                add('project_message', message, 'New project message',
+                    f"{brief['title'] if brief else 'Project'}: {message['body']}", f"/projects/{project['id']}")
+    return sorted(feed, key=lambda item: item['created_at'] or '', reverse=True)[:80]
+
+
+@app.get('/api/notifications')
+def notifications(user=Depends(current_user)):
+    return notifications_for_user(user)
+
+
 def conversation_version(scope, conversation_id, user):
     """Return only identifiers from conversations this user can read."""
     if scope == 'project':

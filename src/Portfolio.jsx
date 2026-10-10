@@ -8,6 +8,7 @@ import BriefBuilder from './BriefBuilder.jsx'
 import BriefDetail from './BriefDetail.jsx'
 import CrevoAssistant from './CrevoAssistant.jsx'
 import FormatPicker from './FormatPicker.jsx'
+import { NotificationBellAuto } from './NotificationBell.jsx'
 
 const split = value => value.split(',').map(x => x.trim()).filter(Boolean)
 
@@ -57,7 +58,7 @@ function SiteMotion() {
 }
 
 function PortfolioShell({ children }) {
-  return <div className="portfolio-page"><header className="portfolio-nav"><BrandLogo/><div className="portfolio-nav-links"><Link to="/categories">Categories</Link><Link to="/discover">Discover creators <ArrowUpRight size={16}/></Link></div></header>{children}</div>
+  return <div className="portfolio-page"><header className="portfolio-nav"><BrandLogo/><div className="portfolio-nav-links"><NotificationBellAuto/><Link to="/categories">Categories</Link><Link to="/discover">Discover creators <ArrowUpRight size={16}/></Link></div></header>{children}</div>
 }
 
 function WorkCard({ item }) {

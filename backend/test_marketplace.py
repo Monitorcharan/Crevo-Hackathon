@@ -57,6 +57,13 @@ def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
         assert reply.status_code == 200, reply.text
         assert main.conversation_version('inbox', thread_id, brand_user) != before_reply
         assert len(client.get(f'/api/contact/threads/{thread_id}', headers=brand_headers).json()['messages']) == 1
+        assert client.get('/api/notifications').status_code == 401
+        brand_alerts = client.get('/api/notifications', headers=brand_headers).json()
+        creator_alerts = client.get('/api/notifications', headers=creator_headers).json()
+        other_alerts = client.get('/api/notifications', headers=another_headers).json()
+        assert any(item['kind'] == 'contact_reply' and item['href'] == f'/inbox/{thread_id}' for item in brand_alerts)
+        assert any(item['kind'] == 'contact' and item['href'] == f'/inbox/{thread_id}' for item in creator_alerts)
+        assert not other_alerts
 
         work = client.post('/api/me/portfolio/items', headers=creator_headers, json={
             'title': 'Launch film', 'description': 'A sample film', 'media_url': 'https://example.com/film',
@@ -89,6 +96,8 @@ def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
         application = client.post(f"/api/briefs/{brief['id']}/apply", headers=creator_headers,
                                   json={'note': 'I can make a cinematic vertical film for this launch.'}).json()
         project = client.post(f"/api/applications/{application['id']}/accept", headers=brand_headers).json()
+        assert any(item['kind'] == 'application' for item in client.get('/api/notifications', headers=brand_headers).json())
+        assert any(item['kind'] == 'project' and item['href'] == f"/projects/{project['id']}" for item in client.get('/api/notifications', headers=creator_headers).json())
         before_project_message = main.conversation_version('project', project['id'], brand_user)
         assert main.conversation_version('project', project['id'], creator_user) == before_project_message
         assert client.get('/api/conversations/live', params={'scope': 'project', 'id': project['id']}, headers=another_headers).status_code == 404

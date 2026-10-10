@@ -9,6 +9,7 @@ import SocialSignIn from './SocialSignIn.jsx'
 import BrandProfile from './BrandProfile.jsx'
 import CreatorContact from './CreatorContact.jsx'
 import Inbox from './Inbox.jsx'
+import NotificationBell from './NotificationBell.jsx'
 import useConversationLive from './useConversationLive.js'
 import { AdminVerifications, CreatorReviews, ProjectReview, VerificationRequestPanel, VerifiedBadge } from './CreatorTrust.jsx'
 import { categories } from './categories.js'
@@ -72,7 +73,7 @@ function Nav({ session, onLogout, dark }) {
     {session && <NavLink to="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>}
     {session?.is_admin && <NavLink to="/admin/verifications" onClick={() => setOpen(false)}>Verifications</NavLink>}
     {!session && <><NavLink className="mobile-auth-link" to="/login" onClick={() => setOpen(false)}>Log in</NavLink><NavLink className="mobile-auth-link" to="/join" onClick={() => setOpen(false)}>Get started</NavLink></>}
-  </nav><div className="nav-actions">{session ? <><span className="nav-greeting">Hi, {session.user.name.split(' ')[0]}</span><button className="text-button" onClick={onLogout}>Log out</button></> : <><Link className="text-button" to="/login">Log in</Link><Link className="button button-small button-light" to="/join">Get started <ArrowUpRight size={15}/></Link></>}</div><button className="mobile-menu" aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></header>
+  </nav><NotificationBell user={session?.user}/><div className="nav-actions">{session ? <><span className="nav-greeting">Hi, {session.user.name.split(' ')[0]}</span><button className="text-button" onClick={onLogout}>Log out</button></> : <><Link className="text-button" to="/login">Log in</Link><Link className="button button-small button-light" to="/join">Get started <ArrowUpRight size={15}/></Link></>}</div><button className="mobile-menu" aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></header>
 }
 
 const craftCards = [
