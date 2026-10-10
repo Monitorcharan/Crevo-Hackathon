@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, Sparkles } from 'lucide-react'
 import { api } from './api.js'
 import { briefCategories } from './categories.js'
+import FormatPicker, { formatComplete, normalizeFormat } from './FormatPicker.jsx'
 
 const csv = text => text.split(',').map(x => x.trim()).filter(Boolean)
 const initialForm = { title: '', description: '', category: '', skills: '', platforms: '', budget: '', location: '', content_type: '', style: '', format: '', commercial_use: '' }
@@ -42,6 +43,7 @@ export default function BriefBuilder() {
         for (const key of ['skills', 'platforms']) {
           if (result[key]?.length) next[key] = result[key].join(', ')
         }
+        if (result.format || result.content_type) next.format = normalizeFormat(result.format, result.content_type)
         return next
       })
       setDraftSource(result.source)
@@ -56,6 +58,7 @@ export default function BriefBuilder() {
 
   async function publish(event) {
     event.preventDefault()
+    if (!formatComplete(form.format)) { setPublishError('Choose an output format and aspect ratio before publishing.'); return }
     setPublishing(true)
     setPublishError('')
     try {
@@ -106,8 +109,8 @@ export default function BriefBuilder() {
           </div>
           <div className="form-two">
             <label>Content type<input required value={form.content_type} onChange={event => set('content_type', event.target.value)} placeholder="AI film, animation, images"/></label>
-            <label>Format / aspect ratio<input required value={form.format} onChange={event => set('format', event.target.value)} placeholder="9:16, 30 seconds"/></label>
           </div>
+          <FormatPicker value={form.format} onChange={value => set('format', value)}/>
           <label>Visual style<input required value={form.style} onChange={event => set('style', event.target.value)} placeholder="Cinematic, vibrant, editorial"/></label>
           <label>Commercial-use requirements<textarea required rows={3} value={form.commercial_use} onChange={event => set('commercial_use', event.target.value)} placeholder="Where and for how long will the work be used?"/></label>
           <div className="form-two">

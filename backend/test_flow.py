@@ -96,3 +96,23 @@ def test_structured_brief_draft(tmp_path, monkeypatch):
         assert result.json()['format'] == '9:16'
         assert result.json()['commercial_use'] == ''
         assert result.json()['skills'] == ['Video']
+
+
+def test_ai_assistant_requires_login_and_uses_provider(tmp_path, monkeypatch):
+    monkeypatch.setattr(store, 'REMOTE', False)
+    monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'assistant.db')
+    monkeypatch.setattr(main, 'AI_PROVIDER', 'gemini')
+    async def fake_generate(prompt, json_mode=False):
+        assert not json_mode
+        assert 'Which aspect ratio' in prompt
+        return 'For a vertical social video, choose 9:16.'
+    monkeypatch.setattr(main, 'generate_ai_text', fake_generate)
+    with TestClient(app) as client:
+        payload = {'messages': [{'role': 'user', 'content': 'Which aspect ratio should I use?'}]}
+        assert client.post('/api/assistant/chat', json=payload).status_code == 401
+        brand = client.post('/api/auth/register', json={'name': 'Brand Manager', 'company_name': 'Brand Studio', 'email': 'chat-brand@example.com', 'password': 'a-strong-password', 'role': 'brand'}).json()
+        headers = {'Authorization': 'Bearer ' + brand['access_token']}
+        reply = client.post('/api/assistant/chat', headers=headers, json=payload)
+        assert reply.status_code == 200, reply.text
+        assert reply.json() == {'reply': 'For a vertical social video, choose 9:16.', 'source': 'gemini'}
+        assert client.post('/api/assistant/chat', headers=headers, json={'messages': [{'role': 'assistant', 'content': 'Hello'}]}).status_code == 422
