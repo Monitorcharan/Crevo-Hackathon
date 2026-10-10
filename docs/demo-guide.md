@@ -5,6 +5,7 @@
 ## Before recording
 
 - Open the live app once and let the free Render service wake up.
+- Open `/demo` to show the guest brief → match → shortlist → unsent inquiry preview without credentials.
 - Open `/login` and use the one-click shared creator and brand demo accounts, ideally in separate browser profiles. The creator already has an illustrative portfolio item and gig; the brand has a sample brief. Shared-account edits persist and are visible to other visitors.
 - Prepare a short campaign idea, such as: “Launch a new café with a 15-second vertical film showing the space, signature drinks, and people behind it.”
 

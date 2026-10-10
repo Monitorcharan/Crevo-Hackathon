@@ -70,15 +70,23 @@ def init_local():
             ('[Demo] Kian Mercer', '3D motion & generative artist', ['Motion Design', '3D & CGI', 'Generative Art'], ['3D Art Direction', 'Motion Concepts'], ['Instagram', 'YouTube'], 'glass-motion.png', 'Glass Orbit / motion concept'),
             ('[Demo] Solana Park', 'AI product & beauty visual artist', ['Beauty', 'AI Photography', 'Product Visualization'], ['Product Imagery', 'Art Direction'], ['Instagram', 'TikTok'], 'skincare-still.png', 'Soft Light / skincare still life'),
             ('[Demo] Niko Lane', 'Fashion editorial & social creator', ['Fashion', 'Social Media Content', 'AI Photography'], ['Editorial Imagery', 'Social Campaigns'], ['Instagram', 'TikTok'], 'fashion-editorial.png', 'Electric Blue / fashion editorial'),
+            ('[Demo] Imani Sol', 'Food & beverage campaign designer', ['Food', 'Product Visualization', 'Advertising Creative'], ['Product Imagery', 'Campaign Concepts', 'Art Direction'], ['Instagram', 'TikTok'], 'citrus-campaign.svg', 'Sola / citrus launch concept'),
+            ('[Demo] Theo Grant', 'Brand identity & motion art director', ['Brand Identity', 'Graphic Design', 'Motion Design'], ['Typography', 'Creative Direction', 'Motion Concepts'], ['Instagram', 'YouTube'], 'type-signal.svg', 'Move With It / identity frame'),
+            ('[Demo] Mira Chen', 'AR worldbuilder & VFX concept artist', ['AR & VFX', '3D & CGI', 'Technology'], ['Worldbuilding', 'Environment Design', 'VFX Concepts'], ['Instagram', 'YouTube'], 'signal-world.svg', 'Signal City / AR environment concept'),
+            ('[Demo] Ezra Quinn', 'AI filmmaker & narrative visualist', ['AI Filmmaking', 'AI Animation', 'Travel'], ['Storyboarding', 'Visual Narrative', 'Creative Direction'], ['Instagram', 'YouTube'], 'film-frame.svg', 'The Long Way Home / film keyframe'),
         ]
+        demo_rates = {'[Demo] Aria Vale': 850, '[Demo] Kian Mercer': 700, '[Demo] Solana Park': 550,
+                      '[Demo] Niko Lane': 500, '[Demo] Imani Sol': 450, '[Demo] Theo Grant': 600,
+                      '[Demo] Mira Chen': 800, '[Demo] Ezra Quinn': 650}
         for name, title, categories, skills, platforms, image, work_title in samples:
             if db.execute('select 1 from creators where name=?', (name,)).fetchone():
                 continue
             creator_id = str(uuid.uuid4())
             db.execute('insert into creators(id,owner_id,name,title,bio,location,categories,skills,platforms,audience,rate,avatar_url,portfolio,portfolio_source) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                (creator_id, None, name, title, 'Fictional sample profile with original AI-generated concept art and illustrative feedback. No real client work is represented.', 'Creative studio · worldwide', json.dumps(categories), json.dumps(skills), json.dumps(platforms), 0, 0, None, 'Illustrative Crevo demo portfolio.', 'demo'))
+                (creator_id, None, name, title, 'Fictional sample profile with illustrative concept art and feedback. No real client work is represented.', 'Creative studio · worldwide', json.dumps(categories), json.dumps(skills), json.dumps(platforms), 0, demo_rates[name], None, 'Illustrative Crevo demo portfolio.', 'demo'))
+            vector = image.endswith('.svg')
             db.execute('insert into portfolio_items(id,creator_id,title,description,media_url,media_type,tools,workflow,format,commercial_use,verification) values(?,?,?,?,?,?,?,?,?,?,?)',
-                (str(uuid.uuid4()), creator_id, work_title, 'Illustrative AI-generated concept artwork for the Crevo demo, not a real client campaign.', f'https://crevo-hackathon.onrender.com/demo/{image}', 'image', json.dumps(['OpenAI image generation']), 'Generated a fictional campaign image and selected the final concept.', '16:9 landscape', 'Demo only; no client license is represented.', 'illustrative demo'))
+                (str(uuid.uuid4()), creator_id, work_title, 'Original illustrative SVG concept, not a real client campaign.' if vector else 'Illustrative AI-generated concept artwork for the Crevo demo, not a real client campaign.', f'https://crevo-hackathon.onrender.com/demo/{image}', 'image', json.dumps(['Vector SVG illustration'] if vector else ['OpenAI image generation']), 'Composed a fictional campaign keyframe in vector shapes.' if vector else 'Generated a fictional campaign image and selected the final concept.', '3:2 concept image' if vector else '16:9 landscape', 'Demo only; no client license is represented.', 'illustrative demo'))
 
 
 def normalize(row):

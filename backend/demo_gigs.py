@@ -1,4 +1,4 @@
-"""Install illustrative service listings for the five known demo creators only."""
+"""Install illustrative service listings for the known demo creators only."""
 
 import store
 
@@ -20,6 +20,22 @@ SAMPLES = {
         'I will plan an editorial visual direction for a fashion or lifestyle campaign, from mood and composition to final concept frames. The image shown is fictional AI-generated demo art and does not represent a commissioned campaign.',
         'Moodboard; editorial style exploration; campaign concept frames; feedback and selection.',
         '4:5 social imagery', ['Fashion concepts', 'Editorial imagery', 'Social creative']),
+    '[Demo] Imani Sol': ('Food and beverage launch imagery concept', 'citrus-campaign.svg',
+        'I will explore a visual direction for a fictional food or beverage launch. This SVG cover is original illustrative art and is not a commissioned campaign.',
+        'Brief review; product moodboard; composition studies; concept frame; revision plan.',
+        '3:2 concept image', ['Product imagery', 'Art direction', 'Vector concept']),
+    '[Demo] Theo Grant': ('Brand identity and motion style frame', 'type-signal.svg',
+        'I will develop a type-led identity direction and a static frame that could guide motion design. This listing is an illustrative service example.',
+        'Brand discovery; type and color system; static style frame; motion notes.',
+        '3:2 style frame', ['Typography', 'Creative direction', 'Motion concepts']),
+    '[Demo] Mira Chen': ('AR environment concept direction', 'signal-world.svg',
+        'I will explore a speculative AR environment direction through static concept art. The cover is not a working AR experience.',
+        'Experience brief; environment sketches; interface motifs; concept frame.',
+        '3:2 environment image', ['Worldbuilding', 'VFX concepts', 'Vector concept']),
+    '[Demo] Ezra Quinn': ('Film story treatment and keyframe', 'film-frame.svg',
+        'I will turn a narrative idea into a visual treatment with story beats and illustrative keyframes. This static cover is not a finished film.',
+        'Story discovery; visual treatment; storyboard beats; selected keyframe.',
+        '3:2 film keyframe', ['Storyboarding', 'Creative direction', 'Visual narrative']),
     '[Demo] Crevo Creator': ('AI campaign concept from idea to visual storyboard', 'night-drive.png',
         'I can turn a rough brand idea into a clear AI-assisted campaign concept. Share your audience, goal and references; I will outline a story, develop a visual direction and prepare illustrative frames for review. This shared account is for hackathon evaluation, and its artwork is demo content.',
         'Brief discovery; concept and moodboard; storyboard outline; sample visual frames; one review round.',
