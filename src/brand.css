@@ -237,3 +237,9 @@
  .loader-dot,.loader-letter{animation:none!important}
  .loader-dot{opacity:0}.loader-letter{opacity:1;filter:none;transform:none}
 }
+
+/* A restrained pointer glow and depth shift behind the landing message. */
+.hero-pointer-light{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:var(--hero-light-opacity,0);background:radial-gradient(480px circle at var(--pointer-x,60%) var(--pointer-y,45%),#d5fb551c,transparent 70%);transition:opacity .45s ease}
+@media(hover:hover) and (pointer:fine){.hero .hero-visual{transform:translate3d(var(--hero-shift-x,0px),var(--hero-shift-y,0px),0);transition:transform .55s cubic-bezier(.22,1,.36,1)}}
+@media(max-width:720px){.hero-pointer-light{display:none}.hero .hero-visual{transform:none}}
+@media(prefers-reduced-motion:reduce){.hero-pointer-light{display:none}.hero .hero-visual{transform:none!important;transition:none}}
