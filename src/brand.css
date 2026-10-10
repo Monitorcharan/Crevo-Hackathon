@@ -257,3 +257,4 @@
 }
 @media(max-width:390px){.hero-content{padding-top:135px}.hero .hero-visual{height:125px;margin-top:22px}}
 @media(max-width:340px){.hero-actions{grid-template-columns:1fr}.hero-actions .button{justify-content:space-between;padding-inline:16px;font-size:13px}}
+@media(max-width:720px){.hero-content h1{color:#fff;opacity:1;text-shadow:0 2px 20px #0009}.hero-content p{color:#f0f0ed;opacity:1}.hero-eyebrow{color:#e5e8df}}
