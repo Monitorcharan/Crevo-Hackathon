@@ -2,16 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { ArrowUpRight, Aperture, AudioLines, BookOpenText, Box, Brush, Camera, Clapperboard, Code2, Film, Globe2, Heart, Layers3, Megaphone, Mic2, MonitorPlay, Package, Palette, Pause, PenTool, Plane, Play, ScanFace, Search, Shirt, Sparkles, Utensils, Video, WandSparkles, X } from 'lucide-react'
+import { ArrowUpRight, Aperture, AudioLines, BookOpenText, Box, Brush, Camera, Clapperboard, Code2, Film, Globe2, Heart, Instagram, Layers3, Linkedin, Megaphone, Mic2, MonitorPlay, Package, Palette, Pause, PenTool, Plane, Play, ScanFace, Search, Shirt, Sparkles, Utensils, Video, WandSparkles, X, Youtube } from 'lucide-react'
 import { briefCategories } from './categories.js'
+import categoryPhotos from './categoryPhotos.json'
+import { editorialCreators } from './editorialCreators.js'
 import CrevoCompanion from './CrevoCompanion.jsx'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const showcase = [
-  { name: 'AI Filmmaking', image: '/demo/night-drive.png', label: 'CINEMATIC WORLDS' },
-  { name: '3D & CGI', image: '/demo/glass-motion.png', label: 'IMPOSSIBLE MADE REAL' },
-  { name: 'Fashion', image: '/demo/fashion-editorial.png', label: 'NEW VISUAL LANGUAGE' },
+  { name: 'AI Filmmaking', image: categoryPhotos['AI Filmmaking'].image, label: 'CINEMATIC WORLDS' },
+  { name: '3D & CGI', image: categoryPhotos['3D & CGI'].image, label: 'IMPOSSIBLE MADE REAL' },
+  { name: 'Fashion', image: categoryPhotos.Fashion.image, label: 'NEW VISUAL LANGUAGE' },
 ]
 
 function CategoryShowcase() {
@@ -88,10 +90,34 @@ function CategoryCard({ name, duplicate = false }) {
   const index = briefCategories.indexOf(name)
   const [detail, Icon] = details[name] || ['Find the right creative mind', Sparkles]
   return <Link to={`/discover?category=${encodeURIComponent(name)}`} className={`craft-card craft-${['film', 'motion', 'image', 'social'][index % 4]}`} aria-label={duplicate ? undefined : `Explore ${name} creators`} aria-hidden={duplicate ? 'true' : undefined} tabIndex={duplicate ? -1 : undefined}>
+    {categoryPhotos[name] ? <><img className="category-photo" src={categoryPhotos[name].image} alt="" loading="lazy"/><span className="category-photo-shade"/></> : <span className="craft-art" aria-hidden="true"><Icon strokeWidth={1.2}/></span>}
     <span className="craft-card-top"><span>{String(index + 1).padStart(2, '0')} / CREATIVE CRAFT</span><ArrowUpRight size={20}/></span>
-    <span className="craft-art" aria-hidden="true"><Icon strokeWidth={1.2}/></span>
     <span className="craft-card-bottom"><strong>{name}</strong><small>{detail}</small></span>
   </Link>
+}
+
+export function CreatorInspiration({ term = '' }) {
+  const people = term ? editorialCreators.filter(person => `${person.category} ${person.name} ${person.craft}`.toLowerCase().includes(term)) : editorialCreators
+  if (!people.length) return null
+  const socialLinks = [
+    ['website', Globe2, 'Official work'], ['instagram', Instagram, 'Instagram'],
+    ['youtube', Youtube, 'YouTube'], ['linkedin', Linkedin, 'LinkedIn'],
+    ['x', null, 'X'],
+  ]
+  return <section className="creator-inspiration" id="creator-inspiration" aria-label="Real-world creator inspiration">
+    <div className="creator-inspiration-head"><div><span className="eyebrow">REAL PEOPLE / PUBLIC WORK</span><h2>Creators worth <em>knowing.</em></h2></div><p>One real-world creative reference for each category. These independent people have not joined Crevo; their work and public channels are linked for inspiration, not booking.</p></div>
+    <div className="creator-inspiration-grid">{people.map((person, index) => <article className="creator-inspiration-card" key={person.category}>
+      <span className="creator-inspiration-number">{String(briefCategories.indexOf(person.category) + 1).padStart(2, '0')} / {person.category.toUpperCase()}</span>
+      <div className="creator-inspiration-name"><span aria-hidden="true">{person.name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><div><h3>{person.name}</h3><p>{person.craft}</p></div></div>
+      <div className="creator-inspiration-links">{socialLinks.filter(([key]) => person[key]).map(([key, Icon, label]) => <a href={person[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${label}: ${person.name}`} title={label}>{Icon ? <Icon size={18}/> : <strong>𝕏</strong>}</a>)}</div>
+    </article>)}</div>
+  </section>
+}
+
+function PhotoCredits() {
+  const credits = [...new Map(Object.values(categoryPhotos).map(photo => [photo.image, photo])).values()]
+  const licenseUrls = { by: 'https://creativecommons.org/licenses/by/2.0/', 'by-sa': 'https://creativecommons.org/licenses/by-sa/2.0/', cc0: 'https://creativecommons.org/publicdomain/zero/1.0/' }
+  return <details className="category-photo-credits"><summary>Photo credits &amp; licenses</summary><p>Category images are real photographs sourced through Openverse. The images illustrate a craft; they do not depict the named inspiration creators or verify anyone's work.</p><ul>{credits.map(photo => <li key={photo.image}><a href={photo.source} target="_blank" rel="noopener noreferrer">{photo.title || 'Photograph'}</a> by {photo.creator} · <a href={licenseUrls[photo.license]} target="_blank" rel="noopener noreferrer">CC {photo.license.toUpperCase()}</a></li>)}</ul></details>
 }
 
 function CategoryMarquee() {
@@ -115,6 +141,8 @@ export default function CategoriesPage() {
     <div className="category-search-row"><label className="category-search"><Search size={21} aria-hidden="true"/><input type="search" aria-label="Search categories" placeholder="Search categories — try filmmaking, beauty, motion…" value={query} onChange={event => setQuery(event.target.value)}/>{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear category search"><X size={19}/></button>}</label><span className="category-search-count" aria-live="polite">{term ? `${matches.length} OF ${briefCategories.length} CATEGORIES` : `${briefCategories.length} CREATIVE CATEGORIES`}</span></div>
     {!term && <CategoryShowcase/>}
     {!term ? <CategoryMarquee/> : matches.length ? <div className="craft-grid category-page-grid">{matches.map(name => <CategoryCard name={name} key={name}/>)}</div> : <div className="category-no-results"><Search size={30} aria-hidden="true"/><h2>No categories found</h2><p>Try a different craft or browse all 26 categories.</p><button type="button" className="button button-dark" onClick={() => setQuery('')}>Show all categories</button></div>}
+    <CreatorInspiration term={term}/>
+    <PhotoCredits/>
     <div className="craft-footer"><span>Looking for something more specific? Search creators by skill, tools, and portfolio type.</span><Link to="/discover">Browse all creators <ArrowUpRight size={16}/></Link></div>
   </div></main>
 }
