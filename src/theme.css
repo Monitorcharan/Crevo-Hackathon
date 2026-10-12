@@ -257,3 +257,5 @@
   :where(.card-image,.work-media):hover img{transform:scale(1.045)}
 }
 @media(prefers-reduced-motion:reduce){[data-motion-reveal]{opacity:1!important}[data-motion-reveal].is-visible{animation:none!important}:where(.creator-card,.work-card,.project-card,.brief-row,.application-card,.dash-panel,.inbox-thread):hover{transform:none}}
+
+.site-scroll-progress{position:fixed;inset:0 auto auto 0;width:100%;height:3px;z-index:9999;background:#d5fb55;transform:scaleX(0);transform-origin:left center;pointer-events:none;box-shadow:0 0 14px #d5fb5580}@media(prefers-reduced-motion:reduce){.site-scroll-progress{display:none}}

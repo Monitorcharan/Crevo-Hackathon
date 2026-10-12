@@ -7,6 +7,7 @@ import App from './App.jsx'
 import BriefBuilder from './BriefBuilder.jsx'
 import BriefDetail from './BriefDetail.jsx'
 import CrevoAssistant from './CrevoAssistant.jsx'
+import CinematicMotion from './CinematicMotion.jsx'
 import FormatPicker from './FormatPicker.jsx'
 import { NotificationBellAuto } from './NotificationBell.jsx'
 import { GigDetail, GigManager } from './Gig.jsx'
@@ -88,5 +89,5 @@ export function PortfolioManager() {
 }
 
 export default function PortfolioApp() {
-  return <><SiteMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/gigs/manage" element={<GigManager/>}/><Route path="/gigs/:id" element={<GigDetail/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant/></>
+  return <><SiteMotion/><CinematicMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/gigs/manage" element={<GigManager/>}/><Route path="/gigs/:id" element={<GigDetail/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant/></>
 }
