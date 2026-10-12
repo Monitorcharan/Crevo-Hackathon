@@ -1,8 +1,59 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowUpRight, Aperture, AudioLines, BookOpenText, Box, Brush, Camera, Clapperboard, Code2, Film, Globe2, Heart, Layers3, Megaphone, Mic2, MonitorPlay, Package, Palette, PenTool, Plane, ScanFace, Search, Shirt, Sparkles, Utensils, Video, WandSparkles, X } from 'lucide-react'
 import { briefCategories } from './categories.js'
 import CrevoCompanion from './CrevoCompanion.jsx'
+
+gsap.registerPlugin(ScrollTrigger)
+
+const showcase = [
+  { name: 'AI Filmmaking', image: '/demo/night-drive.png', label: 'CINEMATIC WORLDS' },
+  { name: '3D & CGI', image: '/demo/glass-motion.png', label: 'IMPOSSIBLE MADE REAL' },
+  { name: 'Fashion', image: '/demo/fashion-editorial.png', label: 'NEW VISUAL LANGUAGE' },
+]
+
+function CategoryShowcase() {
+  const root = useRef(null)
+  useEffect(() => {
+    const stage = root.current
+    if (!stage || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const cards = gsap.utils.toArray('.category-float-card', stage)
+    const media = gsap.matchMedia()
+    media.add('(min-width: 721px)', () => {
+      const timeline = gsap.timeline({
+        scrollTrigger: { trigger: stage, start: 'top 75%', end: 'bottom 55%', scrub: 1.3 },
+      })
+      timeline.fromTo(cards[0], { xPercent: 36, yPercent: 18, rotation: -16 }, { xPercent: 0, yPercent: -8, rotation: -8, ease: 'none' }, 0)
+        .fromTo(cards[1], { yPercent: 34, rotation: 8, scale: .88 }, { yPercent: -10, rotation: 0, scale: 1, ease: 'none' }, 0)
+        .fromTo(cards[2], { xPercent: -36, yPercent: 28, rotation: 15 }, { xPercent: 0, yPercent: 5, rotation: 7, ease: 'none' }, 0)
+      return () => timeline.kill()
+    })
+    media.add('(max-width: 720px)', () => {
+      const timeline = gsap.timeline({
+        scrollTrigger: { trigger: stage, start: 'top 85%', end: 'bottom 40%', scrub: 1 },
+      })
+      timeline.fromTo(cards, { y: 65, opacity: .65, rotation: index => [-7, 0, 7][index] },
+        { y: 0, opacity: 1, rotation: 0, stagger: .08, ease: 'none' })
+      return () => timeline.kill()
+    })
+    return () => media.revert()
+  }, [])
+
+  return <section className="category-showcase" ref={root} aria-label="Featured creative categories">
+    <div className="category-showcase-backdrop" aria-hidden="true">MAKE <span>ANYTHING.</span></div>
+    <div className="category-showcase-cards">{showcase.map(({ name, image, label }, index) =>
+      <Link className="category-float-card" to={`/discover?category=${encodeURIComponent(name)}`} key={name}>
+        <img src={image} alt="" loading="lazy"/>
+        <span className="category-float-shade"/>
+        <span className="category-float-index">0{index + 1} / CREATIVE CRAFT</span>
+        <span className="category-float-caption"><small>{label}</small><strong>{name}</strong></span>
+        <ArrowUpRight className="category-float-arrow" size={21}/>
+      </Link>)}</div>
+    <div className="category-showcase-hint">SCROLL TO EXPLORE <span>↓</span></div>
+  </section>
+}
 
 const details = {
   Lifestyle: ['Everyday stories with feeling', Heart],
@@ -41,6 +92,7 @@ export default function CategoriesPage() {
   return <main className="categories-page page-light"><div className="container">
     <div className="landing-section-head categories-heading"><div><span className="eyebrow">EXPLORE BY CRAFT / {briefCategories.length} CATEGORIES</span><h1>Find the kind of<br/><em>magic you need.</em></h1></div><div className="categories-intro-side"><p>From a cinematic launch film to a scroll-stopping campaign, start with the work you want to make.</p><CrevoCompanion size={118} mood="happy"/></div></div>
     <div className="category-search-row"><label className="category-search"><Search size={21} aria-hidden="true"/><input type="search" aria-label="Search categories" placeholder="Search categories — try filmmaking, beauty, motion…" value={query} onChange={event => setQuery(event.target.value)}/>{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear category search"><X size={19}/></button>}</label><span className="category-search-count" aria-live="polite">{term ? `${matches.length} OF ${briefCategories.length} CATEGORIES` : `${briefCategories.length} CREATIVE CATEGORIES`}</span></div>
+    {!term && <CategoryShowcase/>}
     {matches.length ? <div className="craft-grid category-page-grid">{matches.map(name => {
       const index = briefCategories.indexOf(name)
       const [detail, Icon] = details[name] || ['Find the right creative mind', Sparkles]
