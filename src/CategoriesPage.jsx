@@ -96,8 +96,8 @@ function CategoryCard({ name, duplicate = false }) {
   </Link>
 }
 
-export function CreatorInspiration({ term = '' }) {
-  const people = term ? editorialCreators.filter(person => `${person.category} ${person.name} ${person.craft}`.toLowerCase().includes(term)) : editorialCreators
+export function CreatorInspiration({ term = '', category = 'All', limit }) {
+  const people = editorialCreators.filter(person => (category === 'All' || person.category === category) && (!term || `${person.category} ${person.name} ${person.craft}`.toLowerCase().includes(term.toLowerCase()))).slice(0, limit || undefined)
   if (!people.length) return null
   const socialLinks = [
     ['website', Globe2, 'Official work'], ['instagram', Instagram, 'Instagram'],
@@ -105,10 +105,11 @@ export function CreatorInspiration({ term = '' }) {
     ['x', null, 'X'],
   ]
   return <section className="creator-inspiration" id="creator-inspiration" aria-label="Real-world creator inspiration">
-    <div className="creator-inspiration-head"><div><span className="eyebrow">REAL PEOPLE / PUBLIC WORK</span><h2>Creators worth <em>knowing.</em></h2></div><p>One real-world creative reference for each category. These independent people have not joined Crevo; their work and public channels are linked for inspiration, not booking.</p></div>
+    <div className="creator-inspiration-head"><div><span className="eyebrow">REAL PEOPLE / PUBLIC WORK</span><h2>Creators worth <em>knowing.</em></h2></div><p>{people.length} real-world creative {people.length === 1 ? 'reference' : 'references'} across the selected categories. These independent people have not joined Crevo; their public work and channels are linked for research, not booking.</p></div>
     <div className="creator-inspiration-grid">{people.map((person, index) => <article className="creator-inspiration-card" key={person.category}>
       <span className="creator-inspiration-number">{String(briefCategories.indexOf(person.category) + 1).padStart(2, '0')} / {person.category.toUpperCase()}</span>
       <div className="creator-inspiration-name"><span aria-hidden="true">{person.name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><div><h3>{person.name}</h3><p>{person.craft}</p></div></div>
+      <p className="creator-inspiration-status">PUBLIC REFERENCE · NOT A CREVO MEMBER</p>
       <div className="creator-inspiration-links">{socialLinks.filter(([key]) => person[key]).map(([key, Icon, label]) => <a href={person[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${label}: ${person.name}`} title={label}>{Icon ? <Icon size={18}/> : <strong>𝕏</strong>}</a>)}</div>
     </article>)}</div>
   </section>
