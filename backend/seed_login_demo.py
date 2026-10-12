@@ -60,14 +60,30 @@ def main():
             'avatar_url': None, 'portfolio_source': 'manual',
             'portfolio': 'I turn early campaign ideas into visual directions using AI and traditional editing tools. This shared profile demonstrates how a creator can explain tools, workflow, formats, and usage terms on Crevo. The artwork is illustrative.',
         })
-    if not any(item['title'] == '[Demo] After Dark launch concept' for item in store.all_rows('portfolio_items', {'creator_id': creator['id']})):
+    sample_work = [
+        ('[Demo] After Dark launch concept', 'night-drive.png',
+         'Illustrative campaign keyframe for an imaginary automotive launch.',
+         'Developed a fictional launch concept, generated a dusk city scene, and selected a final keyframe direction.',
+         '16:9 campaign keyframe'),
+        ('[Demo] Glass Orbit motion study', 'glass-motion.png',
+         'Illustrative glass and light direction for an imaginary motion campaign. This is a still concept, not a finished animation.',
+         'Explored material and lighting ideas, then selected a single concept frame for further motion planning.',
+         '16:9 motion concept'),
+        ('[Demo] Soft Light product story', 'skincare-still.png',
+         'Illustrative product visual for a fictional skincare launch. The product and campaign are imaginary.',
+         'Defined the visual mood, generated still-life options, and selected the final composition for this concept.',
+         '4:5 product concept'),
+    ]
+    existing_titles = {item['title'] for item in store.all_rows('portfolio_items', {'creator_id': creator['id']})}
+    for title, image, description, workflow, output_format in sample_work:
+        if title in existing_titles:
+            continue
         store.insert('portfolio_items', {
-            'creator_id': creator['id'], 'title': '[Demo] After Dark launch concept',
-            'description': 'Illustrative campaign keyframe for an imaginary automotive launch. No real client work or license is represented.',
-            'media_url': 'https://crevo-hackathon.onrender.com/demo/night-drive.png',
+            'creator_id': creator['id'], 'title': title,
+            'description': f'{description} No real client work or license is represented.',
+            'media_url': f'https://crevo-hackathon.onrender.com/demo/{image}',
             'media_type': 'image', 'tools': ['OpenAI image generation'],
-            'workflow': 'Developed a fictional launch concept, generated a dusk city scene, and selected a final keyframe direction.',
-            'format': '16:9 campaign keyframe',
+            'workflow': workflow, 'format': output_format,
             'commercial_use': 'Demo only. No real client commercial license is represented.',
             'verification': 'illustrative demo',
         })
