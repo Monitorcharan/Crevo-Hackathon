@@ -2,7 +2,7 @@ import { BrandLogo } from './BrandMark.jsx'
 import { useEffect, useState } from 'react'
 import { Link, Routes, Route, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, CirclePlus } from 'lucide-react'
-import { api, token } from './api.js'
+import { api, authMode, token } from './api.js'
 import App from './App.jsx'
 import BriefBuilder from './BriefBuilder.jsx'
 import BriefDetail from './BriefDetail.jsx'
@@ -30,7 +30,7 @@ function SiteMotion() {
   const { pathname } = useLocation()
   useEffect(() => {
     if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const seen = new WeakSet()
+    const seen = new Set()
     const observer = new IntersectionObserver(entries => {
       for (const entry of entries) {
         if (!entry.isIntersecting) continue
@@ -49,12 +49,13 @@ function SiteMotion() {
         observer.observe(element)
       })
     }
-    const changes = new MutationObserver(() => {
+    const changes = new MutationObserver(records => {
+      if (records.every(record => record.target instanceof Element && record.target.closest('.crevo-assistant'))) return
       if (!frame) frame = requestAnimationFrame(scan)
     })
-    changes.observe(document.body, { childList: true, subtree: true })
+    changes.observe(document.getElementById('root'), { childList: true, subtree: true })
     frame = requestAnimationFrame(scan)
-    return () => { cancelAnimationFrame(frame); changes.disconnect(); observer.disconnect() }
+    return () => { cancelAnimationFrame(frame); changes.disconnect(); observer.disconnect(); seen.forEach(element => { delete element.dataset.motionReveal; element.style.removeProperty('--reveal-delay'); element.classList.remove('is-visible') }) }
   }, [pathname])
   return null
 }
@@ -89,5 +90,7 @@ export function PortfolioManager() {
 }
 
 export default function PortfolioApp() {
-  return <><SiteMotion/><CinematicMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/gigs/manage" element={<GigManager/>}/><Route path="/gigs/:id" element={<GigDetail/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant/></>
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
+  return <><SiteMotion/><CinematicMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/gigs/manage" element={<GigManager/>}/><Route path="/gigs/:id" element={<GigDetail/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant signedIn={Boolean(token() || authMode() === 'firebase')}/></>
 }

@@ -15,3 +15,7 @@
 .crevo-companion-launcher:focus-visible,.crevo-companion-tabs button:focus-visible,.crevo-companion-actions button:focus-visible{outline:3px solid #799c28;outline-offset:4px}
 @media(max-width:520px){.crevo-assistant{right:10px}.crevo-assistant-panel{width:calc(100vw - 20px)}.crevo-companion-launcher{width:90px}.crevo-assistant-messages{padding:12px}.crevo-companion-tabs{padding:8px}}
 @media(prefers-reduced-motion:reduce){.crevo-assistant-thinking span{animation:none}}
+
+.crevo-assistant-messages{min-height:0;overscroll-behavior:contain;overflow-anchor:none}
+.crevo-companion-play{overscroll-behavior:contain}
+.crevo-companion-launcher{touch-action:pan-y}

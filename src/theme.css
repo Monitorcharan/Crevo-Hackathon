@@ -242,7 +242,7 @@
 @keyframes crevo-reveal{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
 @keyframes crevo-message-enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
 :where(.page-light,.portfolio-page,.brief-builder,.brief-view,.auth-page){animation:crevo-page-enter .46s ease-out both}
-[data-motion-reveal]{opacity:0}
+[data-motion-reveal]{opacity:1}
 [data-motion-reveal].is-visible{animation:crevo-reveal .7s cubic-bezier(.22,1,.36,1) var(--reveal-delay,0ms) both}
 :where(.notice,.alert,.brief-draft-notice,.brief-form-status,.brief-published-notice,.inbox-message,.message){animation:crevo-message-enter .4s cubic-bezier(.22,1,.36,1) both}
 :where(.button,.round-link,.social-signin-button,.demo-login-option,.category-search button,.message-form button):active:not(:disabled){transform:translateY(1px) scale(.98)}

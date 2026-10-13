@@ -58,8 +58,8 @@ export default function CinematicMotion() {
       if (seen.has(element)) return
       seen.add(element)
       const animation = gsap.fromTo(element,
-        { y: 34, opacity: 0, clipPath: 'inset(0 0 22% 0)' },
-        { y: 0, opacity: 1, clipPath: 'inset(0 0 0% 0)', duration: 1.05, ease: 'power3.out', paused: true, clearProps: 'transform,opacity,clipPath' },
+        { y: 20 },
+        { y: 0, duration: 1.05, ease: 'power3.out', paused: true, clearProps: 'transform,opacity,clipPath' },
       )
       animations.push(animation)
       triggers.push(ScrollTrigger.create({
@@ -90,7 +90,8 @@ export default function CinematicMotion() {
       ScrollTrigger.refresh()
     }
 
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver(records => {
+      if (records.every(record => record.target instanceof Element && record.target.closest('.crevo-assistant'))) return
       if (!frame) frame = requestAnimationFrame(scan)
     })
     observer.observe(document.body, { childList: true, subtree: true })
@@ -104,7 +105,7 @@ export default function CinematicMotion() {
       document.removeEventListener('pointerout', releaseMagnet)
       observer.disconnect()
       triggers.forEach(trigger => trigger.kill())
-      animations.forEach(animation => animation.kill())
+      animations.forEach(animation => animation.revert())
       gsap.set([...document.querySelectorAll(headingSelector), ...document.querySelectorAll('.workproof-visual, .mascot-stage')], { clearProps: 'transform,opacity,clipPath' })
     }
   }, [pathname])
