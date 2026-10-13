@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowUp, Minus, Sparkles } from 'lucide-react'
@@ -10,6 +11,17 @@ const suggestions = ['Help me write a brief', 'Which format should I choose?', '
 
 export default function CrevoAssistant({ signedIn = false }) {
   const [open, setOpen] = useState(false)
+  const [scrolling, setScrolling] = useState(false)
+  useEffect(() => {
+    let timer
+    const pause = () => { setScrolling(true); clearTimeout(timer); timer = setTimeout(() => setScrolling(false), 180) }
+    window.addEventListener('scroll', pause, { passive: true })
+    return () => { window.removeEventListener('scroll', pause); clearTimeout(timer) }
+  }, [])
+  useEffect(() => {
+    document.body.classList.toggle('crevo-chat-open', open)
+    return () => document.body.classList.remove('crevo-chat-open')
+  }, [open])
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -67,7 +79,8 @@ export default function CrevoAssistant({ signedIn = false }) {
     }
   }
 
-  return <div className="crevo-assistant">
+  return createPortal(<div className="crevo-assistant">
+    {open && <button className="crevo-chat-backdrop" aria-label="Close Crevo chat" onClick={close}/>}
     <AnimatePresence>
       {open && <motion.section className="crevo-assistant-panel" role="dialog" id="crevo-assistant-panel" aria-label="Crevo assistant" initial={{ opacity: 0, y: 20, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: .96 }} transition={{ duration: .22 }}>
         <header className="crevo-assistant-head"><span className="crevo-assistant-head-mark"><span aria-hidden="true">✦</span></span><div><strong>Ask Crevo</strong><small>AI help for your next creative move</small></div><button type="button" onClick={close} aria-label="Minimize AI chat"><Minus size={19}/></button></header>
@@ -77,7 +90,7 @@ export default function CrevoAssistant({ signedIn = false }) {
         </div>
         {play ? <div className="crevo-companion-play">
           <div className="crevo-companion-stage">
-            <CrevoMascotAsync ref={mascotRef} hat={hat} size={220} mood={mood} playKey={playKey} interactive draggable dragReturn zoom={.8} maxDpr={1} reducedMotion="auto" label="Play with Crevo. Drag to move or press to bounce." onClick={() => setReaction('That tickles!')} />
+            <CrevoMascotAsync ref={mascotRef} animationState={scrolling ? 'paused' : 'playing'} hat={hat} size={220} mood={mood} playKey={playKey} interactive draggable dragReturn zoom={.8} maxDpr={1} reducedMotion="auto" label="Play with Crevo. Drag to move or press to bounce." onClick={() => setReaction('That tickles!')} />
           </div>
           <p role="status">{reaction}</p>
           <div className="crevo-companion-actions">
@@ -100,11 +113,11 @@ export default function CrevoAssistant({ signedIn = false }) {
         <div className="crevo-assistant-foot">AI suggestions may need your review before use.</div>
       </motion.section>}
     </AnimatePresence>
-    <div className="crevo-companion-dock">
+    {!open && <div className="crevo-companion-dock">
       <button ref={launcherRef} type="button" className="crevo-companion-launcher" onClick={() => { setOpen(value => !value); setPlay(false) }} aria-expanded={open} aria-controls="crevo-assistant-panel" aria-label={open ? 'Minimize Crevo assistant' : 'Open Crevo assistant'} title="Chat or play with Crevo">
-        {!(open && play) && <CrevoMascotAsync hat={hat} size={100} mood={busy ? 'thinking' : error ? 'error' : open ? 'listening' : 'idle'} interactive={false} trackCursor={false} intensity={.35} maxDpr={1} reducedMotion="auto" />}
+        {!(open && play) && <CrevoMascotAsync hat={hat} size={100} animationState={scrolling ? 'paused' : 'playing'} mood={busy ? 'thinking' : error ? 'error' : open ? 'listening' : 'idle'} interactive={false} trackCursor={false} intensity={.35} maxDpr={1} reducedMotion="auto" />}
         <span className="crevo-companion-caption">{open ? 'Minimize' : 'Ask Crevo'}</span>
       </button>
-    </div>
-  </div>
+    </div>}
+  </div>, document.body)
 }

@@ -92,5 +92,5 @@ export function PortfolioManager() {
 export default function PortfolioApp() {
   const { pathname } = useLocation()
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [pathname])
-  return <><SiteMotion/><CinematicMotion/><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/gigs/manage" element={<GigManager/>}/><Route path="/gigs/:id" element={<GigDetail/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant signedIn={Boolean(token() || authMode() === 'firebase')}/></>
+  return <><Routes><Route path="/portfolio/edit" element={<PortfolioManager/>}/><Route path="/gigs/manage" element={<GigManager/>}/><Route path="/gigs/:id" element={<GigDetail/>}/><Route path="/creators/:id/work" element={<PublicPortfolio/>}/><Route path="/briefs/new" element={<BriefBuilder/>}/><Route path="/briefs/:id" element={<BriefDetail/>}/><Route path="/*" element={<App/>}/></Routes><CrevoAssistant signedIn={Boolean(token() || authMode() === 'firebase')}/></>
 }

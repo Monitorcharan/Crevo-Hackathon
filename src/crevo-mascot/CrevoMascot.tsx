@@ -266,7 +266,7 @@ export const CrevoMascot = forwardRef<CrevoMascotHandle, CrevoMascotProps>(funct
             dpr={[1, maxDpr]}
             camera={{ fov: 28, near: 0.1, far: 40, position: [0, 2.3, 11] }}
             gl={{ alpha: true, antialias: true, powerPreference: 'default' }}
-            resize={{ scroll: false, debounce: 0 }}
+            resize={{ scroll: false, debounce: 200 }}
             style={{ pointerEvents: 'none', width: '100%', height: '100%' }}
             onCreated={({ gl }) => {
               gl.toneMapping = NeutralToneMapping // keeps the electric lime saturated

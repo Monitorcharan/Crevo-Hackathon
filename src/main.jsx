@@ -7,3 +7,5 @@ import './theme.css'
 createRoot(document.getElementById('root')).render(<React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>)
 
 import './brand.css'
+
+import './crevo-assistant-companion.css'

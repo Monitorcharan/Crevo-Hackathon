@@ -19,3 +19,13 @@
 .crevo-assistant-messages{min-height:0;overscroll-behavior:contain;overflow-anchor:none}
 .crevo-companion-play{overscroll-behavior:contain}
 .crevo-companion-launcher{touch-action:pan-y}
+
+/* Final layout rules load after the global theme. */
+.crevo-assistant{position:fixed;inset:auto 16px 16px auto;z-index:3000;font-family:'DM Sans',sans-serif}
+.crevo-assistant-panel{position:fixed;top:12px;right:12px;bottom:12px;width:min(380px,calc(100vw - 24px));height:auto;max-height:none;display:flex;flex-direction:column;isolation:isolate;background:#f4f2eb;box-shadow:0 16px 55px #0004}
+.crevo-assistant-head,.crevo-companion-tabs,.crevo-assistant-suggestions,.crevo-assistant-compose,.crevo-assistant-signin,.crevo-assistant-foot{flex-shrink:0}
+.crevo-assistant-messages{flex:1 1 0;min-height:0;overflow-y:auto}
+.crevo-chat-backdrop{position:fixed;inset:0;border:0;background:#0008;z-index:-1;cursor:default}
+@media(min-width:1100px){body.crevo-chat-open #root{margin-right:404px} .crevo-chat-backdrop{display:none}}
+@media(max-width:1099px){body.crevo-chat-open{overflow:hidden}}
+@media(max-width:520px){.crevo-assistant-panel{top:max(8px,env(safe-area-inset-top));right:8px;bottom:max(8px,env(safe-area-inset-bottom));width:calc(100vw - 16px)}}

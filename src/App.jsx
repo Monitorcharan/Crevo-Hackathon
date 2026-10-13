@@ -48,8 +48,7 @@ function Alert({ error }) { return error && <div className="alert" role="alert">
 function Primary({ children, ...props }) { return <button className="button button-primary" {...props}>{children}</button> }
 
 function RevealSection({ children, className, id }) {
-  const reducedMotion = useReducedMotion()
-  return <motion.section id={id} className={className} initial={reducedMotion ? false : { y: 20 }} whileInView={{ y: 0 }} viewport={{ once: true, amount: 0.08 }} transition={{ duration: .8, ease: [.22, 1, .36, 1] }}>{children}</motion.section>
+  return <section id={id} className={className}>{children}</section>
 }
 
 function moveCraftCard(event) {
