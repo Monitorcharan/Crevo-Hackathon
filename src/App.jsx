@@ -158,10 +158,12 @@ function Landing() {
     <ExploreCrafts/><MascotSpotlight/>
     <RevealSection className="intro-section"><div className="container"><div className="section-top"><div><span className="eyebrow">01 / THE PLATFORM</span><h2>Great work starts<br/>with the right people<span className="accent">.</span></h2></div><p>Crevo brings AI-native talent and ambitious brands into the same room. Discover, pitch, match and collaborate in one place.</p></div><div className="feature-grid"><article><span className="feature-number">01</span><Compass size={30}/><h3>Find your fit</h3><p>Explore creators by craft, audience and platform, or get ranked suggestions for your brief.</p></article><article><span className="feature-number">02</span><WandSparkles size={30}/><h3>Make your mark</h3><p>Give your work a home with a profile and portfolio you can shape to tell your story.</p></article><article><span className="feature-number">03</span><MessageCircle size={30}/><h3>Build together</h3><p>Move from application to project conversation without losing the thread.</p></article></div></div></RevealSection>
     <WorkProof/>
-    <RevealSection className="featured-section"><div className="container"><div className="section-heading"><div><span className="eyebrow">02 / CREATOR SPOTLIGHT</span><h2>People making<br/>things happen<span className="accent">.</span></h2></div><Link className="round-link" to="/discover" aria-label="Explore all creators"><ArrowUpRight/></Link></div>{creators?.some(c => c.portfolio_source !== 'demo' && c.name !== 'Crevo Demo Creator') ? <div className="creator-grid">{creators.filter(c => c.portfolio_source !== 'demo' && c.name !== 'Crevo Demo Creator').slice(0, 3).map((c,i) => <CreatorCard key={c.id} creator={c} index={i}/>)}</div> : <CreatorInspiration limit={3}/>}</div></RevealSection>
+    <RevealSection className="featured-section"><div className="container"><div className="section-heading"><div><span className="eyebrow">02 / CREATOR SPOTLIGHT</span><h2>People making<br/>things happen<span className="accent">.</span></h2></div><Link className="round-link" to="/discover" aria-label="Explore all creators"><ArrowUpRight/></Link></div>{creators?.some(c => isRealMemberCreator(c)) ? <div className="creator-grid">{creators.filter(c => isRealMemberCreator(c)).slice(0, 3).map((c,i) => <CreatorCard key={c.id} creator={c} index={i}/>)}</div> : <CreatorInspiration limit={3}/>}</div></RevealSection>
     <Journey/><AudiencePaths/><LandingFaq/>
     <RevealSection className="cta-section"><div className="container cta-inner"><span className="eyebrow">YOUR NEXT BIG IDEA STARTS HERE</span><h2>Let’s make<br/><em>something matter.</em></h2><Link to="/join" className="button button-dark">Get started <ArrowUpRight/></Link><BrandMark className="cta-mark"/></div></RevealSection></>
 }
+
+const isRealMemberCreator = creator => creator.portfolio_source !== 'demo' && !creator.name.startsWith('[Demo]') && creator.name !== 'Crevo Demo Creator'
 
 function Avatar({ creator, index = 0, large = false }) {
   return <div className={`avatar-art ${tones[index % tones.length]} ${large ? 'avatar-large' : ''}`}>
@@ -179,7 +181,7 @@ function Discover() {
   const [search, setSearch] = useState(searchParams.get('q') || ''), [category, setCategory] = useState(searchParams.get('category') || 'All'), [platform, setPlatform] = useState(''), [skill, setSkill] = useState(''), [tool, setTool] = useState(''), [contentType, setContentType] = useState('')
   useEffect(() => { setSearch(searchParams.get('q') || ''); setCategory(searchParams.get('category') || 'All') }, [searchParams])
   const { data, loading, error } = useRequest('/creators', [])
-  const members = useMemo(() => (data || []).filter(c => c.portfolio_source !== 'demo' && c.name !== 'Crevo Demo Creator'), [data])
+  const members = useMemo(() => (data || []).filter(c => isRealMemberCreator(c)), [data])
   const choices = useMemo(() => {
     const unique = values => [...new Set(values)].sort((a, b) => a.localeCompare(b))
     return { skills: unique(members.flatMap(c => c.skills)), tools: unique(members.flatMap(c => c.portfolio_tools || [])), contentTypes: unique(members.flatMap(c => c.content_types || [])) }
