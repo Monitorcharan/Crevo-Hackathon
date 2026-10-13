@@ -1,5 +1,5 @@
-import BrandSequence from './BrandSequence.jsx'
+import FlowingRibbon from './FlowingRibbon.jsx'
 
 export default function Hero() {
-  return <div className="hero-visual" aria-hidden="true"><BrandSequence className="hero-sequence" /></div>
+  return <div className="hero-visual ribbon-only-hero" aria-hidden="true"><FlowingRibbon/></div>
 }

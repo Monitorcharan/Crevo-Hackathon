@@ -1,11 +1,10 @@
-.flowing-ribbon-page{position:relative;isolation:isolate}
-.flowing-ribbon-background{position:fixed;left:0;right:0;top:12vh;height:300px;z-index:1;pointer-events:none;opacity:.32;overflow:hidden;will-change:transform}
+/* The text ribbon belongs only to the landing-page hero. */
+.hero-visual.ribbon-only-hero{top:50%;right:0;width:50%;height:330px;transform:translateY(-50%);opacity:1;pointer-events:none;overflow:hidden;isolation:isolate;z-index:3}
+.flowing-ribbon-background{position:relative;width:100%;height:100%;pointer-events:none;overflow:hidden}
 .flowing-ribbon-background svg{width:100%;height:100%;display:block}
 .flowing-ribbon-sway{animation:crevo-tail-sway 8s ease-in-out infinite alternate;transform-origin:center}
 @keyframes crevo-tail-sway{from{transform:translateY(-9px)}to{transform:translateY(9px)}}
-.flowing-ribbon-page>section{position:relative}
-.flowing-ribbon-page>section>.container{position:relative;z-index:2}
-.flowing-ribbon-page .hero-visual{z-index:3}
-.flowing-ribbon-page .hero-grain{z-index:0}
-@media(max-width:720px){.flowing-ribbon-background{height:230px;opacity:.23}.flowing-ribbon-background svg{width:180%;max-width:none;margin-left:-40%}}
-@media(prefers-reduced-motion:reduce){.flowing-ribbon-sway{animation:none}.flowing-ribbon-background{will-change:auto;transform:none!important}}
+@media(min-width:901px){.hero-content>div{max-width:54%}}
+@media(max-width:900px) and (min-width:721px){.hero-visual.ribbon-only-hero{width:47%;height:260px}.hero-content>div{max-width:58%}}
+@media(max-width:720px){.hero-visual.ribbon-only-hero{top:95px;left:0;right:0;width:100%;height:210px;transform:none}.hero-content{padding-top:330px;padding-bottom:90px;align-items:flex-start}.hero-content>div{max-width:100%}.hero{height:auto;min-height:800px;max-height:none}.hero-grain{background:linear-gradient(0deg,#252525 35%,transparent 85%)}}
+@media(prefers-reduced-motion:reduce){.flowing-ribbon-sway{animation:none}}

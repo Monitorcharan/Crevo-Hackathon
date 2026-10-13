@@ -10,39 +10,23 @@ export default function FlowingRibbon() {
   const [unit, setUnit] = useState(600)
   const [reduced, setReduced] = useState(true)
   useEffect(() => {
-    const page = layer.current?.parentElement
-    if (!page) return
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    let frame = 0
-    let start = 0
-    let range = 1
-    const draw = () => {
-      frame = 0
-      if (motion.matches) { layer.current.style.transform = ''; return }
-      const progress = Math.max(0, Math.min(1, (window.scrollY - start) / range))
-      layer.current.style.transform = `translate3d(0,${(progress * window.innerHeight * .42).toFixed(1)}px,0)`
+    let inView = true
+    const visibility = () => {
+      if (document.hidden || motion.matches || !inView) svg.current?.pauseAnimations()
+      else svg.current?.unpauseAnimations()
+      const sway = svg.current?.querySelector('.flowing-ribbon-sway')
+      if (sway) sway.style.animationPlayState = document.hidden || motion.matches || !inView ? 'paused' : 'running'
     }
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(draw) }
-    const measure = () => {
-      start = page.getBoundingClientRect().top + window.scrollY
-      range = Math.max(1, page.offsetHeight - window.innerHeight)
-      schedule()
-    }
-    const visibility = () => { if (document.hidden || motion.matches) svg.current?.pauseAnimations(); else svg.current?.unpauseAnimations() }
-    const preference = () => { setReduced(motion.matches); visibility(); schedule() }
-    // Two wave segments form one repeating slogan, ensuring a seamless text loop.
+    const preference = () => { setReduced(motion.matches); visibility() }
+    const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(([entry]) => { inView = entry.isIntersecting; visibility() })
+    if (layer.current) observer?.observe(layer.current)
     setUnit(path.current.getTotalLength() / 6)
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
-    observer?.observe(page)
-    window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', measure)
     document.addEventListener('visibilitychange', visibility)
     motion.addEventListener('change', preference)
-    preference(); measure()
+    preference()
     return () => {
-      cancelAnimationFrame(frame); observer?.disconnect()
-      window.removeEventListener('scroll', schedule)
-      window.removeEventListener('resize', measure)
+      observer?.disconnect()
       document.removeEventListener('visibilitychange', visibility)
       motion.removeEventListener('change', preference)
     }
