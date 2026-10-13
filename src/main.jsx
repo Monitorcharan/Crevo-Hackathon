@@ -9,3 +9,4 @@ createRoot(document.getElementById('root')).render(<React.StrictMode><BrowserRou
 import './brand.css'
 
 import './crevo-assistant-companion.css'
+import './flowing-ribbon.css'

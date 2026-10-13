@@ -1,0 +1,11 @@
+.flowing-ribbon-page{position:relative;isolation:isolate}
+.flowing-ribbon-background{position:fixed;left:0;right:0;top:12vh;height:300px;z-index:1;pointer-events:none;opacity:.32;overflow:hidden;will-change:transform}
+.flowing-ribbon-background svg{width:100%;height:100%;display:block}
+.flowing-ribbon-sway{animation:crevo-tail-sway 8s ease-in-out infinite alternate;transform-origin:center}
+@keyframes crevo-tail-sway{from{transform:translateY(-9px)}to{transform:translateY(9px)}}
+.flowing-ribbon-page>section{position:relative}
+.flowing-ribbon-page>section>.container{position:relative;z-index:2}
+.flowing-ribbon-page .hero-visual{z-index:3}
+.flowing-ribbon-page .hero-grain{z-index:0}
+@media(max-width:720px){.flowing-ribbon-background{height:230px;opacity:.23}.flowing-ribbon-background svg{width:180%;max-width:none;margin-left:-40%}}
+@media(prefers-reduced-motion:reduce){.flowing-ribbon-sway{animation:none}.flowing-ribbon-background{will-change:auto;transform:none!important}}
