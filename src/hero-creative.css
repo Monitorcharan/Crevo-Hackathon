@@ -1,14 +1,17 @@
-/* An editorial creative journey around the original dots-to-wordmark animation. */
-.hero-visual.creative-stage{top:50%;right:5%;transform:translateY(-47%);width:min(42vw,570px);height:auto;pointer-events:auto;padding:20px 22px;border:1px solid #ffffff20;border-radius:5px;background:linear-gradient(145deg,#30312d,#232422);box-shadow:0 28px 60px #0003;isolation:isolate;color:#f1f2e9}
-.creative-stage-top,.creative-stage-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:8px;letter-spacing:.12em;color:#b4b8aa;font-weight:700}
-.creative-stage-top>span:first-child{display:flex;align-items:center;gap:7px}.creative-stage-top i{width:5px;height:5px;background:#d7ff45;border-radius:50%}
-.creative-idea{position:relative;margin:20px 0 0;padding:16px 18px;border-left:2px solid #d7ff45;background:#ffffff05}
-.creative-step{font-size:8px;letter-spacing:.14em;color:#d7ff45;font-weight:700}
-.hero .creative-idea p{font-family:'Space Grotesk',sans-serif;font-size:clamp(16px,1.5vw,23px);line-height:1.3;margin:10px 0 12px;max-width:none;color:#f1f2e9;letter-spacing:-.025em}
-.creative-idea em{font-style:normal;color:#b8bba9}.creative-idea-tag{display:flex;align-items:center;gap:7px;font-size:9px;color:#b4b8aa}.creative-idea-tag svg:last-child{margin-left:auto;color:#d7ff45}
-.creative-stage-center{position:relative;height:170px}.creative-stage-center .brand-sequence{height:145px}.creative-stage-note{position:absolute;bottom:6px;width:100%;display:flex;justify-content:center;align-items:center;gap:6px;color:#b4b8aa;font-size:9px;letter-spacing:.04em}
-.creative-outcomes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.creative-outcome{overflow:hidden;border:1px solid #ffffff18;background:#191b18}.creative-outcome img{display:block;width:100%;height:96px;object-fit:cover}.creative-outcome>div{padding:12px 10px}.creative-outcome span{display:block;color:#b5bba4;font-size:7px;letter-spacing:.1em}.creative-outcome strong{display:flex;justify-content:space-between;align-items:center;gap:5px;margin-top:7px;font-size:11px;font-weight:500}.creative-outcome strong svg{flex:none;color:#d7ff45}
-.creative-stage-footer{font-size:7px;padding-top:16px;margin-top:14px;border-top:1px solid #ffffff14}
-@media(min-width:901px){.hero-content>div{max-width:51%}.hero h1{font-size:clamp(58px,6.3vw,94px)}.hero-search{max-width:100%}.hero-content{padding-block:150px 100px}.hero{min-height:740px;height:auto;max-height:none}}
-@media(max-width:900px){.hero{display:flex;flex-direction:column;min-height:0;height:auto;max-height:none;padding-bottom:72px}.hero-content{order:1;display:block;padding-top:135px;padding-bottom:35px}.hero-content>div{max-width:100%}.hero-visual.creative-stage{position:relative;order:2;top:auto;right:auto;left:auto;transform:none;width:88%;max-width:570px;margin:0 auto;height:auto;padding:18px}.hero-grain,.hero-pointer-light{display:none}.hero h1{font-size:clamp(52px,9vw,78px)}.hero .creative-idea p{font-size:21px}.creative-stage-center{height:145px}.creative-stage-center .brand-sequence{height:120px}.creative-stage-center .sequence-mobile-mark{display:none}.creative-stage-center .loader-svg{display:block}.creative-outcome img{height:100px}.hero-bottom{bottom:24px}}
-@media(max-width:390px){.creative-stage-footer{font-size:6px;letter-spacing:.05em}.creative-outcome strong{font-size:10px}.hero-visual.creative-stage{padding:14px}.hero .hero-actions{gap:10px}}
+/* Sculptural folded ribbons in Crevo's lime / charcoal palette. */
+.hero-visual.ribbon-stage{position:absolute;top:50%;right:0;width:54%;height:650px;transform:translateY(-50%);pointer-events:none;overflow:hidden;isolation:isolate;opacity:1}
+.crevo-ribbons{position:absolute;inset:0;display:block;width:100%;height:100%;opacity:.75}
+.ribbon-weave{transform-origin:50% 50%;animation:crevo-ribbon-breathe 16s ease-in-out infinite alternate;animation-play-state:paused}
+.ribbon-echo{animation:crevo-ribbon-drift 20s ease-in-out infinite alternate;animation-play-state:paused}
+.ribbon-stage-playing .ribbon-weave,.ribbon-stage-playing .ribbon-echo{animation-play-state:running}
+.ribbon-wordmark{position:absolute;left:12%;top:29%;width:80%;height:190px;z-index:2;background:radial-gradient(ellipse,#252525ed 12%,#252525ab 40%,#25252500 72%)}
+.ribbon-wordmark .brand-sequence{width:100%;height:100%}.ribbon-wordmark .loader-svg{display:block}.ribbon-wordmark .sequence-mobile-mark{display:none}
+.ribbon-signature{position:absolute;bottom:12%;left:26%;display:flex;align-items:center;gap:9px;font-size:8px;font-weight:600;letter-spacing:.2em;color:#ced5bf}
+.ribbon-signature span{width:22px;height:1px;background:#d7ff45}
+@keyframes crevo-ribbon-breathe{from{transform:translate(-12px,-9px) rotate(-3deg) scale(.98)}to{transform:translate(12px,9px) rotate(3deg) scale(1.02)}}
+@keyframes crevo-ribbon-drift{from{opacity:.25;transform:translate(80px,8px)}to{opacity:.7;transform:translate(115px,27px)}}
+@media(min-width:901px){.hero-content>div{max-width:54%}.hero{min-height:760px;height:auto;max-height:none}.hero-content{padding-block:160px 115px}.hero h1{font-size:clamp(62px,6.6vw,104px)}}
+@media(max-width:900px){.hero-visual.ribbon-stage{width:62%;right:-8%;height:600px;opacity:.65}.hero-content>div{max-width:72%}.hero-grain{background:linear-gradient(90deg,#252525 2%,#252525e8 35%,#25252520 100%)}.hero h1{font-size:clamp(55px,8vw,80px)}}
+@media(max-width:720px){.hero{display:block;min-height:800px;height:auto;max-height:none}.hero-visual.ribbon-stage{top:70px;right:-15%;left:auto;width:105%;height:330px;transform:none;opacity:.85}.ribbon-wordmark{top:27%;left:22%;width:66%;height:115px}.ribbon-signature{bottom:8%;left:37%;font-size:6px}.hero-content{padding-top:355px;padding-bottom:95px;display:block}.hero-content>div{max-width:100%}.hero-grain{background:linear-gradient(0deg,#252525 35%,#25252500 85%)}.hero h1{font-size:clamp(45px,11vw,65px)}.hero-bottom{bottom:22px}}
+@media(prefers-reduced-motion:reduce){.ribbon-weave,.ribbon-echo{animation:none;transform:none}.hero-visual.ribbon-stage{transform:translateY(-50%)!important}}
+@media(max-width:720px) and (prefers-reduced-motion:reduce){.hero-visual.ribbon-stage{transform:none!important}}
