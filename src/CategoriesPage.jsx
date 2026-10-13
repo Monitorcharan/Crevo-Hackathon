@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { ArrowUpRight, Aperture, AudioLines, BookOpenText, Box, Brush, Camera, Clapperboard, Code2, Film, Globe2, Heart, Instagram, Layers3, Linkedin, Megaphone, Mic2, MonitorPlay, Package, Palette, Pause, PenTool, Plane, Play, ScanFace, Search, Shirt, Sparkles, Utensils, Video, WandSparkles, X, Youtube } from 'lucide-react'
 import { briefCategories } from './categories.js'
 import categoryPhotos from './categoryPhotos.json'
 import { editorialCreators } from './editorialCreators.js'
+import editorialImages from './editorialImages.json'
 import CrevoCompanion from './CrevoCompanion.jsx'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -105,14 +106,24 @@ export function CreatorInspiration({ term = '', category = 'All', limit }) {
     ['x', null, 'X'],
   ]
   return <section className="creator-inspiration" id="creator-inspiration" aria-label="Real-world creator inspiration">
-    <div className="creator-inspiration-head"><div><span className="eyebrow">REAL PEOPLE / PUBLIC WORK</span><h2>Creators worth <em>knowing.</em></h2></div><p>{people.length} real-world creative {people.length === 1 ? 'reference' : 'references'} across the selected categories. These independent people have not joined Crevo; their public work and channels are linked for research, not booking.</p></div>
+    <div className="creator-inspiration-head"><div><span className="eyebrow">REAL PEOPLE / PUBLIC WORK</span><h2>Creators worth <em>knowing.</em></h2></div><p>{people.length} public {people.length === 1 ? 'profile' : 'profiles'} across the selected categories. These independent creators have not joined Crevo; their public work and channels are linked for research, not booking.</p></div>
     <div className="creator-inspiration-grid">{people.map((person, index) => <article className="creator-inspiration-card" key={person.category}>
       <span className="creator-inspiration-number">{String(briefCategories.indexOf(person.category) + 1).padStart(2, '0')} / {person.category.toUpperCase()}</span>
-      <div className="creator-inspiration-name"><span aria-hidden="true">{person.name.split(' ').map(part => part[0]).slice(0,2).join('')}</span><div><h3>{person.name}</h3><p>{person.craft}</p></div></div>
+      <Link className="creator-inspiration-photo" to={`/creators/public/${encodeURIComponent(person.name)}`} aria-label={`View public profile for ${person.name}`}><img src={editorialImages[person.name]?.image || categoryPhotos[person.category].image} alt={editorialImages[person.name] ? person.name : `${person.category} category photograph; not a portrait of ${person.name}`} loading="lazy"/>{!editorialImages[person.name] && <small>CATEGORY PHOTO</small>}</Link>
+      <div className="creator-inspiration-name"><div><h3><Link to={`/creators/public/${encodeURIComponent(person.name)}`}>{person.name}</Link></h3><p>{person.craft}</p></div></div>
       <p className="creator-inspiration-status">PUBLIC REFERENCE · NOT A CREVO MEMBER</p>
       <div className="creator-inspiration-links">{socialLinks.filter(([key]) => person[key]).map(([key, Icon, label]) => <a href={person[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${label}: ${person.name}`} title={label}>{Icon ? <Icon size={18}/> : <strong>𝕏</strong>}</a>)}</div>
     </article>)}</div>
   </section>
+}
+
+export function PublicCreatorProfile() {
+  const { name } = useParams()
+  const person = editorialCreators.find(item => item.name === name)
+  if (!person) return <main className="page-light public-creator-page"><div className="container"><h1>Creator not found</h1><Link to="/discover">Back to discovery</Link></div></main>
+  const photo = editorialImages[person.name]
+  const socialLinks = [['website', Globe2, 'Official work'], ['instagram', Instagram, 'Instagram'], ['youtube', Youtube, 'YouTube'], ['linkedin', Linkedin, 'LinkedIn'], ['x', null, 'X']]
+  return <main className="page-light public-creator-page"><div className="container"><Link to="/discover" className="back-link">← Discover creators</Link><div className="public-creator-layout"><div className="public-creator-visual"><img src={photo?.image || categoryPhotos[person.category].image} alt={photo ? person.name : `${person.category} category photograph; not a portrait of ${person.name}`}/>{!photo && <span>CATEGORY PHOTOGRAPH · NOT A PORTRAIT</span>}</div><div className="public-creator-copy"><span className="eyebrow">PUBLIC CREATOR REFERENCE / {person.category.toUpperCase()}</span><h1>{person.name}<span className="accent">.</span></h1><h2>{person.craft}</h2><p>This profile links to publicly available work and social channels. {person.name} has not joined or verified a Crevo account. Availability, rates, tools, and commercial terms are not known to Crevo.</p><div className="creator-inspiration-links">{socialLinks.filter(([key]) => person[key]).map(([key, Icon, label]) => <a href={person[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${label}: ${person.name}`} title={label}>{Icon ? <Icon size={20}/> : <strong>𝕏</strong>}</a>)}</div><div className="public-creator-actions">{person.website && <a className="button button-dark" href={person.website} target="_blank" rel="noopener noreferrer">Explore official work <ArrowUpRight size={18}/></a>}<Link className="button button-outline" to={`/discover?category=${encodeURIComponent(person.category)}`}>Explore {person.category}</Link></div></div></div>{photo ? <p className="public-creator-credit">Photo: <a href={photo.source} target="_blank" rel="noopener noreferrer">{photo.credit}</a> · {photo.license}. Cropped for display.</p> : <p className="public-creator-credit">Category photograph: <a href={categoryPhotos[person.category].source} target="_blank" rel="noopener noreferrer">{categoryPhotos[person.category].creator}</a> · CC {categoryPhotos[person.category].license.toUpperCase()}. This image does not depict {person.name}.</p>}</div></main>
 }
 
 function PhotoCredits() {
