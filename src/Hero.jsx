@@ -9,6 +9,46 @@ const bands = Array.from({ length: 16 }, (_, i) => {
 export default function Hero() {
   const stage = useRef(null)
   const [playing, setPlaying] = useState(false)
+  const ribbonFlow = useRef(null)
+  useEffect(() => {
+    const hero = stage.current?.closest('.hero')
+    const flow = ribbonFlow.current
+    if (!hero || !flow) return
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let frame = 0
+    let heroTop = 0
+    let heroHeight = 1
+    const measure = () => {
+      heroTop = hero.getBoundingClientRect().top + window.scrollY
+      heroHeight = Math.max(1, hero.offsetHeight)
+      schedule()
+    }
+    const draw = () => {
+      frame = 0
+      if (motion.matches) { flow.removeAttribute('transform'); return }
+      const progress = Math.max(0, Math.min(1, (window.scrollY - heroTop) / heroHeight))
+      // Two rounded zigzags: continuous position and slope when scroll reverses.
+      const wave = Math.sin(progress * Math.PI * 4)
+      const x = wave * 72
+      const y = -progress * 105
+      const rotation = wave * 6
+      flow.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${rotation.toFixed(2)} 450 380)`)
+    }
+    function schedule() { if (!frame) frame = requestAnimationFrame(draw) }
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', measure)
+    motion.addEventListener('change', schedule)
+    const resize = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    resize?.observe(hero)
+    measure()
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', measure)
+      motion.removeEventListener('change', schedule)
+      resize?.disconnect()
+    }
+  }, [])
   useEffect(() => {
     let inView = true
     const update = () => setPlaying(inView && document.visibilityState !== 'hidden')
@@ -30,8 +70,10 @@ export default function Hero() {
         <mask id="crevo-ribbon-mask"><rect width="900" height="760" fill="url(#crevo-ribbon-fade)"/></mask>
       </defs>
       <g mask="url(#crevo-ribbon-mask)">
+        <g ref={ribbonFlow}>
         <g className="ribbon-weave">{bands.map((d, index) => <path key={index} d={d} fill="url(#crevo-ribbon-metal)" opacity={.4 + index / 32} />)}</g>
         <g className="ribbon-echo" transform="translate(100 20)"><path d="M 150 -30 C 10 230 810 220 580 490 S 210 670 390 840" stroke="#d7ff45" strokeWidth="1" opacity=".45"/><path d="M 170 -30 C 30 230 830 220 600 490 S 230 670 410 840" stroke="#e8efdc" strokeWidth="1" opacity=".2"/></g>
+        </g>
       </g>
     </svg>
     <div className="ribbon-wordmark"><BrandSequence className="hero-sequence"/></div>
