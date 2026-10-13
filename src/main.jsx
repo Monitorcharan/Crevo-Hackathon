@@ -4,9 +4,12 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './Portfolio.jsx'
 import './style.css'
 import './theme.css'
-createRoot(document.getElementById('root')).render(<React.StrictMode><BrowserRouter><App /></BrowserRouter></React.StrictMode>)
+import { StudioMotionProvider } from './StudioMotion.jsx'
+createRoot(document.getElementById('root')).render(<React.StrictMode><BrowserRouter><StudioMotionProvider><App /></StudioMotionProvider></BrowserRouter></React.StrictMode>)
 
 import './brand.css'
 
 import './crevo-assistant-companion.css'
 import './flowing-ribbon.css'
+
+import './studio.css'

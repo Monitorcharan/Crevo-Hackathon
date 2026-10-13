@@ -1,0 +1,41 @@
+/* CREVO is the artwork. All visuals are live type, CSS geometry, and SVG. */
+.crevo-type-stage{position:absolute;inset:8% -1% 8% 0;perspective:850px;border:1px solid #d7ff6226;border-radius:28px;background:radial-gradient(ellipse at 50% 50%,#708e2b33,transparent 65%),#111b0e70;box-shadow:0 40px 100px #03090350;overflow:hidden;transform:rotate(-7deg);isolation:isolate}
+.crevo-type-grid{position:absolute;inset:0;background-image:linear-gradient(#cfff6510 1px,transparent 1px),linear-gradient(90deg,#cfff6510 1px,transparent 1px);background-size:38px 38px;mask-image:radial-gradient(ellipse,#000,transparent 85%)}
+.crevo-type-coordinate,.crevo-type-baseline{position:absolute;left:25px;right:25px;display:flex;align-items:center;gap:10px;font:8px 'Space Grotesk',sans-serif;letter-spacing:.17em;color:#a6b68f;z-index:1}
+.crevo-type-coordinate{top:23px;justify-content:space-between}.crevo-type-coordinate>span{color:#647b49}
+.crevo-type-baseline{bottom:23px;font-size:7px}.crevo-type-baseline>span:last-child{margin-left:auto;font-size:22px;color:#d7ff62}
+.crevo-type-plane{position:absolute;inset:0;transform-style:preserve-3d;display:grid;place-items:center}
+.crevo-type-svg{width:100%;height:100%;overflow:visible;font-family:'Space Grotesk',sans-serif;font-size:150px;font-weight:700;letter-spacing:-12px;filter:drop-shadow(0 16px 18px #02080290)}
+.crevo-type-main{animation:crevo-type-breathe 8s cubic-bezier(.45,0,.55,1) infinite;transform-origin:50% 50%;transform-box:fill-box}
+.crevo-type-echoes text{animation:crevo-echo 8s ease-in-out infinite;animation-delay:var(--echo-delay)}
+.crevo-type-thread{stroke-dasharray:9 8;opacity:.5;animation:crevo-thread 24s linear infinite}
+.studio-letter-chip{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;line-height:1}
+.studio-hero-art .studio-float-top{left:-2%;top:0}.studio-hero-art .studio-float-bottom{bottom:0;right:2%;min-width:260px}
+.studio-hero-art .studio-art-note{bottom:-7%;right:16%}
+.crevo-poster{position:relative;height:100%;width:100%;border-radius:14px;overflow:hidden;isolation:isolate;padding:24px;display:flex;flex-direction:column;justify-content:space-between;background:#1a2618;color:#d7ff62}
+.crevo-poster-index,.crevo-poster-foot{position:relative;z-index:2;font-size:7px;letter-spacing:.13em;line-height:1.5;font-weight:500}
+.crevo-poster-foot{font-size:6px;max-width:75%}
+.crevo-poster-dimension{background:radial-gradient(circle at 65% 25%,#607f2e88,transparent 60%),#132012}
+.crevo-poster-dimension>strong{font:500 clamp(32px,3.5vw,52px)/.95 'Space Grotesk',sans-serif;letter-spacing:-.07em;margin-top:auto;margin-bottom:24px;position:relative;z-index:1}
+.crevo-poster-dimension em{font-family:Georgia,serif;font-weight:400}
+.crevo-wire-sphere{position:absolute;right:-4%;top:12%;width:77%;aspect-ratio:1;transform-style:preserve-3d;animation:crevo-wire-turn 22s linear infinite}
+.crevo-wire-sphere i{position:absolute;inset:0;border:1px solid #d7ff6280;border-radius:50%;transform:rotateY(calc(var(--ring)*25deg));box-shadow:0 0 20px #d7ff6209}
+.crevo-poster-type{background:#e1abc4;color:#3a2733}
+.crevo-poster-type .crevo-poster-type{background:none;padding:0;border-radius:0;display:block;height:auto;overflow:visible;font:600 clamp(44px,4.7vw,66px)/.9 'Space Grotesk',sans-serif;letter-spacing:-.07em;z-index:1}
+.crevo-poster-type .crevo-poster-type span{display:block}
+.crevo-poster-type em{font-family:Georgia,serif;font-weight:400;letter-spacing:-.09em;color:#613149}
+.crevo-poster-asterisk{position:absolute;right:-10px;bottom:12%;font-size:145px;line-height:1;color:#8b456659;animation:studio-spin 30s linear infinite}
+.crevo-poster-film{background:#bacbd4;color:#18333b}
+.crevo-film-frame{position:relative;border:1px solid #19343b66;padding:16px;height:76%;display:flex;flex-direction:column;justify-content:space-between;background:repeating-linear-gradient(0deg,#1a3a4004 0 1px,transparent 1px 5px)}
+.crevo-film-frame>span{font-size:7px;letter-spacing:.12em;display:flex;align-items:center;gap:7px}.crevo-film-frame i{height:5px;width:5px;border-radius:50%;background:#a44a3a;animation:crevo-record 3s ease-in-out infinite}
+.crevo-film-frame strong{font:500 clamp(32px,3.3vw,49px)/.97 'Space Grotesk',sans-serif;letter-spacing:-.06em}
+.crevo-film-frame em{font-family:Georgia,serif;font-weight:400;color:#284e5c}
+.crevo-film-scan{position:absolute;inset:0;background:linear-gradient(transparent 47%,#effbff30 50%,transparent 53%);animation:crevo-scan 7s ease-in-out infinite;pointer-events:none}
+@keyframes crevo-type-breathe{0%,100%{transform:skewY(0) scaleY(.98)}50%{transform:skewY(-3deg) scaleY(1.16)}}
+@keyframes crevo-echo{0%,100%{translate:0 0}50%{translate:12px -8px}}
+@keyframes crevo-thread{to{stroke-dashoffset:-340}}
+@keyframes crevo-wire-turn{from{transform:rotateZ(-25deg) rotateY(0deg)}to{transform:rotateZ(-25deg) rotateY(360deg)}}
+@keyframes crevo-record{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes crevo-scan{0%,100%{translate:0 -45%}50%{translate:0 45%}}
+@media(max-width:1100px){.crevo-type-coordinate,.crevo-type-baseline{left:18px;right:18px;font-size:6px}.studio-hero-art .studio-float-bottom{min-width:220px}.crevo-poster{padding:18px}}
+@media(max-width:600px){.crevo-type-stage{inset:4% -2% 2%;border-radius:20px}.crevo-type-coordinate{top:17px}.crevo-type-baseline{bottom:17px;font-size:5px;letter-spacing:.08em}.studio-hero-art .studio-float-top{left:-5%;top:-8%}.studio-hero-art .studio-float-bottom{bottom:-8%;right:-5%}.studio-hero-art .studio-art-note{bottom:-19%;font-size:5px}.studio-hero-layout{padding-bottom:92px}.crevo-poster{padding:25px}.crevo-poster-dimension>strong{font-size:52px}.crevo-poster-type .crevo-poster-type{font-size:70px}.crevo-film-frame strong{font-size:53px}.crevo-poster-index{font-size:8px}.crevo-poster-foot{font-size:7px}}

@@ -6,10 +6,12 @@ import { ArrowUp, Minus, Sparkles } from 'lucide-react'
 import { CrevoMascotAsync } from './crevo-mascot/async'
 import './crevo-assistant-companion.css'
 import { api } from './api.js'
+import { useStudioMotion } from './StudioMotion.jsx'
 
 const suggestions = ['Help me write a brief', 'Which format should I choose?', 'How do I find a creator?']
 
 export default function CrevoAssistant({ signedIn = false }) {
+  const { enabled } = useStudioMotion()
   const [open, setOpen] = useState(false)
   const [scrolling, setScrolling] = useState(false)
   useEffect(() => {
@@ -90,7 +92,7 @@ export default function CrevoAssistant({ signedIn = false }) {
         </div>
         {play ? <div className="crevo-companion-play">
           <div className="crevo-companion-stage">
-            <CrevoMascotAsync ref={mascotRef} animationState={scrolling ? 'paused' : 'playing'} hat={hat} size={220} mood={mood} playKey={playKey} interactive draggable dragReturn zoom={.8} maxDpr={1} reducedMotion="auto" label="Play with Crevo. Drag to move or press to bounce." onClick={() => setReaction('That tickles!')} />
+            <CrevoMascotAsync ref={mascotRef} animationState={scrolling || !enabled ? 'paused' : 'playing'} hat={hat} size={220} mood={mood} playKey={playKey} interactive draggable dragReturn zoom={.8} maxDpr={1} reducedMotion={!enabled} label="Play with Crevo. Drag to move or press to bounce." onClick={() => setReaction('That tickles!')} />
           </div>
           <p role="status">{reaction}</p>
           <div className="crevo-companion-actions">
@@ -115,7 +117,7 @@ export default function CrevoAssistant({ signedIn = false }) {
     </AnimatePresence>
     {!open && <div className="crevo-companion-dock">
       <button ref={launcherRef} type="button" className="crevo-companion-launcher" onClick={() => { setOpen(value => !value); setPlay(false) }} aria-expanded={open} aria-controls="crevo-assistant-panel" aria-label={open ? 'Minimize Crevo assistant' : 'Open Crevo assistant'} title="Chat or play with Crevo">
-        {!(open && play) && <CrevoMascotAsync hat={hat} size={100} animationState={scrolling ? 'paused' : 'playing'} mood={busy ? 'thinking' : error ? 'error' : open ? 'listening' : 'idle'} interactive={false} trackCursor={false} intensity={.35} maxDpr={1} reducedMotion="auto" />}
+        {!(open && play) && <CrevoMascotAsync hat={hat} size={100} animationState={scrolling || !enabled ? 'paused' : 'playing'} mood={busy ? 'thinking' : error ? 'error' : open ? 'listening' : 'idle'} interactive={false} trackCursor={false} intensity={.35} maxDpr={1} reducedMotion={!enabled} />}
         <span className="crevo-companion-caption">{open ? 'Minimize' : 'Ask Crevo'}</span>
       </button>
     </div>}
