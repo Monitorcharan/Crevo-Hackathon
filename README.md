@@ -2,11 +2,11 @@
 
 **Live app:** https://crevo-hackathon.onrender.com
 
-A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses a five-dot wave that transforms into the CREVO wordmark. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, skill/tool/content-type discovery, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
+A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses a live animated CREVO wordmark with layered SVG lettering and custom motion. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, skill/tool/content-type discovery, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
 
 ![Crevo landing page](docs/preview.png)
 
-[Hackathon demo guide](docs/demo-guide.md) · [Challenge slides](docs/challenge-deck.pptx) · [Data model note](docs/data-model.md)
+[Hackathon demo guide](docs/demo-guide.md) · [Challenge slides](docs/challenge-deck.pptx) · [Data model note](docs/data-model.md) · [Hackathon fit and priorities](docs/hackathon-fit.md)
 
 The public directory can include eight clearly labeled fictional demo portfolios: four AI-generated concept images and four original SVG concept illustrations. Demo feedback is never counted as a completed-project review; the demo profiles cannot sign in or apply to briefs. The no-sign-in `/demo` route lets visitors edit a sample brief, recalculate transparent rules-based matches, shortlist a creator, and preview an unsent inquiry. This walkthrough writes no account data. Create your own creator and brand accounts to try the full workflow.
 
@@ -114,3 +114,7 @@ The repository includes a single-service Render Docker deployment. The container
 4. Check `/api/health` for `database: supabase` and `ai_enabled: true` (when the AI key is set). Complete a real creator and brand signup, confirm emails, and walk through a brief, application, acceptance, and project message.
 
 Render's Free web service spins down after idle time, so the first visit may take about a minute. Supabase's default email service is intended for testing; configure SMTP before broad public use.
+
+## Creator presentation
+
+Registered member profiles appear before clearly labeled fictional demos in discovery. The landing page shows members, three sample creators with credited stock portraits, and then independent public inspiration profiles with sourced portraits. Stock models are not represented as members. Demo portraits are presentation assets only; real account identity data is unchanged. The profile-type filter separates members from demos. Photo sources and licenses are included in `public/demo-portraits/CREDITS.md`.

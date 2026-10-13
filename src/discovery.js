@@ -6,6 +6,9 @@ const aliases = {
   ugc: ['ugc', 'social media content', 'social campaigns'],
 }
 
+export const isDemoCreator = creator => creator?.portfolio_source === 'demo' || /^\[Demo\]/i.test(creator?.name || '') || creator?.name === 'Crevo Demo Creator'
+export const isMemberCreator = creator => Boolean(creator?.id) && !isDemoCreator(creator)
+
 export function creatorMatchesSearch(creator, query) {
   const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean)
   if (!terms.length) return true

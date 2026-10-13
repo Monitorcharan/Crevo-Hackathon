@@ -13,7 +13,7 @@
 
 | Time | Show | Say |
 | --- | --- | --- |
-| 0–10s | Landing page and five-dot CREVO animation | “Crevo connects brands with creators who make work using modern creative tools.” |
+| 0–10s | Landing page and animated CREVO wordmark | “Crevo connects brands with creators who make work using modern creative tools.” |
 | 10–25s | Categories, creator search and filters | “Brands can narrow creators by specialty, skills, tools, platforms and work type.” |
 | 25–40s | Creator profile, AI portfolio and public gig | “Creators show work, workflow, commercial-use terms and a service offer. Demo feedback is clearly labeled.” |
 | 40–60s | Brand brief builder and Gemini draft | “A brand turns a rough idea into an editable brief with format, style, budget and usage requirements.” |

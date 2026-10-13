@@ -97,8 +97,8 @@ function CategoryCard({ name, duplicate = false }) {
   </Link>
 }
 
-export function CreatorInspiration({ term = '', category = 'All', limit }) {
-  const people = editorialCreators.filter(person => (category === 'All' || person.category === category) && (!term || `${person.category} ${person.name} ${person.craft}`.toLowerCase().includes(term.toLowerCase()))).slice(0, limit || undefined)
+export function CreatorInspiration({ term = '', category = 'All', limit, names }) {
+  const people = editorialCreators.filter(person => (!names || names.includes(person.name)) && (category === 'All' || person.category === category) && (!term || `${person.category} ${person.name} ${person.craft}`.toLowerCase().includes(term.toLowerCase()))).slice(0, limit || undefined)
   if (!people.length) return null
   const socialLinks = [
     ['website', Globe2, 'Official work'], ['instagram', Instagram, 'Instagram'],
@@ -111,7 +111,7 @@ export function CreatorInspiration({ term = '', category = 'All', limit }) {
       <span className="creator-inspiration-number">{String(briefCategories.indexOf(person.category) + 1).padStart(2, '0')} / {person.category.toUpperCase()}</span>
       <Link className="creator-inspiration-photo" to={`/creators/public/${encodeURIComponent(person.name)}`} aria-label={`View public profile for ${person.name}`}><img src={editorialImages[person.name]?.image || categoryPhotos[person.category].image} alt={editorialImages[person.name] ? person.name : `${person.category} category photograph; not a portrait of ${person.name}`} loading="lazy"/>{!editorialImages[person.name] && <small>CATEGORY PHOTO</small>}</Link>
       <div className="creator-inspiration-name"><div><h3><Link to={`/creators/public/${encodeURIComponent(person.name)}`}>{person.name}</Link></h3><p>{person.craft}</p></div></div>
-      <p className="creator-inspiration-status">PUBLIC REFERENCE · NOT A CREVO MEMBER</p>
+      <p className="creator-inspiration-status">PUBLIC REFERENCE · NOT A CREVO MEMBER</p>{editorialImages[person.name] && <p className="member-photo-credit">Photo: <a href={editorialImages[person.name].source} target="_blank" rel="noopener noreferrer">{editorialImages[person.name].credit}</a> · {editorialImages[person.name].license}</p>}
       <div className="creator-inspiration-links">{socialLinks.filter(([key]) => person[key]).map(([key, Icon, label]) => <a href={person[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${label}: ${person.name}`} title={label}>{Icon ? <Icon size={18}/> : <strong>𝕏</strong>}</a>)}</div>
     </article>)}</div>
   </section>

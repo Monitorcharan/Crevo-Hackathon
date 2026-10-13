@@ -10,6 +10,7 @@ import { AmbientScene, LineReveal, Reveal, useStudioMotion } from './StudioMotio
 import { CreatorInspiration } from './CategoriesPage.jsx'
 import CrevoCompanion from './CrevoCompanion.jsx'
 import CrevoWordmark, { CraftPoster } from './CrevoWordmark.jsx'
+import CreatorSpotlight from './CreatorSpotlight.jsx'
 
 const studies = [
   { kind: 'dimension', title: 'Ideas in another dimension.', category: '3D & CGI', label: '3D / MATERIAL EXPLORATION', color: 'lime' },
@@ -70,7 +71,8 @@ export default function StudioLanding() {
       ['03', 'Make it happen.', 'Review applications, choose your collaborator, and build together in one space.', Sparkles],
     ].map(([number, title, description, Icon], i) => <Reveal delay={i * .08} key={number}><BorderGlow className="studio-process-card" backgroundColor="#151915" borderRadius={22} animated={false} glowColor="78 90 65" colors={['#bde74e','#e3ffb0','#56723a']}><span className="studio-process-number">{number}</span><div className="studio-process-icon"><Icon size={32} strokeWidth={1.2}/><span/><span/></div><h3>{title}</h3><p>{description}</p></BorderGlow></Reveal>)}</div></div></section>
 
-    <section className="studio-people studio-shell"><Reveal><CreatorInspiration limit={3}/></Reveal><Link className="studio-button studio-button-dark" to="/discover">Meet the creative community <ArrowUpRight size={20}/></Link></section>
+    <CreatorSpotlight/>
+    <section className="studio-people studio-shell"><Reveal><CreatorInspiration names={['Refik Anadol', 'Beeple', 'Holly Herndon']} limit={3}/></Reveal><Link className="studio-button studio-button-dark" to="/discover">Meet the creative community <ArrowUpRight size={20}/></Link></section>
 
     <section className="studio-invitation studio-shell"><Reveal className="studio-invitation-copy"><span className="studio-kicker">A LITTLE SPARK. A BIG BEGINNING.</span><h2>Good ideas<br/>deserve <em>good company.</em></h2><p>Meet the Crevo companion. A little reminder that every great project begins with curiosity—and someone to share it with.</p><div className="studio-role-links"><Link to="/join">I’m a creator <ArrowUpRight size={20}/></Link><Link to="/join">I’m a brand <ArrowUpRight size={20}/></Link></div></Reveal><Reveal className="studio-mascot"><div className="studio-mascot-ring"/><CrevoCompanion size={310} mood="greeting" interactive/><span>YOUR NEXT IDEA HAS COMPANY.</span></Reveal></section>
 
