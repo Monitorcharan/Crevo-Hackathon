@@ -258,3 +258,19 @@
 @media(max-width:390px){.hero-content{padding-top:135px}.hero .hero-visual{height:125px;margin-top:22px}}
 @media(max-width:340px){.hero-actions{grid-template-columns:1fr}.hero-actions .button{justify-content:space-between;padding-inline:16px;font-size:13px}}
 @media(max-width:720px){.hero-content h1{color:#fff;opacity:1;text-shadow:0 2px 20px #0009}.hero-content p{color:#f0f0ed;opacity:1}.hero-eyebrow{color:#e5e8df}}
+.hero-lede-motion{display:flex!important;flex-wrap:wrap;max-width:650px;column-gap:0;row-gap:0}
+.hero-lede-motion .blur-text-space{white-space:pre}
+.craft-card-entry,.craft-card-glare,.creator-card-glare{display:block;width:100%;height:100%;min-width:0}
+.craft-card-glare>.craft-card,.creator-card-glare>.creator-card{height:100%}
+.project-card-spotlight{height:100%;min-height:170px;padding:0;background:transparent;box-shadow:none;border-radius:0;overflow:visible}
+.project-card-spotlight>.project-card{height:100%;min-height:170px}
+.craft-loop{margin:34px 0 10px;padding:18px 0 15px;border-top:1px solid #c8c8c1;border-bottom:1px solid #c8c8c1;overflow:hidden}
+.craft-loop>.eyebrow{margin-bottom:14px;color:#777;font-size:9px}
+.craft-loop-label{font:700 12px 'Space Grotesk',sans-serif;letter-spacing:.13em;color:#32362c;white-space:nowrap}
+
+/* A continuous, looping ribbon carries the Crevo message across the hero. */
+.hero-visual{overflow:hidden;clip-path:inset(0)}
+.hero-visual .curved-loop-jacket{min-height:0;height:100%;cursor:default!important}
+.hero-visual .curved-loop-svg{width:145%;height:100%;aspect-ratio:auto;overflow:visible;fill:#d5fb55;font-size:27px;letter-spacing:1px}
+.hero-visual .hero-ribbon-copy{fill:#171914;font-family:'Space Grotesk',sans-serif;font-weight:700}
+@media(max-width:720px){.hero-visual .curved-loop-svg{width:190%;font-size:22px}}
