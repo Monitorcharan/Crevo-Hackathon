@@ -41,6 +41,8 @@ export interface CrevoPointerInfo {
 }
 
 export interface CrevoMascotProps {
+  /** Optional assistant hat, attached to the character so it follows every reaction. */
+  hat?: boolean
   /**
    * Edge length of the (square) canvas. Numbers are CSS pixels; strings are any
    * CSS length (e.g. `"100%"`, `"12rem"`). Default `180`.

@@ -1,0 +1,17 @@
+/* Reuse the original Crevo character as the global assistant. */
+.crevo-assistant{bottom:max(12px,env(safe-area-inset-bottom));right:max(16px,env(safe-area-inset-right));display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.crevo-assistant-panel{height:min(620px,calc(100dvh - 150px));border-radius:20px}
+.crevo-companion-launcher{position:relative;display:flex;flex-direction:column;align-items:center;border:0;background:transparent;color:#fff;cursor:pointer;padding:0;width:104px;border-radius:18px}
+.crevo-companion-launcher .crevo-mascot{pointer-events:none}
+.crevo-companion-caption{font-size:11px;font-weight:700;border:1px solid #d7ff4560;background:#151515;color:#d7ff45;padding:5px 12px;border-radius:20px;box-shadow:0 4px 18px #0004}
+.crevo-companion-tabs{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid #d7dbce;flex:none}
+.crevo-companion-tabs button,.crevo-companion-actions button{border:1px solid #bac69b;background:#fff;color:#172016;border-radius:10px;padding:9px 12px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;min-height:40px}
+.crevo-companion-tabs button[aria-pressed=true]{background:#d7ff45;border-color:#91a633}
+.crevo-companion-play{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:12px 16px;gap:12px;background:radial-gradient(ellipse at top,#e8edda,#f4f2eb)}
+.crevo-companion-stage{position:relative;flex:none}
+.crevo-companion-play p{text-align:center;font-size:13px;min-height:38px;margin:0}
+.crevo-companion-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.crevo-companion-play small{font-size:11px;color:#596057;text-align:center}
+.crevo-companion-launcher:focus-visible,.crevo-companion-tabs button:focus-visible,.crevo-companion-actions button:focus-visible{outline:3px solid #799c28;outline-offset:4px}
+@media(max-width:520px){.crevo-assistant{right:10px}.crevo-assistant-panel{width:calc(100vw - 20px)}.crevo-companion-launcher{width:90px}.crevo-assistant-messages{padding:12px}.crevo-companion-tabs{padding:8px}}
+@media(prefers-reduced-motion:reduce){.crevo-assistant-thinking span{animation:none}}

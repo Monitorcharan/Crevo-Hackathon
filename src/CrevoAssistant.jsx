@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowUp, Minus, Sparkles } from 'lucide-react'
-import { BrandMark } from './BrandMark.jsx'
-import { api, authMode, token } from './api.js'
+import { CrevoMascotAsync } from './crevo-mascot/async'
+import './crevo-assistant-companion.css'
+import { api } from './api.js'
 
 const suggestions = ['Help me write a brief', 'Which format should I choose?', 'How do I find a creator?']
 
-export default function CrevoAssistant() {
+export default function CrevoAssistant({ signedIn = false }) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
@@ -15,7 +16,30 @@ export default function CrevoAssistant() {
   const [error, setError] = useState('')
   const endRef = useRef(null)
   const inputRef = useRef(null)
-  const signedIn = Boolean(token() || authMode() === 'firebase')
+  const mascotRef = useRef(null)
+  const launcherRef = useRef(null)
+  const [play, setPlay] = useState(false)
+  const [mood, setMood] = useState('greeting')
+  const [playKey, setPlayKey] = useState(0)
+  const [hat, setHat] = useState(true)
+  const [reaction, setReaction] = useState('Say hello to Crevo!')
+
+  function close() {
+    setOpen(false)
+    requestAnimationFrame(() => launcherRef.current?.focus())
+  }
+
+  useEffect(() => {
+    if (!open) return
+    function escape(event) { if (event.key === 'Escape') close() }
+    document.addEventListener('keydown', escape)
+    return () => document.removeEventListener('keydown', escape)
+  }, [open])
+
+  function react(action, caption) {
+    mascotRef.current?.trigger(action)
+    setReaction(caption)
+  }
 
   useEffect(() => { if (open) { inputRef.current?.focus(); endRef.current?.scrollIntoView({ block: 'end' }) } }, [open, messages, busy])
 
@@ -39,8 +63,25 @@ export default function CrevoAssistant() {
 
   return <div className="crevo-assistant">
     <AnimatePresence>
-      {open && <motion.section className="crevo-assistant-panel" role="dialog" aria-label="Crevo AI assistant" initial={{ opacity: 0, y: 20, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: .96 }} transition={{ duration: .22 }}>
-        <header className="crevo-assistant-head"><span className="crevo-assistant-head-mark"><BrandMark/></span><div><strong>Ask Crevo</strong><small>AI help for your next creative move</small></div><button type="button" onClick={() => setOpen(false)} aria-label="Minimize AI chat"><Minus size={19}/></button></header>
+      {open && <motion.section className="crevo-assistant-panel" role="dialog" id="crevo-assistant-panel" aria-label="Crevo assistant" initial={{ opacity: 0, y: 20, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: .96 }} transition={{ duration: .22 }}>
+        <header className="crevo-assistant-head"><span className="crevo-assistant-head-mark"><span aria-hidden="true">✦</span></span><div><strong>Ask Crevo</strong><small>AI help for your next creative move</small></div><button type="button" onClick={close} aria-label="Minimize AI chat"><Minus size={19}/></button></header>
+        <div className="crevo-companion-tabs" role="group" aria-label="Assistant mode">
+          <button type="button" aria-pressed={!play} onClick={() => setPlay(false)}>Chat with Crevo</button>
+          <button type="button" aria-pressed={play} onClick={() => setPlay(true)}>Play with Crevo</button>
+        </div>
+        {play ? <div className="crevo-companion-play">
+          <div className="crevo-companion-stage">
+            <CrevoMascotAsync ref={mascotRef} hat={hat} size={220} mood={mood} playKey={playKey} interactive draggable dragReturn zoom={.8} maxDpr={1.5} reducedMotion="auto" label="Play with Crevo. Drag to move or press to bounce." onClick={() => setReaction('That tickles!')} />
+          </div>
+          <p role="status">{reaction}</p>
+          <div className="crevo-companion-actions">
+            <button type="button" onClick={() => { setMood('greeting'); setPlayKey(key => key + 1); setReaction('Hello, creative human!') }}>Wave</button>
+            <button type="button" onClick={() => react('wiggle', 'A little creative dance!')}>Wiggle</button>
+            <button type="button" onClick={() => react('celebrate', 'Your next big idea deserves a celebration!')}>Celebrate</button>
+            <button type="button" aria-pressed={hat} onClick={() => setHat(value => !value)}>{hat ? 'Remove hat' : 'Wear hat'}</button>
+          </div>
+          <small>Drag Crevo around, or tap for a bounce.</small>
+        </div> : <>
         <div className="crevo-assistant-messages" role="log" aria-live="polite">
           <div className="crevo-assistant-welcome"><Sparkles size={20}/><strong>Ideas move faster together.</strong><p>Ask about briefs, formats, finding creators, or showcasing your work.</p></div>
           {messages.map((message, index) => <div key={index} className={`crevo-assistant-message ${message.role}`}><span>{message.role === 'assistant' ? 'CREVO AI' : 'YOU'}</span><p>{message.content}</p></div>)}
@@ -49,10 +90,16 @@ export default function CrevoAssistant() {
           <div ref={endRef}/>
         </div>
         {!messages.length && <div className="crevo-assistant-suggestions">{suggestions.map(item => <button key={item} type="button" onClick={() => signedIn ? send(item) : setText(item)}>{item}</button>)}</div>}
-        {signedIn ? <form className="crevo-assistant-compose" onSubmit={event => { event.preventDefault(); send() }}><input ref={inputRef} value={text} onChange={event => setText(event.target.value)} maxLength={1500} placeholder="Ask anything about Crevo…" aria-label="Message Crevo AI"/><button type="submit" disabled={busy || !text.trim()} aria-label="Send to Crevo AI"><ArrowUp size={19}/></button></form> : <div className="crevo-assistant-signin"><p>Sign in to chat with the Crevo AI assistant.</p><Link to="/login" onClick={() => setOpen(false)}>Sign in <ArrowUp size={15}/></Link></div>}
+        {signedIn ? <form className="crevo-assistant-compose" onSubmit={event => { event.preventDefault(); send() }}><input ref={inputRef} value={text} onChange={event => setText(event.target.value)} maxLength={1500} placeholder="Ask anything about Crevo…" aria-label="Message Crevo AI"/><button type="submit" disabled={busy || !text.trim()} aria-label="Send to Crevo AI"><ArrowUp size={19}/></button></form> : <div className="crevo-assistant-signin"><p>Sign in to chat with the Crevo AI assistant.</p><Link to="/login" onClick={close}>Sign in <ArrowUp size={15}/></Link></div>}
+        </>}
         <div className="crevo-assistant-foot">AI suggestions may need your review before use.</div>
       </motion.section>}
     </AnimatePresence>
-    {!open && <button type="button" className="crevo-assistant-launcher" onClick={() => setOpen(true)} aria-label="Open Crevo AI chat" title="Ask Crevo"><BrandMark/></button>}
+    <div className="crevo-companion-dock">
+      <button ref={launcherRef} type="button" className="crevo-companion-launcher" onClick={() => { setOpen(value => !value); setPlay(false) }} aria-expanded={open} aria-controls="crevo-assistant-panel" aria-label={open ? 'Minimize Crevo assistant' : 'Open Crevo assistant'} title="Chat or play with Crevo">
+        <CrevoMascotAsync hat={hat} size={100} mood={busy ? 'thinking' : error ? 'error' : open ? 'listening' : 'idle'} interactive={false} trackCursor maxDpr={1.5} reducedMotion="auto" />
+        <span className="crevo-companion-caption">{open ? 'Minimize' : 'Ask Crevo'}</span>
+      </button>
+    </div>
   </div>
 }

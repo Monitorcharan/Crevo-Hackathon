@@ -88,6 +88,7 @@ class CanvasErrorBoundary extends Component<{ fallback: ReactNode; children: Rea
 export const CrevoMascot = forwardRef<CrevoMascotHandle, CrevoMascotProps>(function CrevoMascot(props, ref) {
   const {
     size = 180,
+    hat = false,
     mood = 'idle',
     animationState = 'playing',
     interactive = false,
@@ -275,7 +276,7 @@ export const CrevoMascot = forwardRef<CrevoMascotHandle, CrevoMascotProps>(funct
               canvas.addEventListener('webglcontextrestored', () => bridge.invalidate?.())
             }}
           >
-            <CrevoCharacter controller={controller} bridge={bridge} zoom={zoom} dragBounds={dragBounds} onReady={onReady} />
+            <CrevoCharacter hat={hat} controller={controller} bridge={bridge} zoom={zoom} dragBounds={dragBounds} onReady={onReady} />
           </Canvas>
         </CanvasErrorBoundary>
       ) : (

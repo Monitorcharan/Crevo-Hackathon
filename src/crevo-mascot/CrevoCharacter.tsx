@@ -228,6 +228,7 @@ const CREST_MINOR_BASE_Z = 0.22
 const FOOT_X = 0.38
 
 interface CrevoCharacterProps {
+  hat?: boolean
   controller: CrevoController
   bridge: CrevoBridge
   zoom?: number
@@ -235,7 +236,7 @@ interface CrevoCharacterProps {
   onReady?: () => void
 }
 
-export function CrevoCharacter({ controller, bridge, zoom = 1, dragBounds = 1, onReady }: CrevoCharacterProps) {
+export function CrevoCharacter({ hat = false, controller, bridge, zoom = 1, dragBounds = 1, onReady }: CrevoCharacterProps) {
   const res = useCharacterResources()
   const gl = useThree((s) => s.gl)
   const camera = useThree((s) => s.camera)
@@ -407,6 +408,20 @@ export function CrevoCharacter({ controller, bridge, zoom = 1, dragBounds = 1, o
               <group position={[0, BODY_HALF_HEIGHT, 0]}>
                 <mesh name="crevo-body" geometry={res.body} material={res.lime} />
                 <CrevoEyes ref={eyes} />
+                {hat && <group name="crevo-assistant-hat" position={[0, .82, .16]} rotation={[0, 0, -.12]}>
+                  <mesh position={[0, .04, 0]}>
+                    <cylinderGeometry args={[.53, .53, .07, 32]} />
+                    <meshStandardMaterial color="#242424" roughness={.35} metalness={.25} />
+                  </mesh>
+                  <mesh position={[0, .24, 0]}>
+                    <cylinderGeometry args={[.32, .37, .36, 32]} />
+                    <meshStandardMaterial color="#242424" roughness={.35} metalness={.25} />
+                  </mesh>
+                  <mesh position={[0, .13, 0]}>
+                    <cylinderGeometry args={[.36, .37, .07, 32]} />
+                    <meshStandardMaterial color="#D7FF45" roughness={.4} />
+                  </mesh>
+                </group>}
 
                 {/* Main crest: a swooping hook that makes the silhouette. */}
                 <group ref={crestMain} name="crevo-crest-main" position={[0.12, 0.74, -0.06]}>
