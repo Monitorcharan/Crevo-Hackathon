@@ -15,3 +15,14 @@
 @media(max-width:720px){.hero{display:block;min-height:800px;height:auto;max-height:none}.hero-visual.ribbon-stage{top:70px;right:-15%;left:auto;width:105%;height:330px;transform:none;opacity:.85}.ribbon-wordmark{top:27%;left:22%;width:66%;height:115px}.ribbon-signature{bottom:8%;left:37%;font-size:6px}.hero-content{padding-top:355px;padding-bottom:95px;display:block}.hero-content>div{max-width:100%}.hero-grain{background:linear-gradient(0deg,#252525 35%,#25252500 85%)}.hero h1{font-size:clamp(45px,11vw,65px)}.hero-bottom{bottom:22px}}
 @media(prefers-reduced-motion:reduce){.ribbon-weave,.ribbon-echo{animation:none;transform:none}.hero-visual.ribbon-stage{transform:translateY(-50%)!important}}
 @media(max-width:720px) and (prefers-reduced-motion:reduce){.hero-visual.ribbon-stage{transform:none!important}}
+
+/* One viewport background, mounted for the whole homepage, with slow vertical parallax. */
+.landing-ribbon-page{position:relative;isolation:isolate}
+.landing-ribbon-background{position:fixed;top:-15vh;right:-5vw;width:72vw;height:130vh;z-index:1;pointer-events:none;opacity:.24;overflow:hidden}
+.landing-ribbon-svg{display:block;width:100%;height:100%}
+.landing-ribbon-page>section{position:relative}
+.landing-ribbon-page>section>.container{position:relative;z-index:2}
+.landing-ribbon-page .hero-visual{z-index:3}
+.landing-ribbon-page .hero-grain{z-index:0}
+@media(max-width:720px){.landing-ribbon-background{right:-20vw;width:115vw;opacity:.16}.hero-visual.ribbon-stage{opacity:1}}
+@media(prefers-reduced-motion:reduce){.landing-ribbon-svg{transform:none}}
