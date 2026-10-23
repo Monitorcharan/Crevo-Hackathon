@@ -17,7 +17,7 @@ REMOTE = bool(SUPABASE_URL and PUBLIC_KEY and SECRET_KEY)
 if os.getenv('CREVO_REQUIRE_SUPABASE') == '1' and not REMOTE:
     raise RuntimeError('Hosted Crevo requires Supabase credentials')
 admin = create_client(SUPABASE_URL, SECRET_KEY) if REMOTE else None
-JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links'}
+JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links', 'workflow'}
 
 
 def connect():
@@ -44,6 +44,15 @@ def init_local():
         create table if not exists reviews(id text primary key,project_id text not null unique,brand_id text not null,creator_id text not null,rating integer not null,body text not null,created_at text default current_timestamp);
         create table if not exists verification_requests(id text primary key,creator_id text not null,evidence_url text not null,statement text not null,status text not null,decision_note text not null default '',reviewed_by text,reviewed_at text,created_at text default current_timestamp);
         ''')
+        brief_columns = {row[1] for row in db.execute('pragma table_info(briefs)')}
+        for field, definition in [('deliverables', "text not null default ''"), ('deadline', 'text'), ('revision_rounds', 'integer')]:
+            if field not in brief_columns:
+                db.execute(f'alter table briefs add column {field} {definition}')
+        project_columns = {row[1] for row in db.execute('pragma table_info(projects)')}
+        if 'workflow' not in project_columns:
+            db.execute("alter table projects add column workflow text not null default '{}'")
+        if 'workflow_revision' not in project_columns:
+            db.execute('alter table projects add column workflow_revision integer not null default 0')
         if 'firebase_uid' not in {row[1] for row in db.execute('pragma table_info(users)')}:
             db.execute('alter table users add column firebase_uid text')
         db.execute('create unique index if not exists users_firebase_uid_idx on users(firebase_uid)')

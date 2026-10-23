@@ -1,3 +1,4 @@
+import BriefReadiness from './BriefReadiness.jsx'
 import { BrandLogo } from './BrandMark.jsx'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -8,7 +9,7 @@ import FormatPicker, { formatComplete, normalizeFormat } from './FormatPicker.js
 import { NotificationBellAuto } from './NotificationBell.jsx'
 
 const csv = text => text.split(',').map(x => x.trim()).filter(Boolean)
-const initialForm = { title: '', description: '', category: '', skills: '', platforms: '', budget: '', location: '', content_type: '', style: '', format: '', commercial_use: '' }
+const initialForm = { title: '', description: '', category: '', skills: '', platforms: '', budget: '', location: '', content_type: '', style: '', format: '', commercial_use: '', deliverables: '', deadline: '', revision_rounds: '' }
 
 export default function BriefBuilder() {
   const navigate = useNavigate()
@@ -38,7 +39,7 @@ export default function BriefBuilder() {
       const result = await api('/briefs/draft', { method: 'POST', body: { idea } })
       setForm(current => {
         const next = { ...current }
-        for (const key of ['title', 'description', 'category', 'content_type', 'style', 'format', 'commercial_use', 'location']) {
+        for (const key of ['title', 'description', 'category', 'content_type', 'style', 'format', 'commercial_use', 'location', 'deliverables']) {
           if (result[key]) next[key] = result[key]
         }
         for (const key of ['skills', 'platforms']) {
@@ -65,7 +66,7 @@ export default function BriefBuilder() {
     try {
       const brief = await api('/briefs', {
         method: 'POST',
-        body: { ...form, skills: csv(form.skills), platforms: csv(form.platforms), budget: Number(form.budget) },
+        body: { ...form, skills: csv(form.skills), platforms: csv(form.platforms), budget: Number(form.budget), deadline: form.deadline || null, revision_rounds: form.revision_rounds === '' ? null : Number(form.revision_rounds) },
       })
       navigate(`/briefs/${brief.id}`, { state: { published: true } })
     } catch (error) {
@@ -96,7 +97,7 @@ export default function BriefBuilder() {
             {draftNotice && <div className="brief-draft-notice" role="status"><Check size={19}/><span>{draftNotice} <strong>This is a draft; it has not been published yet.</strong></span></div>}
             <small>Uses the configured AI provider. Review every suggested field before publishing.</small>
           </div>
-          <div className="brief-tip"><span className="eyebrow">A STRONG BRIEF INCLUDES</span><p>What you want to make, who it is for, the visual direction, deliverables, usage rights, and budget.</p></div>
+          <BriefReadiness form={form}/><div className="brief-tip"><span className="eyebrow">A STRONG BRIEF INCLUDES</span><p>What you want to make, who it is for, the visual direction, deliverables, usage rights, and budget.</p></div>
         </div>
         <form ref={formRef} className={`portfolio-form ${draftSource ? 'brief-form-drafted' : ''}`} onSubmit={publish} aria-busy={publishing}>
           <span className="eyebrow">CAMPAIGN DETAILS</span>
@@ -118,6 +119,7 @@ export default function BriefBuilder() {
             <label>Skills needed<input value={form.skills} onChange={event => set('skills', event.target.value)} placeholder="AI video, Editing"/></label>
             <label>Platforms<input value={form.platforms} onChange={event => set('platforms', event.target.value)} placeholder="Instagram, TikTok"/></label>
           </div>
+          <section className="round-two-scope"><h3>Delivery expectations</h3><label>Deliverables and quantity<textarea required minLength={10} maxLength={1200} rows={3} value={form.deliverables} onChange={event => set('deliverables', event.target.value)} placeholder="For example: one 15-second vertical film, three stills, final exports and source files if required"/></label><div className="form-two"><label>Target delivery date<input required type="date" value={form.deadline} onChange={event => set('deadline', event.target.value)}/></label><label>Included revision rounds<input required type="number" min="0" max="20" step="1" value={form.revision_rounds} onChange={event => set('revision_rounds', event.target.value)} placeholder="2"/></label></div><small>Agree any changes to scope or timing with the creator before work begins.</small></section>
           <label>Location preference<input value={form.location} onChange={event => set('location', event.target.value)} placeholder="Optional"/></label>
           {publishError && <div className="alert" role="alert">{publishError}</div>}
           <button className="button button-primary" disabled={drafting || publishing}>{publishing ? 'Publishing brief…' : 'Publish brief'} <ArrowRight size={17}/></button>

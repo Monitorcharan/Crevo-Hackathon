@@ -130,3 +130,38 @@ grant select, insert, update, delete on table public.users, public.creators,
 insert into storage.buckets(id,name,public)
 values ('portfolios','portfolios',true)
 on conflict (id) do nothing;
+
+-- Delivery history and explicitly simulated payment records; existing RLS/grants apply.
+alter table public.projects add column if not exists workflow jsonb not null default '{}'::jsonb;
+alter table public.projects add column if not exists workflow_revision integer not null default 0;
+
+-- Round 2: explicit delivery expectations, additive for existing briefs.
+alter table public.briefs add column if not exists deliverables text not null default '';
+alter table public.briefs add column if not exists deadline date;
+alter table public.briefs add column if not exists revision_rounds integer check (revision_rounds between 0 and 20);
+create or replace function public.transition_application(p_application_id uuid, p_brand_id uuid, p_decision text)
+returns jsonb language plpgsql security invoker set search_path = public, pg_temp as $$
+declare a public.applications%rowtype; b public.briefs%rowtype; p public.projects%rowtype;
+begin
+select * into a from public.applications where id=p_application_id for update;
+if not found then raise exception 'Application not found'; end if;
+select * into b from public.briefs where id=a.brief_id;
+if b.owner_id is distinct from p_brand_id then raise exception 'Application not found'; end if;
+if p_decision not in ('accepted','declined') then raise exception 'Invalid decision'; end if;
+if a.status='accepted' and p_decision='accepted' then
+ select * into p from public.projects where brief_id=a.brief_id and creator_id=a.creator_id;
+ if found then return to_jsonb(p); end if;
+elsif a.status <> 'pending' then raise exception 'Only pending applications can be changed';
+end if;
+if p_decision='declined' then
+ update public.applications set status='declined' where id=a.id returning * into a;
+ return to_jsonb(a);
+end if;
+insert into public.projects(brief_id,creator_id,brand_id,status) values(a.brief_id,a.creator_id,p_brand_id,'active')
+on conflict (brief_id,creator_id) do nothing;
+select * into p from public.projects where brief_id=a.brief_id and creator_id=a.creator_id;
+update public.applications set status='accepted' where id=a.id;
+return to_jsonb(p);
+end $$;
+revoke all on function public.transition_application(uuid,uuid,text) from public,anon,authenticated;
+grant execute on function public.transition_application(uuid,uuid,text) to service_role;

@@ -1,0 +1,109 @@
+"""Versioned project workflow. Payments are explicitly simulated, never charged."""
+import copy
+import json
+import uuid
+from datetime import datetime, timezone
+from typing import Literal
+from urllib.parse import urlsplit
+
+from fastapi import Depends, HTTPException
+from pydantic import BaseModel, Field
+import store
+
+
+class WorkflowAction(BaseModel):
+    revision: int = Field(ge=0)
+    action: Literal['terms', 'accept_terms', 'payment', 'submit', 'revise', 'approve']
+    amount_paise: int = Field(default=0, ge=0, le=100000000)
+    outcome: Literal['success', 'failed', 'cancelled'] = 'cancelled'
+    method: Literal['UPI', 'Card', 'Netbanking'] = 'UPI'
+    title: str = Field(default='', max_length=160)
+    url: str = Field(default='', max_length=2000)
+    notes: str = Field(default='', max_length=5000)
+    version: int = Field(default=0, ge=0)
+
+
+def register(app, current_user, permitted_project):
+    @app.get('/api/projects/{project_id}/workspace')
+    def workspace(project_id: str, user=Depends(current_user)):
+        project = permitted_project(project_id, user)
+        return {**project, 'brief': store.one('briefs', {'id': project['brief_id']}),
+                'creator': store.one('creators', {'id': project['creator_id']})}
+
+    @app.post('/api/projects/{project_id}/workflow')
+    def act(project_id: str, data: WorkflowAction, user=Depends(current_user)):
+        project = permitted_project(project_id, user)
+        revision = project.get('workflow_revision', 0)
+        if revision != data.revision:
+            raise HTTPException(409, 'This project changed. Refresh and try again.')
+        state = copy.deepcopy(project.get('workflow') or {})
+        brand = user['id'] == project['brand_id']
+        now = datetime.now(timezone.utc).isoformat()
+        status = project['status']
+        deliveries = state.setdefault('deliveries', [])
+        terms = state.get('terms')
+        payment = state.get('payment', {})
+        if data.action in ('terms', 'payment', 'revise', 'approve') and not brand:
+            raise HTTPException(403, 'Only the project brand can do this.')
+        if data.action in ('accept_terms', 'submit') and brand:
+            raise HTTPException(403, 'Only the project creator can do this.')
+        if status == 'completed' and data.action != 'payment':
+            raise HTTPException(409, 'This project is already completed.')
+        if data.action == 'terms':
+            if terms and terms.get('accepted_at'):
+                raise HTTPException(409, 'Accepted terms cannot be changed.')
+            if not data.amount_paise or not data.notes.strip():
+                raise HTTPException(422, 'Add a positive INR amount and the agreed deliverables and usage terms.')
+            state['terms'] = {'amount_paise': data.amount_paise, 'currency': 'INR',
+                              'scope': data.notes.strip(), 'proposed_at': now, 'proposed_by': user['id']}
+        elif data.action == 'accept_terms':
+            if not terms or terms.get('accepted_at'):
+                raise HTTPException(409, 'No new terms to accept.')
+            terms.update(accepted_at=now, accepted_by=user['id'])
+        elif data.action == 'payment':
+            if not terms or not terms.get('accepted_at'):
+                raise HTTPException(409, 'The creator must accept the INR terms first.')
+            if payment.get('status') == 'demo_succeeded':
+                raise HTTPException(409, 'The demo payment is already complete.')
+            attempts = state.setdefault('payment_attempts', [])
+            if len(attempts) >= 100:
+                raise HTTPException(409, 'Demo attempt limit reached.')
+            payment = {'id': 'demo_' + uuid.uuid4().hex[:16], 'mode': 'simulation',
+                       'status': 'demo_succeeded' if data.outcome == 'success' else 'demo_' + data.outcome,
+                       'method': data.method, 'amount_paise': terms['amount_paise'],
+                       'currency': 'INR', 'created_at': now, 'actor_id': user['id']}
+            attempts.append(payment)
+            state['payment'] = payment
+        elif data.action == 'submit':
+            if deliveries and deliveries[-1]['status'] != 'revision_requested':
+                raise HTTPException(409, 'Wait for feedback before submitting another version.')
+            url = urlsplit(data.url.strip())
+            if url.scheme != 'https' or not url.hostname or url.username or url.password:
+                raise HTTPException(422, 'Use a public HTTPS delivery link without embedded credentials.')
+            if not data.title.strip() or not data.notes.strip():
+                raise HTTPException(422, 'Add a title and delivery notes, including tools and usage rights.')
+            if len(deliveries) >= 100:
+                raise HTTPException(409, 'Delivery version limit reached.')
+            deliveries.append({'version': len(deliveries) + 1, 'title': data.title.strip(),
+                               'url': data.url.strip(), 'notes': data.notes.strip(),
+                               'submitted_at': now, 'submitted_by': user['id'], 'status': 'awaiting_review'})
+        elif data.action in ('revise', 'approve'):
+            if not deliveries or deliveries[-1]['version'] != data.version or deliveries[-1]['status'] != 'awaiting_review':
+                raise HTTPException(409, 'Only the latest delivery awaiting review can be reviewed.')
+            if data.action == 'revise' and not data.notes.strip():
+                raise HTTPException(422, 'Describe the changes you need.')
+            deliveries[-1].update(status='approved' if data.action == 'approve' else 'revision_requested',
+                                  feedback=data.notes.strip(), reviewed_at=now, reviewed_by=user['id'])
+            if data.action == 'approve':
+                status = 'completed'
+        values = {'workflow': state, 'workflow_revision': revision + 1, 'status': status}
+        if store.REMOTE:
+            rows = store.admin.table('projects').update(values).eq('id', project_id).eq('workflow_revision', revision).execute().data
+            saved = bool(rows)
+        else:
+            with store.connect() as db:
+                saved = db.execute('update projects set workflow=?, workflow_revision=?, status=? where id=? and workflow_revision=?',
+                                   (json.dumps(state), revision + 1, status, project_id, revision)).rowcount == 1
+        if not saved:
+            raise HTTPException(409, 'This project changed. Refresh and try again.')
+        return {**project, **values}

@@ -11,7 +11,7 @@ Crevo matches the requested AI creator marketplace. Profiles, briefs, and discov
 | Creator profiles and AI portfolios | 30% | Skills, specializations, work media, tools, workflow, format, usage terms; manual portfolio-evidence review | Add actual playable video/animation samples and more detailed process evidence. The present demo is mostly still images and vector concepts. |
 | Brief definition | 20% | Campaign description, category, skills, platforms, budget, content type, style, format, commercial use; editable AI draft | Show a complete example covering deliverables, revisions, deadline, and specific usage requirements. |
 | Discovery and filtering | 25% | Text, category, skills, tools, media type, platform; empty-state reset; members and clearly labeled demos | Populate varied, accurate portfolio metadata so judges can demonstrate meaningful differences between filters. |
-| User experience | 15% | Creator/brand entry, profiles, briefs, applications, acceptance, project conversations, completion | Add submission versions, revision requests, and final approval to make discovery-through-delivery explicit. |
+| User experience | 15% | Creator/brand entry, profiles, briefs, applications, acceptance, project conversations, completion | Delivery versions, revision requests and final approval are now implemented; demonstrate the full flow using both roles. |
 | Presentation and demo | 10% | Live prototype, guest walkthrough, data-model note, short slides and demo guide | Refresh screenshots and record one complete realistic scenario, with sample content labeled. |
 
 ## Highest-value additions
@@ -24,8 +24,13 @@ Crevo matches the requested AI creator marketplace. Profiles, briefs, and discov
 
 ## Demonstration sequence
 
-Brand creates an AI-assisted brief → filters creators → inspects tools, workflow, format, and usage terms → reviews match explanations → creator applies → brand accepts → messages → submits/approves a deliverable when that feature exists. Today the app has messaging and project completion, not a structured delivery/revision workflow.
+Brand creates an AI-assisted brief → filters creators → inspects tools, workflow, format, and usage terms → reviews match explanations → creator applies → brand accepts → messages → submits/approves a deliverable when that feature exists. The project workspace now includes persisted delivery versions, revision feedback, final approval, agreed INR terms, and a clearly labeled keyless payment simulation. See project-workflow.md for the demo sequence and limits.
 
 ## Data integrity
 
 Registered members, fictional demo profiles, and independent public inspiration profiles are distinct. Stock portraits illustrate the fictional demos only. Public figures have not joined Crevo and cannot be booked through reference cards. No real member identity, photo, rate, review, or credential should be fabricated.
+
+
+## Round 2 update — October 23, 2026
+
+Creator comparison, explicit delivery expectations and brief readiness now strengthen discovery and brief definition. Delivery versioning and final approval complete the engagement flow. Payments remain an explicitly labeled simulation. See round-two-demo.md for the five-minute walkthrough and technical explanation. The Round 2 rule book gives qualitative criteria, not new numerical weights.

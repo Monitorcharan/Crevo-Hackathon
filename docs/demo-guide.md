@@ -1,5 +1,7 @@
 # Crevo hackathon demo
 
+For the finale, use the [Round 2 demo and technical explanation](round-two-demo.md), including comparison, brief readiness, delivery review and simulated INR checkout.
+
 [Live app](https://crevo-hackathon.onrender.com) · [GitHub repository](https://github.com/Monitorcharan/Crevo-Hackathon)
 
 ## Before recording
@@ -26,4 +28,4 @@ Crevo is a live creator discovery and collaboration platform built with React, F
 
 ## Scope to state clearly
 
-Inbox and project conversations update live while open, with a refresh fallback. Payments, milestones, and shared project files are outside this MVP. Portfolio tool and ownership claims are creator reported. Sample feedback on fictional demo profiles is explicitly illustrative; real reviews require a completed Crevo project.
+Inbox and project conversations update live while open, with a refresh fallback. Projects support agreed INR terms, versioned HTTPS delivery links, revision requests and final approval. Checkout is explicitly simulated: no money moves and no Razorpay credentials are required. Real payments, escrow, milestone billing and hosted project-file storage remain outside this MVP. Portfolio tool and ownership claims are creator reported. Sample feedback on fictional demo profiles is explicitly illustrative; real reviews require a completed Crevo project.

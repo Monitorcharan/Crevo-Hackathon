@@ -8,7 +8,7 @@ import secrets
 import uuid
 from pathlib import Path
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 from urllib.parse import urlsplit
 
@@ -23,6 +23,7 @@ from supabase import create_client
 
 load_dotenv()
 import store
+from engagements import transition as transition_application
 import firebase_identity
 from demo_gigs import ensure_demo_gigs
 
@@ -205,6 +206,10 @@ class BriefIn(BaseModel):
     style: str = Field(default='', max_length=200)
     format: str = Field(default='', max_length=100)
     commercial_use: str = Field(default='', max_length=500)
+    deliverables: str = Field(default='', max_length=1200)
+    deadline: date | None = None
+    revision_rounds: int | None = Field(default=None, ge=0, le=20)
+
 
 
 class IdeaIn(BaseModel):
@@ -688,7 +693,7 @@ async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
     prompt = (
         'Turn this rough campaign idea into an editable structured creative brief. '
         'Return only a JSON object with keys title, description, category, content_type, style, format, '
-        'commercial_use, skills, platforms, location. Skills and platforms must be arrays of strings; '
+        'commercial_use, deliverables, skills, platforms, location. Skills and platforms must be arrays of strings; '
         f'all other fields must be strings. Category must be one of {", ".join(BRIEF_CATEGORIES)} or empty. '
         'Use only facts clearly stated in the idea. '
         'For missing details use an empty string or empty array; never invent budgets, licensing terms, '
@@ -700,7 +705,7 @@ async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
         draft = json.loads(answer.replace(fence + 'json', '').replace(fence, '').strip())
         if not isinstance(draft, dict):
             raise ValueError('AI draft must be an object')
-        fields = ('title', 'description', 'category', 'content_type', 'style', 'format', 'commercial_use', 'location')
+        fields = ('title', 'description', 'category', 'content_type', 'style', 'format', 'commercial_use', 'location', 'deliverables')
         result = {field: str(draft.get(field) or '').strip()[:3000 if field == 'description' else 500] for field in fields}
         if not result['description']:
             raise ValueError('AI draft has no description')
@@ -717,7 +722,7 @@ async def draft_brief(data: IdeaIn, user=Depends(require_role('brand'))):
 
 @app.post('/api/briefs')
 def create_brief(data: BriefIn, user=Depends(require_role('brand'))):
-    return store.insert('briefs', {'owner_id': user['id'], **data.model_dump(), 'status': 'open'})
+    return store.insert('briefs', {'owner_id': user['id'], **data.model_dump(mode='json'), 'status': 'open'})
 
 
 @app.get('/api/briefs/{brief_id}')
@@ -746,6 +751,8 @@ async def matches(brief_id: str, user=Depends(require_role('brand'))):
         raise HTTPException(404, 'Brief not found')
     results = []
     for creator in store.all_rows('creators'):
+        if not creator.get('owner_id') or creator.get('portfolio_source') == 'demo' or creator.get('name', '').lower().startswith('[demo]') or creator.get('name') == 'Crevo Demo Creator':
+            continue
         category_hit = brief['category'].lower() in [x.lower() for x in creator['categories']]
         skills_hit = sorted(set(x.lower() for x in brief['skills']) & set(x.lower() for x in creator['skills']))
         platforms_hit = sorted(set(x.lower() for x in brief['platforms']) & set(x.lower() for x in creator['platforms']))
@@ -809,14 +816,10 @@ def accept(application_id: str, user=Depends(require_role('brand'))):
     brief = store.one('briefs', {'id': application['brief_id']}) if application else None
     if not brief or brief['owner_id'] != user['id']:
         raise HTTPException(404, 'Application not found')
-    if application['status'] == 'accepted':
-        existing = store.one('projects', {'brief_id': brief['id'], 'creator_id': application['creator_id']})
-        if existing:
-            return existing
-    if application['status'] != 'pending':
-        raise HTTPException(409, 'Only pending applications can be accepted')
-    store.update('applications', application_id, {'status': 'accepted'})
-    return store.insert('projects', {'brief_id': brief['id'], 'creator_id': application['creator_id'], 'brand_id': user['id'], 'status': 'active'})
+    try:
+        return transition_application(application_id, user['id'], 'accepted')
+    except Exception:
+        raise HTTPException(409, 'Could not accept this application. Refresh the page and check its status before retrying.')
 
 
 @app.post('/api/applications/{application_id}/decline')
@@ -825,9 +828,10 @@ def decline(application_id: str, user=Depends(require_role('brand'))):
     brief = store.one('briefs', {'id': application['brief_id']}) if application else None
     if not brief or brief['owner_id'] != user['id']:
         raise HTTPException(404, 'Application not found')
-    if application['status'] != 'pending':
-        raise HTTPException(409, 'Only pending applications can be declined')
-    return store.update('applications', application_id, {'status': 'declined'})
+    try:
+        return transition_application(application_id, user['id'], 'declined')
+    except Exception:
+        raise HTTPException(409, 'Could not decline this application. Refresh the page and check its status before retrying.')
 
 
 @app.get('/api/projects')
@@ -853,7 +857,7 @@ def complete_project(project_id: str, user=Depends(require_role('brand'))):
     project = permitted_project(project_id, user)
     if project['status'] == 'completed':
         return project
-    return store.update('projects', project_id, {'status': 'completed'})
+    raise HTTPException(409, 'Approve the latest delivery in the project workspace to complete this project.')
 
 
 @app.get('/api/projects/{project_id}/messages')
@@ -1135,6 +1139,10 @@ def decide_verification(request_id: str, data: VerificationDecision, user=Depend
 
 
 # The Docker deployment serves the Vite build from the same origin as the API.
+# Registered after membership helpers are defined.
+from project_workflow import register as register_project_workflow
+register_project_workflow(app, current_user, permitted_project)
+
 DIST_DIR = Path(__file__).resolve().parents[1] / 'dist'
 
 
@@ -1146,3 +1154,4 @@ def frontend(path: str):
     if candidate.is_relative_to(DIST_DIR.resolve()) and candidate.is_file():
         return FileResponse(candidate)
     return FileResponse(DIST_DIR / 'index.html')
+
