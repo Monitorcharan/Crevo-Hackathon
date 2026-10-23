@@ -16,7 +16,7 @@ def transition(application_id, brand_id, decision):
             raise ValueError('Application not found')
         existing = db.execute('select * from projects where brief_id=? and creator_id=?', (row['brief_id'], row['creator_id'])).fetchone()
         if row['status'] == 'accepted' and decision == 'accepted' and existing:
-            return store.normalize(existing)
+            return store.normalize(existing, 'projects')
         if row['status'] != 'pending' and not (row['status'] == 'accepted' and decision == 'accepted'):
             raise ValueError('Only pending applications can be changed')
         if decision == 'accepted' and not existing:
@@ -24,4 +24,4 @@ def transition(application_id, brand_id, decision):
             db.execute('insert into projects(id,brief_id,creator_id,brand_id,status) values(?,?,?,?,?)', (project_id, row['brief_id'], row['creator_id'], brand_id, 'active'))
             existing = db.execute('select * from projects where id=?', (project_id,)).fetchone()
         db.execute('update applications set status=? where id=?', (decision, application_id))
-        return store.normalize(existing if decision == 'accepted' else db.execute('select * from applications where id=?', (application_id,)).fetchone())
+        return store.normalize(existing if decision == 'accepted' else db.execute('select * from applications where id=?', (application_id,)).fetchone(), 'projects' if decision == 'accepted' else 'applications')

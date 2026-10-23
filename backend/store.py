@@ -17,7 +17,7 @@ REMOTE = bool(SUPABASE_URL and PUBLIC_KEY and SECRET_KEY)
 if os.getenv('CREVO_REQUIRE_SUPABASE') == '1' and not REMOTE:
     raise RuntimeError('Hosted Crevo requires Supabase credentials')
 admin = create_client(SUPABASE_URL, SECRET_KEY) if REMOTE else None
-JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links', 'workflow'}
+JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links'}
 
 
 def connect():
@@ -98,11 +98,15 @@ def init_local():
                 (str(uuid.uuid4()), creator_id, work_title, 'Original illustrative SVG concept, not a real client campaign.' if vector else 'Illustrative AI-generated concept artwork for the Crevo demo, not a real client campaign.', f'https://crevo-hackathon.onrender.com/demo/{image}', 'image', json.dumps(['Vector SVG illustration'] if vector else ['OpenAI image generation']), 'Composed a fictional campaign keyframe in vector shapes.' if vector else 'Generated a fictional campaign image and selected the final concept.', '3:2 concept image' if vector else '16:9 landscape', 'Demo only; no client license is represented.', 'illustrative demo'))
 
 
-def normalize(row):
+def json_fields(table):
+    return JSON_FIELDS | ({'workflow'} if table == 'projects' else set())
+
+
+def normalize(row, table=None):
     if row is None:
         return None
     item = dict(row)
-    for key in JSON_FIELDS & item.keys():
+    for key in json_fields(table) & item.keys():
         if isinstance(item[key], str):
             item[key] = json.loads(item[key])
     item.pop('password_hash', None)
@@ -117,7 +121,7 @@ def all_rows(table, filters=None, order=None):
             q = q.eq(key, value)
         if order:
             q = q.order(order)
-        return [normalize(x) for x in q.execute().data]
+        return [normalize(x, table) for x in q.execute().data]
     sql = f'select * from {table}'
     values = list(filters.values())
     if filters:
@@ -125,7 +129,7 @@ def all_rows(table, filters=None, order=None):
     if order:
         sql += f' order by {order}'
     with connect() as db:
-        return [normalize(x) for x in db.execute(sql, values).fetchall()]
+        return [normalize(x, table) for x in db.execute(sql, values).fetchall()]
 
 
 def one(table, filters):
@@ -136,8 +140,8 @@ def one(table, filters):
 def insert(table, data):
     item = {'id': str(uuid.uuid4()), **data}
     if REMOTE:
-        return normalize(admin.table(table).insert(item).execute().data[0])
-    encoded = {k: json.dumps(v) if k in JSON_FIELDS else v for k,v in item.items()}
+        return normalize(admin.table(table).insert(item).execute().data[0], table)
+    encoded = {k: json.dumps(v) if k in json_fields(table) else v for k,v in item.items()}
     fields = ','.join(encoded)
     marks = ','.join('?' for _ in encoded)
     with connect() as db:
@@ -148,8 +152,8 @@ def insert(table, data):
 def update(table, row_id, data):
     if REMOTE:
         rows = admin.table(table).update(data).eq('id', row_id).execute().data
-        return normalize(rows[0]) if rows else None
-    encoded = {k: json.dumps(v) if k in JSON_FIELDS else v for k,v in data.items()}
+        return normalize(rows[0], table) if rows else None
+    encoded = {k: json.dumps(v) if k in json_fields(table) else v for k,v in data.items()}
     assignments = ','.join(f'{key}=?' for key in encoded)
     with connect() as db:
         db.execute(f'update {table} set {assignments} where id=?', (*encoded.values(), row_id))
