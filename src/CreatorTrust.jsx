@@ -39,13 +39,12 @@ export function MatchTrustSummary({ trust }) {
   return <div className="match-trust-summary"><h4>Trust behind this match</h4><p>{review.status === 'reviewed' ? `Submitted portfolio evidence reviewed ${new Date(review.reviewed_at).toLocaleDateString()}.` : review.status === 'pending' ? 'Portfolio evidence is awaiting independent review.' : 'Portfolio evidence has not been independently reviewed.'}</p><p>{trust.evidence.documented_samples}/{trust.evidence.work_samples} samples include tools, workflow and format. These details are creator provided.</p><p>{history.completed_projects} brand-approved engagements · {history.review_count} completed-project reviews{history.review_count ? ` · ${history.rating_average.toFixed(1)}/5` : ''}.</p></div>
 }
 
-export function CreatorReviews({ creatorId, rating, count, demoReviews = [] }) {
+export function CreatorReviews({ creatorId, rating, count }) {
   const [reviews, setReviews] = useState([])
   useEffect(() => { api(`/creators/${creatorId}/reviews`).then(setReviews).catch(() => {}) }, [creatorId])
-  const illustrative = demoReviews.length > 0
-  const visible = illustrative ? demoReviews : reviews
-  return <section className="creator-reviews container"><div className="creator-reviews-head"><div><span className="eyebrow">{illustrative ? 'ILLUSTRATIVE DEMO FEEDBACK' : 'BRAND FEEDBACK'}</span><h2>Work that speaks for itself.</h2></div><div className="creator-rating">{illustrative ? <span>Fictional examples · not verified client reviews</span> : count ? <><Star size={24} fill="currentColor"/><strong>{rating?.toFixed(1)}</strong><span>{count} review{count === 1 ? '' : 's'} from completed Crevo projects</span></> : <span>No project reviews yet</span>}</div></div>
-    {visible.length ? <div className="review-list">{visible.map((review, index) => <article key={review.id || index} className="review-card"><div className="review-card-top"><strong>{review.brand_name}</strong><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div><small>{review.project_title}{review.created_at ? ` · ${new Date(review.created_at).toLocaleDateString()}` : ' · Demo example'}</small><p>{review.body}</p></article>)}</div> : <p className="muted">Reviews appear here after brands complete projects with this creator.</p>}
+  const visible = reviews
+  return <section className="creator-reviews container"><div className="creator-reviews-head"><div><span className="eyebrow">BRAND FEEDBACK</span><h2>Work that speaks for itself.</h2></div><div className="creator-rating">{count ? <><Star size={24} fill="currentColor"/><strong>{rating?.toFixed(1)}</strong><span>{count} review{count === 1 ? '' : 's'} from completed Crevo projects</span></> : <span>No project reviews yet</span>}</div></div>
+    {visible.length ? <div className="review-list">{visible.map((review, index) => <article key={review.id || index} className="review-card"><div className="review-card-top"><strong>{review.brand_name}</strong><span>{'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}</span></div><small>{review.project_title}{review.created_at ? ` · ${new Date(review.created_at).toLocaleDateString()}` : ''}</small><p>{review.body}</p></article>)}</div> : <p className="muted">Reviews appear here after brands complete projects with this creator.</p>}
   </section>
 }
 

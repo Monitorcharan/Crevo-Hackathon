@@ -1,149 +1,181 @@
-# Crevo
+# Crevo — AI Creator Marketplace
 
-**Live app:** https://crevo-hackathon.onrender.com
+[Live application](https://crevo-hackathon.onrender.com) · [Complete Round 1 and Round 2 workflow](docs/rounds-one-and-two-workflow.md) · [Presentation guide](docs/demo-guide.md)
 
-A React and FastAPI MVP for AI creator discovery and brand collaboration. The landing page uses a live animated CREVO wordmark with layered SVG lettering and custom motion. The app includes creator profiles, AI work portfolios with tools and workflows, structured briefs, skill/tool/content-type discovery, applications, explainable matching, and project messages. Brands can close briefs, decline or accept applications, and mark projects complete.
+Crevo connects AI creators with brands and creative agencies, from discovering relevant work to approving the final delivery. Round 1 provides profiles, AI portfolios, search and structured briefs. Round 2 adds explained recommendations, reviewed shortlist proposals, invitations, scope and licensing agreements, production updates, versioned feedback and delivery checks.
 
-![Crevo landing page](docs/preview.png)
+## What is implemented
 
-[Hackathon demo guide](docs/demo-guide.md) · [Challenge slides](docs/challenge-deck.pptx) · [Data model note](docs/data-model.md) · [Hackathon fit and priorities](docs/hackathon-fit.md)
+### Round 1: discovery and brief definition
 
-The public directory can include eight clearly labeled fictional demo portfolios: four AI-generated concept images and four original SVG concept illustrations. Demo feedback is never counted as a completed-project review; the demo profiles cannot sign in or apply to briefs. The no-sign-in `/demo` route lets visitors edit a sample brief, recalculate transparent rules-based matches, shortlist a creator, and preview an unsent inquiry. This walkthrough writes no account data. Create your own creator and brand accounts to try the full workflow.
+- Creator profiles with specializations, skills, platforms, starting rates and optional social/contact links.
+- AI portfolios documenting actual tools/models, workflow, output format and declared commercial use.
+- Search and filters for category, skill, tool, content type and platform; side-by-side creator comparison.
+- Brand profiles with company identity and logo.
+- Structured briefs covering content, style, format/aspect ratio, tools, deliverables, deadline, revision allowance, budget and usage rights.
+- Optional AI assistance for editable brief drafts and portfolio introductions.
 
-The active marketplace now contains one curated creator and one brand account. Earlier records are retained in a disabled archive at the owner’s request. Public demo galleries, external creator references and sample checkout are removed; `/demo` redirects to discovery. Startup never seeds creators or demo gigs. Private account credentials are kept outside the repository.
+### Round 2: matching through delivery
+
+- Ranked creator recommendations with score breakdowns, portfolio references, strengths and gaps.
+- Auto-shortlist proposals based on stored briefs and creator evidence. The brand can accept, edit or reject them before sending an invitation.
+- Private invitations, creator acceptance/decline, applications and brand selection.
+- Confirmed scope, INR project quote, timeline and licensing snapshot before production.
+- Production updates and private conversations with live updates and a polling fallback.
+- Actual-file delivery checks, numbered versions, feedback tied to a version, revision status and final approval.
+- Public trust summaries separating creator documentation, portfolio review, approved engagement history and completed-project feedback.
+
+Publishing a new brief through the interface starts the shortlist assistant. The assistant proposes **up to five eligible creators**; it does not invent candidates to fill the list.
+
+## Technology
+
+- **Frontend:** React, Vite, React Router, GSAP, Motion and Three.js/React Three Fiber for the optional mascot scene.
+- **Backend:** Python 3.11, FastAPI and Pydantic.
+- **Persistence:** Supabase PostgreSQL, Supabase email/password Auth and Storage; isolated SQLite is available for local development/tests.
+- **Social sign-in:** Firebase Authentication for explicitly configured providers.
+- **AI:** configured Gemini or OpenAI text APIs. Gemini takes priority when both keys are configured.
+- **Hosting:** one Docker web service on Render serving the built frontend and API from the same origin.
+
+## Complete workflow
+
+1. Creator completes a profile and publishes work with tools, workflow, formats and offered rights.
+2. Brand completes its company profile, searches creators and publishes a structured brief.
+3. Brand reviews ranked matches and their supporting evidence, then reviews the assistant's shortlist proposals.
+4. Brand sends an invitation; creator accepts or declines.
+5. Brand selects an application to start the shared project.
+6. Brand proposes scope, INR quote and rights; creator confirms the agreement.
+7. Creator posts progress and uploads a deliverable. Failed technical checks explain what to fix before submission.
+8. Creator submits version 1; brand approves it or requests specific changes.
+9. Creator starts the revision, submits version 2 and records what changed.
+10. Brand approves the latest delivery. Both sides retain the agreed terms, files, versions, feedback and timeline.
+
+Use separate browser profiles for creator and brand sessions. Credentials are not published in this repository. See the [full walkthrough](docs/rounds-one-and-two-workflow.md) for exact screens, buttons and current Cobalt example.
 
 ## Run locally
 
-Requires a supported Node.js LTS release (the container uses Node 24) and Python 3.11+.
+Use Node.js 24 LTS and Python 3.11 to match the production container. Run the following from the repository root in two PowerShell terminals.
 
-In one terminal:
+**Backend**
 
 ```powershell
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install --require-hashes -r requirements-dev.txt
-Copy-Item .env.example .env
-uvicorn main:app --reload
+python -m pip install --require-hashes -r requirements-dev.txt
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+python -m uvicorn main:app --reload
 ```
 
-In a second terminal, from the project root:
+**Frontend**
 
 ```powershell
-Copy-Item .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. The API is at `http://localhost:8000`, with interactive API docs at `/docs`. Local mode creates `backend/crevo.db`. Startup does not seed creators or demo gigs. Create one brand account and one creator account and add portfolio evidence to try the full workflow.
+Open [localhost:5173](http://localhost:5173). FastAPI runs at [localhost:8000](http://localhost:8000), with API documentation at `/docs`. Vite proxies `/api` to the backend.
 
-Workflow: creator profile and AI portfolio → structured brand brief → explained matches → reviewed shortlist → invitation and creator response → selection → scope/license confirmation → production updates → checked delivery → version-specific feedback and revisions → final approval. See the [complete Round 1 and Round 2 workflow](docs/rounds-one-and-two-workflow.md) for the current live walkthrough.
+With no Supabase values, the backend creates `backend/crevo.db`. Local startup is empty: register a creator and brand, add real portfolio evidence and publish a brief. Profile/logo uploads require configured Supabase Storage; local project delivery files are supported.
 
-## Supabase mode
+To run isolated fictional development fixtures, use the [local test scenario](docs/round-two-demo.md). It uses a separate SQLite database and technical video fixtures. It does not seed the live Supabase marketplace.
 
-1. Create a Supabase project and run [`backend/schema.sql`](backend/schema.sql) in its SQL editor.
-2. Copy `backend/.env.example` to `backend/.env` and set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY`. Legacy anon and service-role variable names remain supported for existing projects.
-3. Restart FastAPI. `/api/health` will report `database: supabase`.
-4. Add creator accounts or data in Supabase. For a hackathon walkthrough, run `python backend/seed_demo.py` from the project root to install eight clearly labeled fictional portfolios. It preserves real creator accounts and any legacy demo referenced by a project or application. Re-running it refreshes only the demo work samples. Run this again after deploying new demo art; a code deploy alone does not add rows to Supabase.
-5. In Supabase Auth URL configuration, set your app URL as the site URL. If email confirmation is enabled, users must confirm their email before logging in.
+## Configure the backend
 
-The secret key stays in the backend only. All data mutations and reads go through FastAPI, which checks the user's role and ownership. The SQL enables RLS, revokes direct table access from browser roles, and explicitly grants the service role Data API access. Profile photo uploads use the public `portfolios` bucket created by the schema. Local mode has no storage substitute and displays an explicit upload error.
+Start with [backend/.env.example](backend/.env.example). All server credentials belong in `backend/.env` locally or private Render environment settings.
 
-## Brand registration and profile
+### Supabase
 
-Brand registration asks for the account holder's name and a separate brand or company name. Google sign-up collects the company name before opening the provider popup. Brands can edit both names and upload a JPG, PNG, or WebP logo under 5 MB at `/brand/profile`. The company name and logo appear on the brand dashboard and on briefs that creators view. The `public.users` data model stores `company_name` (text) and `logo_url` (text); the idempotent `backend/schema.sql` adds these columns to existing Supabase projects. Logo files use a brand-specific path in the existing public `portfolios` Storage bucket. Local SQLite supports name editing; logo uploads require Supabase Storage.
+1. Create a project and apply [backend/schema.sql](backend/schema.sql) in its SQL editor. It includes additive updates for existing installations.
+2. Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY` together. Legacy anon/service-role variable names remain supported.
+3. Configure the Auth Site URL and allowed confirmation redirect URLs for the actual app origin and `/login`.
+4. Keep email confirmation enabled and configure a verified SMTP sender before broad public registration.
+5. Restart the backend and check `/api/health` reports `database: supabase`.
 
-## Firebase social sign-in
+FastAPI enforces roles and ownership. Tables have RLS enabled and direct browser access revoked; server credentials stay on the backend. Public profile images use the `portfolios` bucket. Checked delivery files use the private `crevo-deliveries` bucket and membership-protected API downloads.
 
-Crevo supports Google, Apple, and Facebook via Firebase Authentication while retaining Supabase email/password sign-in and Supabase project data. Social buttons appear only for providers listed in `FIREBASE_AUTH_PROVIDERS` after they are configured. Existing email users sign in normally and use **Connect a sign-in method** on the dashboard before using a social button. A social account with an existing Crevo email is not linked automatically.
+**Current operational limit:** reliable public confirmation emails still require an email provider. Existing account sign-in and the engagement journey were verified live. See [Auth troubleshooting](docs/auth-troubleshooting.md).
 
-1. Create or select a Firebase project and register a Web app. Enable Google in Firebase Authentication. In **Authentication → Settings → Authorized domains**, add `crevo-hackathon.onrender.com` (and `localhost` for local development). The Firebase CLI's Auth provider deployment does not add these domains; confirm them in the console or the live Auth project config before testing the popup.
-2. In `backend/.env` locally and the Render service environment publicly, set `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, and `FIREBASE_APP_ID` from the Web app config. These are public web configuration values; the Supabase secret remains server only.
-3. Set `FIREBASE_AUTH_PROVIDERS=google` after Google is enabled and tested. Add `facebook` only after configuring a Meta developer app ID, app secret, and Firebase OAuth redirect URI in Meta and Firebase. Add `apple` only after configuring a Sign in with Apple service ID, team ID, key ID, and private key in Apple Developer and Firebase. Keep unconfigured providers out of the list.
-4. Run the idempotent `backend/schema.sql` migration for existing Supabase projects to add `public.users.firebase_uid`. Deploy the app, then test new creator and brand sign-in and linking with real accounts.
+### Optional AI assistance
 
-Firebase client ID tokens are verified on the server against Google's signing certificates, issuer, audience, expiry, and provider before an app user is loaded. A new Firebase user gets a matching Supabase Auth record because Crevo's existing project tables reference `auth.users`. Firebase sign-in requires a verified email from the identity provider. Google/Facebook/Apple provider setup and end-to-end OAuth testing require the corresponding external developer accounts; the UI intentionally hides providers that are not enabled.
+Set `GEMINI_API_KEY` or `OPENAI_API_KEY`; model overrides are `GEMINI_MODEL` and `OPENAI_MODEL`. Review provider data-use terms before submitting confidential campaign details.
 
-## Contact, reviews, and Crevo Verification
+Rules remain available when AI is unconfigured or unavailable. Brief drafting reports an explicit configuration error without a provider. Template introductions are labeled; no simulated AI response is presented as a model result.
 
-- A brand can open a creator profile and choose **Get a quote** or **Ask a question**. The request starts a private Crevo inbox thread; only that brand and creator can read or reply. The inbox refreshes messages every 10 seconds while open.
-- Creators can opt in to sharing a contact email with signed-in brands by saving a **Contact email for signed-in brands** on their profile. The Email creator action opens the visitor's email app with the creator address and request details filled in. Crevo does not send, track, or store external emails.
-- Brands can leave one 1–5 star review per completed Crevo project. Reviews appear publicly with the brand name and project title. Reviews cannot be posted before completion or by another account.
-- A creator with at least one portfolio item can submit a public work or workflow link and a statement for verification. A profile shows **Crevo Verified** only after a configured administrator reviews and approves the request. It means submitted portfolio evidence was reviewed, not that every tool claim or outcome is guaranteed. Pending and rejected requests never show the badge.
-- Set `CREVO_ADMIN_USER_IDS` in the backend or Render environment to a comma-separated list of existing account UUIDs permitted to approve requests. Hosted administrators must authenticate with a verified email; registering an email address never grants administrative access. Those accounts see **Verifications** in navigation and can review requests at `/admin/verifications`. Leave this unset to disable approvals.
-- Discovery and brief creation now include 26 creative categories, including AI filmmaking, animation, 3D/CGI, generative art, product visualization, voice, copywriting, and VFX.
-- All 26 categories have their own visual cards at `/categories`, linked from the glass navbar. A card opens discovery with that category selected. The current portfolio uses original Cobalt and Citrus image concepts with documented provenance; no fictional feedback is presented.
+### Optional social sign-in and review administration
 
-The idempotent `backend/schema.sql` adds contact threads/messages, completed-project reviews, verification requests, and the creator opt-in email/approval fields. Apply it to an existing Supabase project before deploying this version. All new tables have RLS enabled and direct browser roles revoked; FastAPI enforces record ownership and uses its server-side Supabase client.
+Configure Firebase project/web settings using the `FIREBASE_*` variables in the backend template. Enable only providers actually configured and tested. Add the deployed domain to Firebase Auth authorized domains. Existing email accounts explicitly link a social identity from their dashboard.
 
-## AI behavior
+`CREVO_ADMIN_USER_IDS` lists existing account UUIDs allowed to review portfolio evidence. Hosted administrators also require a verified identity. Email registration alone never grants administrator access. Decisions require written review notes; the badge describes review of submitted portfolio evidence.
 
-Set `GEMINI_API_KEY` or `OPENAI_API_KEY` in `backend/.env` to enable real portfolio introduction generation, AI assisted structured brief drafting, and AI assisted match assessment. Gemini takes priority when both keys are present. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`; `OPENAI_MODEL` defaults to `gpt-4.1-mini`. These features use the providers' official text generation APIs. Match ranking gives 70% weight to normalized category, skill, tool, format, content, style, rights, trust and budget rules and 30% to an AI assessment of the top eight candidates. Rights and evidence caps apply after the AI contribution. If the AI service is unavailable, the rules ranking remains available. Google says free-tier Gemini content can be used to improve its products, so avoid putting confidential client details into AI drafts on the free tier. Without an AI API key, portfolio introductions are labeled template drafts, brief drafting returns an explicit configuration error, and match ranking is labeled weighted rules. No simulated AI response is presented as AI generated.
+## Matching, trust and licensing
 
-Creators can add Instagram, Facebook, X, YouTube, and Reddit profile URLs; their public profile shows clickable platform logos for saved accounts. Creators can add work samples with a media URL, AI tools/models, production workflow, output format, and commercial-use terms. Individual tool and work claims remain **creator reported**. Crevo Verification separately records administrator review of submitted portfolio evidence. Briefs include content type, style, format/aspect ratio and commercial-use requirements. Public portfolio media must be accessible to visitors. Supabase Storage handles profile images and private checked project deliveries, with project membership enforced on downloads.
+Rules use specialization, skills, tools, aspect ratio, content type, creative style, usage rights, trust and budget. Applicable signals are normalized to 100. Successful AI assessment contributes 30% and rules 70%; rights and evidence caps are applied afterward. AI failure retains the rules ranking.
+
+- Scores at least 75 are strong, 50–74 possible, and below 50 weak.
+- Declared rights conflicts cap fit at 49. Unknown rights or absent portfolio evidence cap it at 74.
+- Structured rights compare usage types, duration, territory and exclusivity. Uncovered rights block selection.
+- Trust contributes up to five rule points: three for portfolio review, one for approved engagement history and one for qualifying positive completed-project feedback.
+- Documentation completeness is visible but cannot grant an independent-review badge.
+
+A fit score is not measured recommendation accuracy. Licensing is checked against declared terms, not independently certified copyright. See [trust signals](docs/trust-signals.md) and [the data model](docs/data-model.md).
+
+## Delivery checks and limits
+
+The server inspects actual PNG, JPEG, WebP and MP4 bytes, up to 50 MB, for content type, requested file format, aspect ratio and video duration. Duration tolerance is ±0.5 seconds. Failed checks produce corrective guidance and no submission token. Passed checks, file hashes and metadata stay attached to the version.
+
+Visual quality, exact colors/logos, arbitrary requirements in prose, originality and underlying tool/asset rights require human review. Style matching uses textual evidence; version comparison uses hashes and metadata rather than visual differences. Unsupported deliverable types use HTTPS links with explicit manual review.
+
+The brief budget is USD; the project quote is separately agreed in INR. Payment processing, escrow, automatic currency conversion and revision billing are outside the current interface.
 
 ## Verify
 
 ```powershell
-npm run build
 npm test
+npm run build
 cd backend
-pytest -q
+python -m pytest -q
 ```
 
-The tests cover Firebase identity verification and account linking, account creation, profile editing, AI portfolio metadata, structured briefs, discovery, applications, project messaging, contact-thread privacy, completed-project reviews, and administrator-approved verification. It uses an isolated local database.
+Latest verification on 24 October 2026: **52 backend tests, 8 frontend tests and the production build passed**. A temporary live journey passed **19 checks**, including concurrent dashboard/inbox reads, AI-assisted matching, shortlist proposals, invitation response, agreed rights, failed and successful uploads, revision, approval, trust-history updates and private downloads. Temporary records/files were removed and the existing engagement state was preserved.
 
-**Validation status (24 October 2026):** 52 backend tests and 8 frontend tests pass; the production build passes. A temporary live engagement passed existing-account login, AI-assisted matching, actual shortlist proposals, invitation notification and response, selection, scope/license confirmation, production updates, rejection of a wrong-ratio upload, checked delivery, revision, approval and private file access. Only that run's temporary records and files were removed; the existing Cobalt engagement state was preserved. The current creator has complete matching essentials and pending independent verification. Public email signup still needs an email provider for reliable confirmation delivery. See the [full guide](docs/rounds-one-and-two-workflow.md) for the exact journey and limits.
+Dependency inputs live in `backend/requirements.in` and `requirements-dev.in`; their `.txt` files are hash-locked. Regenerate a reviewed runtime lock with `uv pip compile backend/requirements.in --universal --python-version 3.11 --generate-hashes -o backend/requirements.txt` and the equivalent command for the development input.
 
-## Round 2: matching through delivery
+Tests use isolated SQLite data and do not call paid AI services. Actual MP4 fixtures cover ratio/duration failures. Connection regressions cover terminated upstream connections, bounded read retries, write replay prevention and session preservation.
 
-The Round 2 layer extends the existing marketplace with portfolio-aware ranked matches and visible gaps; structured licensing comparisons; saved shortlists and audited assistant proposals; creator invitations and responses; scope/license confirmation; and versioned deliveries, revision states and a shared activity timeline. Publishing a new brief automatically proposes suitable creators for brand review. Conflicting rights block selection when structured requirements are present. The assistant uses stored platform records and the configured matching method, with transparent rules when AI is unavailable.
+## Deploy to Render
 
-Uploads inspect actual PNG/JPEG/WebP/MP4 bytes for file format, aspect ratio, content type and requested duration before submission. Passed checks and file hashes stay attached to each version. Agreed rights stay attached to the project. Other deliverable types can use external links with clearly labeled manual review.
+1. Connect this repository's branch to the Docker service described in [render.yaml](render.yaml).
+2. Enter Supabase credentials and any enabled AI/Firebase settings as private environment values. The Blueprint requires Supabase for hosted operation.
+3. Wait until Render reports the deployment is live, then check `/api/health`, account sign-in and the end-to-end workflow.
+4. Configure Supabase/Firebase origins for the deployed HTTPS address.
 
-[Current live Round 1 and Round 2 walkthrough](docs/rounds-one-and-two-workflow.md). For isolated development fixtures, see the historical [local Round 2 setup](docs/round-two-demo.md). Apply the additive `backend/schema.sql` changes before deploying another installation. The existing Render service publishes this repository; `/api/health` identifies this release as `round-2`.
+The image uses digest-pinned base images, hash-locked Python runtime dependencies and a non-root user. Tests, seeding scripts, local exports and credentials are excluded from the production context. Render's container filesystem is not used for hosted persistent data.
 
-## Current scope
+Supabase requests use HTTP/1.1 with verified TLS, bounded connection pooling and one retry for reads. Writes are not automatically repeated after uncertain failures. Temporary upstream outages return a useful 503 response rather than an unexplained 500 or invalid-session response.
 
-- Pre-hire inbox and project conversations receive live server-sent updates while open, with a 10-second refresh fallback. Notification read status is saved on the current device.
-- Creators can publish, edit, and remove public gigs with a cover image, offer details, tools, output format, and commercial-use terms. Brands can view them from creator profiles and contact the creator. Payments and orders are outside this MVP.
-- A project begins when a brand accepts an application. The project workspace supports agreed scope and rights, checked file delivery, version-specific feedback, revisions, and final approval. The live interface has no payment checkout or actual payment processing.
-- Local auth is for development. Use Supabase Auth and a strong server secret for shared deployments.
-- The animated hero and logo respect reduced-motion settings and do not require WebGL.
-- The lemon-green Crevo mascot from the owner's `crevo_avatar` project appears on the landing page, Categories page, and sign-in artwork. Its 3D scene is code split, pauses off-screen, respects reduced motion, and uses the supplied CSS fallback when WebGL is unavailable.
+## Repository structure
 
+```text
+backend/             API, workflow rules, schema, locked dependencies and tests
+backend/fixtures/    Technical MP4 files used by tests
+src/                 React screens, components, styles and frontend tests
+public/category-photos/  Category artwork with in-app attribution
+public/portfolio/    Original Cobalt/Citrus concepts, studio marks and provenance
+docs/                Workflow, architecture, security and presentation notes
+Dockerfile           Frontend build and non-root FastAPI runtime
+render.yaml          Existing single-service deployment definition
+```
 
-## Public deployment
+Private `.env` files, databases, operator backups, caches, QA output and presentation/video working folders are excluded from Git. Tests, lockfiles, source assets and environment templates are committed. Retired demo galleries, unused creator portraits and obsolete seeding entry points have been removed.
 
-The repository includes a single-service Render Docker deployment. The container builds the Vite frontend and serves it with FastAPI from one public URL. Supabase remains the persistent database, Auth service, profile image store and private delivery store; Render's free container filesystem is not used for saved data.
+## Documentation and current data
 
-1. Push this folder as a public GitHub repository. Local `.env` files, build output, dependencies, and the earlier `marketplace-prototype/` are excluded from Git and Docker.
-2. Import `render.yaml` as a Render Blueprint. Choose the Free web service plan. Enter `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` as private environment values. Enter `GEMINI_API_KEY` or `OPENAI_API_KEY` to enable actual AI portfolio introductions, brief drafting, and AI match assessment. Never commit or paste these values into a public page.
-3. Once Render reports the service is live, set the Supabase Auth Site URL to the public `https://...onrender.com` URL. Add `http://localhost:5173/**` as an additional redirect URL if you still use local development.
-4. Check `/api/health` for `database: supabase` and `ai_enabled: true` (when the AI key is set). Complete a real creator and brand signup, confirm emails, and walk through a brief, application, acceptance, and project message.
+- [Documentation index](docs/README.md)
+- [Complete Round 1 and Round 2 workflow](docs/rounds-one-and-two-workflow.md)
+- [Presentation guide](docs/demo-guide.md)
+- [Project delivery and revisions](docs/project-workflow.md)
+- [Trust signals and connection recovery](docs/trust-signals.md)
+- [Security hardening](docs/security-hardening.md)
+- [Portfolio provenance](docs/portfolio-provenance.md)
 
-Render's Free web service spins down after idle time, so the first visit may take about a minute. Supabase's default email service is intended for testing; configure SMTP before broad public use.
-
-## Creator presentation
-
-The live marketplace shows the curated registered creator with original Cobalt and Citrus concepts, actual tool/workflow notes and provenance. Public demo galleries, stock portrait creator cards and external inspiration profiles have been retired. Earlier records remain disabled or archived and are excluded from discovery and matching. The creator uses a studio mark; no unrelated person's identity is represented as a member.
-
-
-## Security hardening (24 October 2026)
-
-- Local session signing has no known fallback. An unset local key uses a process-random key for private development; shared local deployments require an explicit strong key. Delivery signing uses an independent purpose-derived key, or `ASSET_SIGNING_SECRET`, and never takes a hosted delivery key from `LOCAL_JWT_SECRET`.
-- Public creator and nested gig responses omit Auth owner UUIDs and contact addresses. Only signed-in brands can request an opted-in email through a rate-limited endpoint.
-- Administrator access requires a server-configured account UUID and a verified hosted identity. Legacy email allowlists are ignored.
-- Live shared demo accounts are banned, their passwords rotated, and sessions revoked. Interactive demos are local only and use an operator-chosen private password; `/demo` redirects to the active directory.
-- Auth quotas apply per IP and account; paid AI routes share per-user and global budgets. Supabase counters are atomic and persist across restarts. Requests fail closed if quota storage is unavailable.
-- Production runs as UID/GID 10001, uses digest-pinned images and hash-locked runtime dependencies, and excludes pytest, tests, and seeding scripts. Development dependencies are separately locked.
-
-Apply the additive quota statements in `backend/schema.sql` when upgrading another installation. Regenerate locks using `uv pip compile backend/requirements.in --universal --python-version 3.11 --generate-hashes -o backend/requirements.txt` and the equivalent command for `requirements-dev.in`. Review and refresh pinned image digests with security updates. See `docs/security-hardening.md` for limits and verification.
-
-## Curated marketplace
-
-See [trust signals and connection recovery](docs/trust-signals.md) for the public evidence panel, review requirements, matching inputs and the fix for intermittent Supabase connection errors.
-
-The creator profile presents content fit, skills and tools, portfolio evidence, declared commercial-use rights, and trust signals in an aligned responsive layout. Original Cobalt and Citrus concepts include actual generation tools, workflow notes, dimensions and provenance. The brand brief requests matching content and rights. Portfolio review remains pending; no client reviews or verification badges are invented. See `docs/curated-marketplace.json` for the content and `docs/portfolio-provenance.md` for generation records.
-
-Archived profiles and briefs remain stored but are excluded by the application’s shared data-access layer, including direct URLs, gigs, public portfolios and matching. Disabled users cannot log in, refresh or use existing sessions. Supabase Auth also bans the retired identities; their sessions expire immediately. New public registrations remain available.
+The live marketplace currently uses one curated creator and one brand. Earlier records remain disabled/archived at the owner's request. Cobalt and Citrus are original independent concepts with documented tools and workflow; no commissioned campaign, client review or independent approval is invented. `/demo` redirects to discovery, and startup never seeds live marketplace records.

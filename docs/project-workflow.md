@@ -1,36 +1,34 @@
-# Project delivery and payment demo
+# Project workflow: agreement to final delivery
 
-## What works
+Open the shared engagement from either participant's dashboard. Use separate brand and creator browser sessions.
 
-Open an accepted engagement from the dashboard as either participant.
+## Agreement
 
-1. The brand proposes a separate INR amount and scope, including usage rights, deadlines and revisions.
-2. The creator accepts the proposal. Accepted terms cannot be edited.
-3. The brand opens sample checkout, chooses UPI/Card/Netbanking and simulates success, failure or cancellation. Failed and cancelled attempts can be retried. A successful simulation closes the demo checkout.
-4. The creator submits an HTTPS delivery link with production and handoff notes.
-5. The brand requests changes with feedback. The creator submits a new numbered version; the prior version stays visible.
-6. The brand approves the latest version, completing the project and enabling the existing review flow.
+1. The brand proposes an INR amount, scope, deadline/revision expectations and structured usage rights.
+2. Proposed rights must cover the brief's required usage, territory, duration and exclusivity.
+3. The creator chooses **Confirm scope & license**. The agreement and licensing snapshot stay attached to the project; accepted terms cannot be silently edited.
 
-Payment and delivery are independent: simulated payment is not a requirement for final approval. Existing completed projects stay completed.
+The brief's USD budget and project's INR quote are distinct. There is no automatic conversion or active payment checkout.
 
-## Payment limits
+## Production and delivery
 
-This is a Crevo-owned Razorpay-style checkout simulation, not Razorpay Test Mode or a real integration. It requires no payment credentials, does not load Razorpay, collects no payment details, and never charges, escrows, refunds or pays out money. Every receipt and status is explicitly marked demo. It cannot be used as evidence of payment. A production gateway still needs merchant onboarding, order creation, signature validation and authenticated webhooks.
+1. The creator posts production updates and discusses questions in the private conversation.
+2. The creator uploads the actual PNG/JPEG/WebP/MP4 file. The server checks bytes, format, ratio and requested duration; a failed file receives corrective guidance before it becomes a submitted version.
+3. A successful check creates a short-lived, project-bound submission token. The creator adds a title and production/handoff notes and submits version 1.
+4. The brand reviews/downloads the private file, then requests changes or approves the latest version.
 
-Original brief budgets are USD. They are preserved; INR project terms are independently agreed rather than converted or relabeled.
+Other deliverable types can use an HTTPS link with explicit manual review. Technical checks do not judge visual quality, originality or the legal validity of underlying rights.
 
-## Data model and deployment
+## Revisions
 
-`projects.workflow` contains the proposed/accepted terms, numbered delivery history, current simulated payment and payment-attempt history. `projects.workflow_revision` increments for each mutation. The server requires the expected revision and updates the workflow and completion status in one conditional write, preventing concurrent requests from overwriting history. Identity and role come from the authenticated participant, not request fields. Delivery versions and attempts are capped at 100 per project.
+Brand feedback belongs to a particular submitted version. The creator chooses **Start revision**, uploads the revised work and describes changes. Revision states are requested, in progress, submitted and approved. Version 2 retains the relationship to version 1 feedback. File comparison reports changed hashes, dimensions, format or duration; it does not claim to detect visual edits.
 
-The additive columns are included in `backend/schema.sql` and have been applied to the connected crevo Supabase project. Existing project RLS and backend-only grants apply. Local SQLite receives equivalent columns during normal startup. Restart the backend after updating code. No new environment variables or payment keys are needed.
+Only the latest version awaiting review can be approved. Approval completes the project, preserves all history and blocks additional submissions. A genuine brand review becomes available after completion.
 
-## Demo presentation
+## Consistency and privacy
 
-Use separate brand and creator sessions. Show revision 1, request a change, submit revision 2, and approve it. Explain that payment is a UI simulation and that delivery approval is a real persisted workflow. Do not describe it as paid escrow or a settled creator payout.
+Every action supplies the expected `workflow_revision`. A conditional update increments it and prevents stale clients from overwriting newer state. Roles and membership come from the authenticated account. Uploaded submission tokens are purpose-, project- and audience-bound and expire after 24 hours; saved deliveries remain downloadable afterward.
 
-Automated backend tests cover the delivery, revision and production-update flow; provider transactions were not run.
+Transient upstream reads retry once. Writes are not automatically replayed after uncertain failures; refresh the workspace to check the saved state before retrying an action. See [connection recovery](trust-signals.md).
 
-## Database advisory
-
-The existing backend-only tables have RLS enabled without direct-client policies, consistent with service-role access through authenticated API routes. The database advisor also reports the existing disabled [leaked-password protection setting](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection); this change does not modify account security settings.
+For exact buttons and example files, use the [complete walkthrough](rounds-one-and-two-workflow.md).

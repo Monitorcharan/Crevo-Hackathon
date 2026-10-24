@@ -1,67 +1,31 @@
-# Historical local walkthrough
+# Isolated local test scenario
 
-For the current live site, use the [complete Round 1 and Round 2 workflow](rounds-one-and-two-workflow.md). This page documents an older isolated local scenario.
+This optional launcher creates fictional records in an explicitly local SQLite database. It never seeds the hosted marketplace. Use the [complete workflow](rounds-one-and-two-workflow.md) for the current live creator and brand.
 
-The live site now uses the curated creator/brand pair and original portfolio in `curated-marketplace.json`. Public demos and their media have been retired. The older local scenario below is retained only as development reference and may recreate local fixture media when explicitly run.
+## Launch
 
-# Crevo Round 2 walkthrough
-
-Round 2 extends the original React/FastAPI marketplace. The new flow uses stored briefs, registered creators, AI portfolios, contact threads, applications, and projects. It does not use a separate hardcoded matching screen.
-
-## Existing accounts and local demonstration
-
-Older registered members use the same Round 2 features. Their dashboard identifies missing categories, skills, portfolio evidence, workflow metadata, and usage rights. Real members supply their own claims.
-
-Hosted shared sign-in was retired during security hardening. Its records are retained, but those identities cannot sign in. Use your own creator and brand accounts on the live site, or the isolated local scenario below. The public `/demo` route is read-only.
-
-## Start the isolated local demo
-
-From the repository root, in two terminals:
+Install the backend development requirements and frontend dependencies from the root README. From the repository root:
 
 ```powershell
 python backend/run_round_two_local.py
 ```
 
+In another terminal:
+
 ```powershell
 npm run dev
 ```
 
-Open `http://localhost:5173/login`. The launcher asks for a private local password. Log in with `brand.demo.crevo@example.com` and `creator.demo.crevo@example.com` using that password in separate browser sessions. No credentials are embedded in the frontend. Data is saved in `tmp/round2-preview.db`, separately from the original SQLite database and hosted Supabase project. To start a fresh scenario, pass a new file: `python backend/run_round_two_local.py --db tmp/round2-fresh.db`.
+The launcher asks for an operator-chosen password of at least 12 characters. The brand is `brand.demo.crevo@example.com` and primary creator is `creator.demo.crevo@example.com`. Use separate browser profiles. No password is embedded in the frontend or repository.
 
-All seeded identities and portfolio claims are fictional, clearly described shared demo accounts. Their MP4 samples are solid-color technical placeholders, not creative campaigns. Replace these with your team's actual creative exports for the presentation. File dimensions and duration checks run on the actual uploaded bytes either way.
+Records use `tmp/round2-preview.db`; files use `public/round-two-samples/` and local delivery storage. To start a fresh scenario, pass `--db tmp/round2-fresh.db`. Add `--ai` only when you intend to call the configured real AI provider; the default is transparent rules.
 
-Rules matching works without an AI service. Add `--ai` to the launcher to enable the configured Gemini/OpenAI assessment. Actual AI results are labeled with the provider-assisted method; errors retain the rules ranking. No generated response is simulated.
+## What the fixtures exercise
 
-## Judge journey
+The scenario supplies four fictional creators: suitable video profiles, a limited-territory offer and a sparse profile. The prepared Sola Coffee brief requests a 15-second vertical MP4, relevant tools and worldwide social/web rights for 12 months.
 
-1. **Brand → campaign.** Open “Sola Coffee / the first sip.” It requests a 15-second 9:16 video, Runway evidence, and worldwide organic/paid social and website use for 12 months. Alternatively publish a new brief: it automatically starts the shortlist assistant and opens its proposals.
-2. **Matching.** Inspect the ranked cards, component scores, portfolio references, and weaknesses. Maya and Arjun have compatible declared offers. Nia's India-only, three-month offer conflicts with the brief. Sol's sparse profile has weak evidence. Unknown rights are not treated as compatible.
-3. **Assistant.** On the seeded brief, choose **Build auto-shortlist**. Accept the proposals, keep/remove individual creators, or reject the set. Check the durable activity history, including removed proposals. The assistant only proposes candidates with scores of at least 50 and no declared rights conflict. An empty result explains that more suitable evidence or refined requirements are needed.
-4. **Contact.** Invite Maya with an editable message. This creates a private inbox conversation and a creator notification. Generating or accepting proposals alone does not send invitations.
-5. **Creator response.** Open `/login`, sign in with the local creator account, open the invitation notification, then accept or decline from the brief. Accepting creates an application for the brand to review. The profile editor includes the creator's structured offered rights.
-6. **Selection and agreement.** Switch to the brand, review the application, and select Maya. A creator with conflicting or undeclared rights cannot be selected for a brief with structured requirements. The project retains the selected brief and offered-rights snapshot. Propose the INR quote and scope, review the license, then switch to the creator and confirm the scope and license. Production starts only after acceptance. The quote explicitly remains separate from the original USD budget; the payment walkthrough is optional and simulated.
-7. **Fail a delivery check.** Upload `public/round-two-samples/round2-landscape.mp4`. The server inspects the file and flags the 16:9 versus 9:16 mismatch. It returns a fix and no submission token. The brand's version history remains unchanged.
-8. **Submit version 1.** Upload `public/round-two-samples/round2-vertical.mp4`, or your own 15-second 9:16 MP4, add a title and handoff notes, and submit. File type, aspect ratio, and duration (±0.5s) are checked before submission. The saved version includes the results and file hash.
-9. **Revise.** As the brand, request specific changes on version 1. As the creator, choose **Start revision**, upload the revised file, describe the changes, and submit version 2. The previous feedback, actor, timestamp, and relationship between versions stay visible.
-10. **Deliver.** As the brand, approve the latest version. The project completes, additional submissions are blocked, and both sides retain the agreed license, scope, version history, file checks, and activity timeline. A completed-project review is then available.
+Follow matching → shortlist review → invitation/response → application selection → agreement → progress → checked upload → revision → approval. See the [project workflow](project-workflow.md) for shared behavior.
 
-## Production updates and version comparison
+The generated `public/round-two-samples/round2-landscape.mp4` must fail the 9:16 ratio requirement; `round2-vertical.mp4` has the required format. These are solid-color technical fixtures, not creative portfolio films or commissioned campaigns. A local fixture's claims and feedback must not be presented as real production evidence.
 
-After the scope is accepted, the creator can post short progress updates; the brand sees them in the workspace's **Progress updates** panel. When a revised version is submitted, the server compares its inspected file metadata with the previous version and lists what changed (new file, dimensions, format, duration). This is a metadata comparison, not a visual diff.
-
-## Existing hosted project
-
-Apply the additive statements in `backend/schema.sql` before deploying this code to the existing Supabase-backed service. The schema adds structured rights, tools, duration, and shortlist records and updates the transactional selection function. The new table enables RLS, revokes direct browser access, and grants access only to the backend service role, consistent with the original architecture. Existing records remain intact. The existing Render service serves the deployed app; `/api/health` identifies the Round 2 release.
-
-Delivery files use the private Supabase `crevo-deliveries` Storage bucket created by the schema. In local mode they are stored beside the selected database in `deliveries/`. Both storage modes require project membership for downloads through FastAPI; delivery files do not receive public Storage links. Uploaded assets are checked on the server, signed for the project, and expire for submission after 24 hours. Saved deliveries remain downloadable afterward.
-
-## Verification
-
-```powershell
-npm run build
-python -m pytest backend -q
-```
-
-The suite covers the original account/marketplace features plus portfolio ranking, rights conflicts and unknowns, real MP4 dimensions/duration, shortlist decisions, invitations, authorization, agreement acceptance, failed uploads, checked versions, revision lineage, concurrency conflicts, final approval, and file access. On this Windows sandbox, API tests need loopback access for FastAPI TestClient's event loop.
-
-The delivery check supports PNG, JPEG, WebP and MP4 up to 50 MB. It checks technical metadata, not visual quality, underlying model licenses, originality, or legal validity. License comparisons use explicitly declared terms; creator confirmation is retained in the project. Country names must match (case-insensitive); “Worldwide” is the broad grant. Portfolio style matching uses textual evidence rather than visual embedding analysis.
+The original MP4s in `backend/fixtures/` are committed because automated tests inspect their actual dimensions and duration. Generated copies, SQLite files, credentials and delivery files are excluded from Git. Public `/demo` redirects to discovery; no hosted demo account is enabled by this launcher.

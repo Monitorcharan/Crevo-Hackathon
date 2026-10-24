@@ -13,6 +13,15 @@ backend/conftest.py
 backend/seed_*.py
 backend/run_round_two_local.py
 backend/prepare_round_two_demo.py
+docs
+.pytest_cache
+**/__pycache__
+**/.pytest_cache
+**/.env.*
+*.pem
+*.key
+*service-account*.json
+*serviceAccount*.json
 output
 marketplace-prototype
 .runtime-check
@@ -23,3 +32,4 @@ tmp
 .deck-build
 deliverables
 demo_production
+public/round-two-samples

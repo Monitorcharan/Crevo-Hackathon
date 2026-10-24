@@ -1,16 +1,41 @@
+# Environment files and credentials. Commit templates only.
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+*service-account*.json
+*serviceAccount*.json
+
+# Dependencies and generated builds.
 node_modules/
 dist/
-.env
-.env.local
-backend/.env
-backend/__pycache__/
-backend/*.db
-backend/deliveries/
-tmp/round2-*.db
-tmp/deliveries/
-tmp/private-account-reset/
-backend/.venv/
-backend/.pytest_cache/
-marketplace-prototype/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local databases, uploaded files and operator snapshots.
+*.db
+*.db-shm
+*.db-wal
+/backend/deliveries/
+/public/round-two-samples/
+/tmp/
+
+# Local exports, QA evidence and presentation/video working folders.
+/output/
+/deliverables/
+/.deck-build/
+/demo_production/
+/marketplace-prototype/
 .runtime-check
 *.log
+.DS_Store
+Thumbs.db

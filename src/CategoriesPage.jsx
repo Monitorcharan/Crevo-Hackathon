@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { ArrowUpRight, Aperture, AudioLines, BookOpenText, Box, Brush, Camera, Clapperboard, Code2, Film, Globe2, Heart, Instagram, Layers3, Linkedin, Megaphone, Mic2, MonitorPlay, Package, Palette, Pause, PenTool, Plane, Play, ScanFace, Search, Shirt, Sparkles, Utensils, Video, WandSparkles, X, Youtube } from 'lucide-react'
+import { ArrowUpRight, Aperture, AudioLines, BookOpenText, Box, Brush, Camera, Clapperboard, Code2, Film, Globe2, Heart, Layers3, Megaphone, Mic2, MonitorPlay, Package, Palette, Pause, PenTool, Plane, Play, ScanFace, Search, Shirt, Sparkles, Utensils, Video, WandSparkles, X } from 'lucide-react'
 import { briefCategories } from './categories.js'
 import categoryPhotos from './categoryPhotos.json'
-import { editorialCreators } from './editorialCreators.js'
-import editorialImages from './editorialImages.json'
 import CrevoCompanion from './CrevoCompanion.jsx'
 
 gsap.registerPlugin(ScrollTrigger)
@@ -97,39 +95,10 @@ function CategoryCard({ name, duplicate = false }) {
   </Link>
 }
 
-export function CreatorInspiration({ term = '', category = 'All', limit, names }) {
-  const people = editorialCreators.filter(person => (!names || names.includes(person.name)) && (category === 'All' || person.category === category) && (!term || `${person.category} ${person.name} ${person.craft}`.toLowerCase().includes(term.toLowerCase()))).slice(0, limit || undefined)
-  if (!people.length) return null
-  const socialLinks = [
-    ['website', Globe2, 'Official work'], ['instagram', Instagram, 'Instagram'],
-    ['youtube', Youtube, 'YouTube'], ['linkedin', Linkedin, 'LinkedIn'],
-    ['x', null, 'X'],
-  ]
-  return <section className="creator-inspiration" id="creator-inspiration" aria-label="Real-world creator inspiration">
-    <div className="creator-inspiration-head"><div><span className="eyebrow">REAL PEOPLE / PUBLIC WORK</span><h2>Creators worth <em>knowing.</em></h2></div><p>{people.length} public {people.length === 1 ? 'profile' : 'profiles'} across the selected categories. These independent creators have not joined Crevo; their public work and channels are linked for research, not booking.</p></div>
-    <div className="creator-inspiration-grid">{people.map((person, index) => <article className="creator-inspiration-card" key={person.category}>
-      <span className="creator-inspiration-number">{String(briefCategories.indexOf(person.category) + 1).padStart(2, '0')} / {person.category.toUpperCase()}</span>
-      <Link className="creator-inspiration-photo" to={`/creators/public/${encodeURIComponent(person.name)}`} aria-label={`View public profile for ${person.name}`}><img src={editorialImages[person.name]?.image || categoryPhotos[person.category].image} alt={editorialImages[person.name] ? person.name : `${person.category} category photograph; not a portrait of ${person.name}`} loading="lazy"/>{!editorialImages[person.name] && <small>CATEGORY PHOTO</small>}</Link>
-      <div className="creator-inspiration-name"><div><h3><Link to={`/creators/public/${encodeURIComponent(person.name)}`}>{person.name}</Link></h3><p>{person.craft}</p></div></div>
-      <p className="creator-inspiration-status">PUBLIC REFERENCE · NOT A CREVO MEMBER</p>{editorialImages[person.name] && <p className="member-photo-credit">Photo: <a href={editorialImages[person.name].source} target="_blank" rel="noopener noreferrer">{editorialImages[person.name].credit}</a> · {editorialImages[person.name].license}</p>}
-      <div className="creator-inspiration-links">{socialLinks.filter(([key]) => person[key]).map(([key, Icon, label]) => <a href={person[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${label}: ${person.name}`} title={label}>{Icon ? <Icon size={18}/> : <strong>𝕏</strong>}</a>)}</div>
-    </article>)}</div>
-  </section>
-}
-
-export function PublicCreatorProfile() {
-  const { name } = useParams()
-  const person = editorialCreators.find(item => item.name === name)
-  if (!person) return <main className="page-light public-creator-page"><div className="container"><h1>Creator not found</h1><Link to="/discover">Back to discovery</Link></div></main>
-  const photo = editorialImages[person.name]
-  const socialLinks = [['website', Globe2, 'Official work'], ['instagram', Instagram, 'Instagram'], ['youtube', Youtube, 'YouTube'], ['linkedin', Linkedin, 'LinkedIn'], ['x', null, 'X']]
-  return <main className="page-light public-creator-page"><div className="container"><Link to="/discover" className="back-link">← Discover creators</Link><div className="public-creator-layout"><div className="public-creator-visual"><img src={photo?.image || categoryPhotos[person.category].image} alt={photo ? person.name : `${person.category} category photograph; not a portrait of ${person.name}`}/>{!photo && <span>CATEGORY PHOTOGRAPH · NOT A PORTRAIT</span>}</div><div className="public-creator-copy"><span className="eyebrow">PUBLIC CREATOR REFERENCE / {person.category.toUpperCase()}</span><h1>{person.name}<span className="accent">.</span></h1><h2>{person.craft}</h2><p>This profile links to publicly available work and social channels. {person.name} has not joined or verified a Crevo account. Availability, rates, tools, and commercial terms are not known to Crevo.</p><div className="creator-inspiration-links">{socialLinks.filter(([key]) => person[key]).map(([key, Icon, label]) => <a href={person[key]} key={key} target="_blank" rel="noopener noreferrer" aria-label={`${label}: ${person.name}`} title={label}>{Icon ? <Icon size={20}/> : <strong>𝕏</strong>}</a>)}</div><div className="public-creator-actions">{person.website && <a className="button button-dark" href={person.website} target="_blank" rel="noopener noreferrer">Explore official work <ArrowUpRight size={18}/></a>}<Link className="button button-outline" to={`/discover?category=${encodeURIComponent(person.category)}`}>Explore {person.category}</Link></div></div></div>{photo ? <p className="public-creator-credit">Photo: <a href={photo.source} target="_blank" rel="noopener noreferrer">{photo.credit}</a> · {photo.license}. Cropped for display.</p> : <p className="public-creator-credit">Category photograph: <a href={categoryPhotos[person.category].source} target="_blank" rel="noopener noreferrer">{categoryPhotos[person.category].creator}</a> · CC {categoryPhotos[person.category].license.toUpperCase()}. This image does not depict {person.name}.</p>}</div></main>
-}
-
 function PhotoCredits() {
   const credits = [...new Map(Object.values(categoryPhotos).map(photo => [photo.image, photo])).values()]
   const licenseUrls = { by: 'https://creativecommons.org/licenses/by/2.0/', 'by-sa': 'https://creativecommons.org/licenses/by-sa/2.0/', cc0: 'https://creativecommons.org/publicdomain/zero/1.0/' }
-  return <details className="category-photo-credits"><summary>Photo credits &amp; licenses</summary><p>Category images are real photographs sourced through Openverse. The images illustrate a craft; they do not depict the named inspiration creators or verify anyone's work.</p><ul>{credits.map(photo => <li key={photo.image}><a href={photo.source} target="_blank" rel="noopener noreferrer">{photo.title || 'Photograph'}</a> by {photo.creator} · <a href={licenseUrls[photo.license]} target="_blank" rel="noopener noreferrer">CC {photo.license.toUpperCase()}</a></li>)}</ul></details>
+  return <details className="category-photo-credits"><summary>Photo credits &amp; licenses</summary><p>Category images are real photographs sourced through Openverse. The images illustrate creative categories; they are not creator portfolio evidence or endorsements.</p><ul>{credits.map(photo => <li key={photo.image}><a href={photo.source} target="_blank" rel="noopener noreferrer">{photo.title || 'Photograph'}</a> by {photo.creator} · <a href={licenseUrls[photo.license]} target="_blank" rel="noopener noreferrer">CC {photo.license.toUpperCase()}</a></li>)}</ul></details>
 }
 
 function CategoryMarquee() {
@@ -153,7 +122,6 @@ export default function CategoriesPage() {
     <div className="category-search-row"><label className="category-search"><Search size={21} aria-hidden="true"/><input type="search" aria-label="Search categories" placeholder="Search categories — try filmmaking, beauty, motion…" value={query} onChange={event => setQuery(event.target.value)}/>{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear category search"><X size={19}/></button>}</label><span className="category-search-count" aria-live="polite">{term ? `${matches.length} OF ${briefCategories.length} CATEGORIES` : `${briefCategories.length} CREATIVE CATEGORIES`}</span></div>
     {!term && <CategoryShowcase/>}
     {!term ? <CategoryMarquee/> : matches.length ? <div className="craft-grid category-page-grid">{matches.map(name => <CategoryCard name={name} key={name}/>)}</div> : <div className="category-no-results"><Search size={30} aria-hidden="true"/><h2>No categories found</h2><p>Try a different craft or browse all 26 categories.</p><button type="button" className="button button-dark" onClick={() => setQuery('')}>Show all categories</button></div>}
-    <CreatorInspiration term={term}/>
     <PhotoCredits/>
     <div className="craft-footer"><span>Looking for something more specific? Search creators by skill, tools, and portfolio type.</span><Link to="/discover">Browse all creators <ArrowUpRight size={16}/></Link></div>
   </div></main>

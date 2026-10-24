@@ -28,7 +28,6 @@ load_dotenv()
 import store
 from engagements import transition as transition_application
 import firebase_identity
-from demo_gigs import ensure_demo_gigs
 from matching import LicenseTerms, score_match, finalize_match, license_check, brief_conflicts, profile_readiness
 from demo_accounts import demo_creator_for_brief, can_match
 from demo_accounts import BRAND_EMAIL, CREATOR_EMAIL

@@ -19,7 +19,6 @@ def seed(path):
     store.DB_PATH = Path(path).resolve()
     store.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     store.init_local()
-    main.ensure_demo_gigs()
     license = {'usage_types': ['organic_social', 'paid_social', 'web'], 'territory': 'Worldwide', 'duration_months': 12, 'exclusive': False}
     def account(name, email, role):
         user = store.one('users', {'email': email})

@@ -3,30 +3,27 @@ import { Link } from 'react-router-dom'
 import { ArrowUpRight } from 'lucide-react'
 import { VerifiedBadge } from './CreatorTrust.jsx'
 import { isDemoCreator } from './discovery.js'
-import { demoPortraits } from './demoPortraits.js'
 import categoryPhotos from './categoryPhotos.json'
 
 export function CreatorPhoto({ creator, className = '' }) {
   const demo = isDemoCreator(creator)
-  const portrait = demo ? demoPortraits[creator.name] : null
   const category = categoryPhotos[(creator.categories || [])[0]]
-  const source = demo ? portrait?.image || category?.image : creator.avatar_url
+  const source = demo ? category?.image : creator.avatar_url
   const [failedSource, setFailedSource] = useState(null)
   const initial = (creator.name || 'Creator').replace(/^\[Demo\]\s*/i, '').split(/\s+/).map(part => part[0]).slice(0, 2).join('')
   return <div className={`member-photo ${className}`}>
-    {source && source !== failedSource ? <img src={source} alt={demo ? portrait ? 'Stock portrait illustrating a fictional demo creator' : 'Category photograph illustrating a fictional demo creator' : creator.name} loading="lazy" onError={() => setFailedSource(source)}/> : <div className="member-photo-initials" aria-label={`${creator.name}: no profile photo uploaded`}><span>{initial}</span><small>PHOTO NOT ADDED</small></div>}
+    {source && source !== failedSource ? <img src={source} alt={demo ? 'Category photograph illustrating a fictional local scenario' : creator.name} loading="lazy" onError={() => setFailedSource(source)}/> : <div className="member-photo-initials" aria-label={`${creator.name}: no profile photo uploaded`}><span>{initial}</span><small>PHOTO NOT ADDED</small></div>}
     <span className={`member-kind ${demo ? 'member-kind-demo' : ''}`}>{demo ? 'FICTIONAL DEMO' : 'CREVO MEMBER'}</span>
-    {demo && source && <span className="member-photo-note">{portrait ? 'STOCK PHOTO · NOT A MEMBER' : 'CATEGORY PHOTOGRAPH'}</span>}
+    {demo && source && <span className="member-photo-note">CATEGORY PHOTOGRAPH</span>}
   </div>
 }
 
 export function CreatorPhotoCredit({ creator }) {
   if (!isDemoCreator(creator)) return null
-  const portrait = demoPortraits[creator.name]
   const category = categoryPhotos[(creator.categories || [])[0]]
-  const source = portrait || category
+  const source = category
   if (!source) return null
-  return <p className="member-photo-credit">Photo: <a href={source.source} target="_blank" rel="noopener noreferrer">{portrait?.credit || category.creator}</a> · {portrait ? <a href="https://unsplash.com/license" target="_blank" rel="noopener noreferrer">Unsplash License</a> : `CC ${category.license.toUpperCase()}`}</p>
+  return <p className="member-photo-credit">Photo: <a href={source.source} target="_blank" rel="noopener noreferrer">{category.creator}</a> · {`CC ${category.license.toUpperCase()}`}</p>
 }
 
 export default function CreatorTile({ creator }) {

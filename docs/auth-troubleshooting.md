@@ -2,7 +2,7 @@
 
 ## Findings from 24 October 2026
 
-The hosted Supabase project is healthy. At inspection, all 14 Auth identities had application user records, all creator accounts had profiles, and the backend service role could insert into users and creators. There were no custom Auth user triggers.
+The earlier signup investigation confirmed that application profiles could be created and the backend service role could access users and creators. That investigation preceded the curated-account cleanup; its account counts are not a current inventory. The live marketplace now keeps one active creator and one active brand, with earlier identities disabled rather than deleted.
 
 The Auth logs showed six signup failures with `over_email_send_rate_limit` and four with `email_address_invalid`. Email signup was enabled, new registrations were allowed, and email confirmation was required. These failures occurred in Auth before application profile creation. They were hidden by the previous generic configuration-error message.
 
@@ -35,3 +35,7 @@ Google is enabled in the live Firebase sign-in configuration and uses a separate
 ## Verification
 
 Run `npm test`, `npm run build`, and `python -m pytest -q` from backend. Hosted verification should check login, refresh, account isolation, and safe provider errors. A successful admin-created test identity does not prove public confirmation-email delivery works.
+
+## Intermittent connection errors
+
+Terminated shared HTTP/2 connections caused intermittent 500 responses on notifications, inbox and project reads. The backend now uses HTTP/1.1 with bounded pooling and one read retry. Temporary Auth outages preserve sessions; uncertain writes are never automatically repeated. See [trust signals and connection recovery](trust-signals.md).

@@ -1,20 +1,36 @@
 # Crevo data model
 
-Crevo stores accounts in Supabase Auth. Its application tables are in PostgreSQL. A creator account owns one creator profile; a brand account owns briefs. The FastAPI server checks account role and record ownership before each private action.
+Supabase Auth stores hosted identities. PostgreSQL stores marketplace records. FastAPI verifies identity, role and ownership before private reads and writes. Local tests use equivalent SQLite records.
 
-| Record | Main fields | Why it matters |
-| --- | --- | --- |
-| Creator profile | Name, title, bio, location, categories/specialization, skills, platforms, optional social profile URLs and opt-in contact email, audience, starting rate, avatar, portfolio introduction, verified-at time | Gives brands a searchable summary of the creator’s focus and availability. |
-| Portfolio item | Creator ID, title, description, media URL, media type (image/video/link), tools and models, workflow, format, commercial-use terms, verification label | Shows an AI work sample and the process behind it. Tool and work claims are marked **creator reported**. A separate Crevo Verified badge means an administrator reviewed submitted portfolio evidence. |
-| Gig | A creator-owned portfolio item with media type `gig`; title, description, cover URL, tools, workflow, output format, commercial-use terms | Presents an editable public service offer. The creator profile holds the starting rate; scope and price are agreed through contact. |
-| Brief | Brand owner, title, description, category, skills, platforms, budget, location, content type, style, format/aspect ratio, commercial-use requirements, status | Captures the deliverable and usage context needed for a useful creator match. |
-| Application | Brief, creator, proposal note, status | Connects a creator to a specific brief. |
-| Contact thread and message | Brand, creator, question/quote type, requirements, optional budget/timeline, sender, message body | Enables private conversation before hiring. |
-| Project and message | Accepted brief, creator, brand, project status, sender, message body | Keeps collaboration attached to the accepted engagement. |
-| Review | Completed project, brand, creator, rating, review body | Shows feedback tied to real Crevo collaborations. |
-| Verification request | Creator, evidence URL, statement, review decision and reviewer | Supports manual approval before a Crevo Verified badge appears. |
-| Notifications | Derived from applications, contact and project messages, project status, and reviews rather than stored in a separate table | Shows account activity; read state is kept on the current device. |
+## Accounts and discovery
 
-Discovery searches creator text, skills, specialization, and portfolio tools. Filters cover category, platform, skill, tool/model, and portfolio media type. Match suggestions combine transparent category, skill, platform, budget, and location rules with an optional Gemini assessment. The AI brief helper suggests structured fields from a rough idea; the brand reviews and completes them before publishing.
+- `users`: Auth UUID, role, name, company name/logo, optional linked Firebase UID and `disabled_at`.
+- `creators`: one profile per creator account, categories, skills, platforms, rate, avatar, introduction, optional social/contact fields, structured offered licensing, `verified_at` and `archived_at`.
+- `portfolio_items`: work media, type, tools/models, workflow, format, commercial-use description and creator-reported verification label. The `gig` media type represents a service offer and does not count as portfolio work evidence.
+- `briefs`: brand owner, description, category, skills, content/style/format, tools, duration, deliverables, deadline, revision allowance, USD budget, structured required licensing, open/closed status and archive state.
 
-Social URLs are stored as an optional JSON object keyed by Instagram, Facebook, X, YouTube, or Reddit. The API accepts only HTTPS links to the matching platform and the public profile renders logo links. Profile avatars use Supabase Storage. Portfolio samples use publicly accessible media URLs in this MVP. Project payments, milestones, and shared file delivery are outside its current scope.
+## Engagement and collaboration
+
+- `brief_candidates`: one creator per brief, proposal/shortlist/invitation state, source, actor/timestamp activity history and optional private contact thread.
+- `applications`: creator proposal or accepted invitation, pending/accepted/declined status and a unique brief/creator pair.
+- `contact_threads` and `contact_messages`: private pre-selection discussion between the brand and creator.
+- `projects`: selected brief, creator and brand; project status; workflow JSON; optimistic `workflow_revision` counter. A unique brief/creator pair prevents duplicate engagements.
+- `messages`: private project conversation.
+
+The project workflow retains the selected requirements and offered-rights snapshot, proposed/accepted scope and INR quote, confirmed licensing snapshot, production updates, versioned deliveries, technical checks, feedback, revision state and activity timeline. Historical simulation fields can remain in old records; the live interface has no payment checkout.
+
+## Trust and operation
+
+- `reviews`: one brand review per completed project, with rating and written feedback.
+- `verification_requests`: submitted public evidence URL, creator statement, pending/approved/rejected status, decision note, reviewer and review timestamp.
+- `request_limits`: persistent atomic quota counters. Browser roles cannot consume the quota RPC directly.
+- Notifications are derived from applications, invitations, conversations, workflow events and review decisions. Read state is saved on the device.
+- Public trust summaries are derived from portfolio documentation, review status, accepted-and-approved projects and qualifying brand reviews. Private IDs, verification statements and decision notes are excluded.
+
+## Files and access
+
+Public profile images use Supabase Storage's `portfolios` bucket. Public portfolio samples have accessible media URLs. Project uploads use the private `crevo-deliveries` bucket; only project members can download them through the API. Local development stores checked deliveries beside its selected SQLite database.
+
+Hosted tables have RLS enabled, direct browser access revoked and server-role access granted. Public creator responses omit account owner UUIDs and opted-in email addresses. Disabled accounts cannot sign in or refresh; archived creators/briefs are excluded by the shared data-access layer.
+
+See [schema.sql](../backend/schema.sql), [workflow](project-workflow.md), [trust signals](trust-signals.md) and [security](security-hardening.md).

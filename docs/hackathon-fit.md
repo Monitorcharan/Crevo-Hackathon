@@ -1,36 +1,31 @@
-# Crevo against the hackathon brief
+# Challenge coverage
 
-Assessment dated 2026-10-13, based on the problem statement supplied by the project owner and the implementation in this repository. This is a scope assessment, not a prediction of judges' scores or a fresh end-to-end test.
+Current implementation assessment: 24 October 2026. Evaluation scores and bonus credit are determined by the judges.
 
-## Direction
+## Round 1 foundations
 
-Crevo matches the requested AI creator marketplace. Profiles, briefs, and discovery together carry 75% of the score. Prioritize evidence of useful AI production work and a clear brand-to-creator engagement over additional decorative effects.
+Creator profiles and AI portfolios record specializations, skills, actual tools/models, workflow, format and declared usage rights. Brands have company identities and structured briefs. Manual discovery supports search, filtering and comparison. Optional AI drafting produces editable suggestions.
 
-| Criterion | Weight | Implemented | Main remaining opportunity |
-| --- | --- | --- | --- |
-| Creator profiles and AI portfolios | 30% | Skills, specializations, work media, tools, workflow, format, usage terms; manual portfolio-evidence review | Add actual playable video/animation samples and more detailed process evidence. The present demo is mostly still images and vector concepts. |
-| Brief definition | 20% | Campaign description, category, skills, platforms, budget, content type, style, format, commercial use; editable AI draft | Show a complete example covering deliverables, revisions, deadline, and specific usage requirements. |
-| Discovery and filtering | 25% | Text, category, skills, tools, media type, platform; empty-state reset; members and clearly labeled demos | Populate varied, accurate portfolio metadata so judges can demonstrate meaningful differences between filters. |
-| User experience | 15% | Creator/brand entry, profiles, briefs, applications, acceptance, project conversations, completion | Delivery versions, revision requests and final approval are now implemented; demonstrate the full flow using both roles. |
-| Presentation and demo | 10% | Live prototype, guest walkthrough, data-model note, short slides and demo guide | Refresh screenshots and record one complete realistic scenario, with sample content labeled. |
+The current hosted creator has original Cobalt and Citrus still-image concepts with provenance. They are independent concepts, not client campaigns or playable films. Older marketplace records are disabled or archived; public demo galleries and external creator reference cards have been removed.
 
-## Highest-value additions
+## Round 2 core
 
-1. **A delivery and revision workspace.** Creator submits a deliverable link/version; brand requests changes or approves; keep notes, timestamps, and the accepted version together. Enforce project membership and roles server-side.
-2. **Three substantial portfolio case studies.** Include a playable short film, animation, and product visual. State actual models/tools used, inputs, generation/selection/editing steps, final format, and usage limits. Avoid labeling a static concept as a finished film.
-3. **Side-by-side creator comparison.** Compare portfolio evidence, specialization, workflow, deliverable formats, tools, and stated usage terms. Link explanations to evidence; do not invent compatibility or availability.
-4. **Evidence-specific verification.** Distinguish identity, portfolio evidence, tool usage, and workflow review. Existing Crevo Verified means submitted portfolio evidence was reviewed; it does not independently verify every tool or license claim.
-5. **A brief completeness guide.** Flag missing deliverables, content type, style, aspect ratio, commercial use, deadline, and revision expectations before publishing; let the brand review AI suggestions.
+- **Matching:** ranked, explained recommendations using portfolio text/metadata, tools, content, format, style, rights, trust and budget. Weak/sparse matches, missing rights, conflicts and AI outages have explicit handling.
+- **Engagement:** shortlist proposals and brand decisions, invitations and creator responses, application selection, confirmed scope/license, production updates and delivery approval.
+- **Revisions:** feedback attached to a version, creator responses/new uploads, actor/timestamp history and requested/in-progress/submitted/approved revision states.
+- **Commercial use:** required and offered usage, duration, territory and exclusivity are compared before selection; agreed terms remain attached through delivery.
+- **Trust:** independent evidence review is separate from creator documentation, approved engagement history and genuine completed-project reviews.
 
-## Demonstration sequence
+## Bonus capabilities
 
-Brand creates an AI-assisted brief → filters creators → inspects tools, workflow, format, and usage terms → reviews match explanations → creator applies → brand accepts → messages → submits/approves a deliverable when that feature exists. The project workspace now includes persisted delivery versions, revision feedback, final approval, agreed INR terms, and a clearly labeled keyless payment simulation. See project-workflow.md for the demo sequence and limits.
+The auto-shortlist uses actual stored briefs and creator evidence, proposes up to five eligible candidates, records its actions and supports accept/edit/reject. Invitations remain a separate brand action.
 
-## Data integrity
+Delivery checks inspect actual uploaded PNG/JPEG/WebP/MP4 bytes before brand review, with corrective guidance for format, ratio, content-type or duration mismatches.
 
-Registered members, fictional demo profiles, and independent public inspiration profiles are distinct. Stock portraits illustrate the fictional demos only. Public figures have not joined Crevo and cannot be booked through reference cards. No real member identity, photo, rate, review, or credential should be fabricated.
+A temporary live engagement verified both capabilities and the full revision/approval path. Its records/files were removed afterward. Automated coverage includes actual MP4 fixtures, rights conflicts, sparse evidence, unauthorized actions and connection recovery.
 
+## Presentation boundaries
 
-## Round 2 update — October 23, 2026
+Public email registration needs a configured sender for reliable confirmation delivery. Independent verification remains pending for the current creator. Technical checks do not replace creative or rights review. Payments, escrow and automatic revision billing are outside the current interface. The fit score is not an accuracy benchmark.
 
-Creator comparison, explicit delivery expectations and brief readiness now strengthen discovery and brief definition. Delivery versioning and final approval complete the engagement flow. Payments remain an explicitly labeled simulation. See round-two-demo.md for the five-minute walkthrough and technical explanation. The Round 2 rule book gives qualitative criteria, not new numerical weights.
+Follow the [current presentation guide](demo-guide.md) and [complete workflow](rounds-one-and-two-workflow.md).
