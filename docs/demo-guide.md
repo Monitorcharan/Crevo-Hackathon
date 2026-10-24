@@ -19,4 +19,4 @@ For isolated development fixtures only, see the historical [local Round 2 walkth
 9. Submit version 1, request a revision and submit version 2 with explicit notes.
 10. Approve the latest delivery and show the retained agreement and history.
 
-Use separate browser profiles for the two accounts. The prepared Cobalt brief is at the starting point; following these steps intentionally advances it.
+Use separate browser profiles for the two accounts. The existing Cobalt brief has an accepted invitation and an application ready for brand selection. Continue there, or publish a new brief to rehearse all earlier stages.

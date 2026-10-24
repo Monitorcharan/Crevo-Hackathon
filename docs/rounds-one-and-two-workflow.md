@@ -22,7 +22,7 @@ Creator profile → documented AI work → brand brief → ranked matches → re
 - Live matching used **70% weighted rules + 30% AI assessment** and returned **95/100** for the test brief. This is a fit score, not an accuracy benchmark or guaranteed outcome.
 - The square file failed the required 4:5 ratio before it became a delivery. The correct PNG passed server inspection and was downloadable privately by the brand. Unauthenticated download was blocked.
 - The live revision clarified the written handoff while resubmitting the same concept file. The history correctly identified the identical file. Automated tests separately verify changed file bytes, hashes and version comparisons.
-- All temporary test records and uploaded files were removed. Your prepared Cobalt brief remains open with no shortlist, application or project, ready to begin.
+- All temporary test records and uploaded files were removed. Your existing Cobalt brief and engagement state were preserved. At the latest check, the creator had accepted the invitation, one application was waiting for selection, and no project had started.
 
 One active creator and one active brand are intentionally retained. The assistant proposes up to five eligible creators; with this data, one proposal is correct. Broader ranking, sparse profiles, contradictory requirements, unknown rights and conflicting territories are covered by isolated tests.
 
@@ -65,7 +65,7 @@ Open `/discover`. Search/filter by category, skill, tool, content type or platfo
 
 ### Step 5 — Structured brief
 
-For a quick walkthrough, open **Cobalt launch / premium product imagery** from the brand dashboard.
+For the existing journey, open **Cobalt launch / premium product imagery** from the brand dashboard. The creator has already accepted its invitation: continue at **Applications → Accept & start project**. To rehearse every earlier stage again, publish a new brief using the values below.
 
 [Open the prepared brief](https://crevo-hackathon.onrender.com/briefs/caf0c30d-7328-46c8-b59c-fb458324e6c5)
 
