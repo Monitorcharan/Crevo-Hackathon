@@ -64,6 +64,9 @@ def init_local():
         if 'firebase_uid' not in {row[1] for row in db.execute('pragma table_info(users)')}:
             db.execute('alter table users add column firebase_uid text')
         db.execute('create unique index if not exists users_firebase_uid_idx on users(firebase_uid)')
+        for table, field in [('users', 'disabled_at'), ('creators', 'archived_at'), ('briefs', 'archived_at')]:
+            if field not in {row[1] for row in db.execute(f'pragma table_info({table})')}:
+                db.execute(f'alter table {table} add column {field} text')
         user_columns = {row[1] for row in db.execute('pragma table_info(users)')}
         if 'company_name' not in user_columns:
             db.execute("alter table users add column company_name text not null default ''")
@@ -76,34 +79,7 @@ def init_local():
             db.execute('alter table creators add column contact_email text')
         if 'verified_at' not in creator_columns:
             db.execute('alter table creators add column verified_at text')
-        legacy_names = ('Maya Chen', 'Jordan Rivera', 'Amara Okafor', 'Leo Martínez', 'Priya Shah', 'Noah Brooks')
-        for name in legacy_names:
-            row = db.execute('select id from creators where name=? and owner_id is null', (name,)).fetchone()
-            if row and not db.execute('select 1 from projects where creator_id=? union select 1 from applications where creator_id=?', (row['id'], row['id'])).fetchone():
-                db.execute('delete from portfolio_items where creator_id=?', (row['id'],))
-                db.execute('delete from creators where id=?', (row['id'],))
-        samples = [
-            ('[Demo] Aria Vale', 'AI filmmaker & campaign director', ['AI Filmmaking', 'Advertising Creative', 'Product Visualization'], ['Creative Direction', 'Storyboarding'], ['Instagram', 'YouTube'], 'night-drive.png', 'After Dark / launch film concept'),
-            ('[Demo] Kian Mercer', '3D motion & generative artist', ['Motion Design', '3D & CGI', 'Generative Art'], ['3D Art Direction', 'Motion Concepts'], ['Instagram', 'YouTube'], 'glass-motion.png', 'Glass Orbit / motion concept'),
-            ('[Demo] Solana Park', 'AI product & beauty visual artist', ['Beauty', 'AI Photography', 'Product Visualization'], ['Product Imagery', 'Art Direction'], ['Instagram', 'TikTok'], 'skincare-still.png', 'Soft Light / skincare still life'),
-            ('[Demo] Niko Lane', 'Fashion editorial & social creator', ['Fashion', 'Social Media Content', 'AI Photography'], ['Editorial Imagery', 'Social Campaigns'], ['Instagram', 'TikTok'], 'fashion-editorial.png', 'Electric Blue / fashion editorial'),
-            ('[Demo] Imani Sol', 'Food & beverage campaign designer', ['Food', 'Product Visualization', 'Advertising Creative'], ['Product Imagery', 'Campaign Concepts', 'Art Direction'], ['Instagram', 'TikTok'], 'citrus-campaign.svg', 'Sola / citrus launch concept'),
-            ('[Demo] Theo Grant', 'Brand identity & motion art director', ['Brand Identity', 'Graphic Design', 'Motion Design'], ['Typography', 'Creative Direction', 'Motion Concepts'], ['Instagram', 'YouTube'], 'type-signal.svg', 'Move With It / identity frame'),
-            ('[Demo] Mira Chen', 'AR worldbuilder & VFX concept artist', ['AR & VFX', '3D & CGI', 'Technology'], ['Worldbuilding', 'Environment Design', 'VFX Concepts'], ['Instagram', 'YouTube'], 'signal-world.svg', 'Signal City / AR environment concept'),
-            ('[Demo] Ezra Quinn', 'AI filmmaker & narrative visualist', ['AI Filmmaking', 'AI Animation', 'Travel'], ['Storyboarding', 'Visual Narrative', 'Creative Direction'], ['Instagram', 'YouTube'], 'film-frame.svg', 'The Long Way Home / film keyframe'),
-        ]
-        demo_rates = {'[Demo] Aria Vale': 850, '[Demo] Kian Mercer': 700, '[Demo] Solana Park': 550,
-                      '[Demo] Niko Lane': 500, '[Demo] Imani Sol': 450, '[Demo] Theo Grant': 600,
-                      '[Demo] Mira Chen': 800, '[Demo] Ezra Quinn': 650}
-        for name, title, categories, skills, platforms, image, work_title in samples:
-            if db.execute('select 1 from creators where name=?', (name,)).fetchone():
-                continue
-            creator_id = str(uuid.uuid4())
-            db.execute('insert into creators(id,owner_id,name,title,bio,location,categories,skills,platforms,audience,rate,avatar_url,portfolio,portfolio_source) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-                (creator_id, None, name, title, 'Fictional sample profile with illustrative concept art and feedback. No real client work is represented.', 'Creative studio · worldwide', json.dumps(categories), json.dumps(skills), json.dumps(platforms), 0, demo_rates[name], None, 'Illustrative Crevo demo portfolio.', 'demo'))
-            vector = image.endswith('.svg')
-            db.execute('insert into portfolio_items(id,creator_id,title,description,media_url,media_type,tools,workflow,format,commercial_use,verification) values(?,?,?,?,?,?,?,?,?,?,?)',
-                (str(uuid.uuid4()), creator_id, work_title, 'Original illustrative SVG concept, not a real client campaign.' if vector else 'Illustrative AI-generated concept artwork for the Crevo demo, not a real client campaign.', f'https://crevo-hackathon.onrender.com/demo/{image}', 'image', json.dumps(['Vector SVG illustration'] if vector else ['OpenAI image generation']), 'Composed a fictional campaign keyframe in vector shapes.' if vector else 'Generated a fictional campaign image and selected the final concept.', '3:2 concept image' if vector else '16:9 landscape', 'Demo only; no client license is represented.', 'illustrative demo'))
+
 
 
 def json_fields(table):
@@ -131,7 +107,7 @@ def all_rows(table, filters=None, order=None):
             q = q.eq(key, value)
         if order:
             q = q.order(order)
-        return [normalize(x, table) for x in q.execute().data]
+        return visible_rows(table, [normalize(x, table) for x in q.execute().data])
     sql = f'select * from {table}'
     values = list(filters.values())
     if filters:
@@ -139,7 +115,15 @@ def all_rows(table, filters=None, order=None):
     if order:
         sql += f' order by {order}'
     with connect() as db:
-        return [normalize(x, table) for x in db.execute(sql, values).fetchall()]
+        return visible_rows(table, [normalize(x, table) for x in db.execute(sql, values).fetchall()])
+
+
+def visible_rows(table, rows):
+    # Preserve archived data for operators while keeping every application read,
+    # including direct URLs, matching, portfolios and gigs, on active records.
+    if table in ('creators', 'briefs'):
+        return [row for row in rows if not row.get('archived_at')]
+    return rows
 
 
 def one(table, filters):

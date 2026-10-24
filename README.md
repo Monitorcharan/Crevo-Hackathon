@@ -10,7 +10,7 @@ A React and FastAPI MVP for AI creator discovery and brand collaboration. The la
 
 The public directory can include eight clearly labeled fictional demo portfolios: four AI-generated concept images and four original SVG concept illustrations. Demo feedback is never counted as a completed-project review; the demo profiles cannot sign in or apply to briefs. The no-sign-in `/demo` route lets visitors edit a sample brief, recalculate transparent rules-based matches, shortlist a creator, and preview an unsent inquiry. This walkthrough writes no account data. Create your own creator and brand accounts to try the full workflow.
 
-The public `/demo` route is a read-only walkthrough. Shared demo sign-in has been removed from the hosted application, and the previously advertised live demo identities are disabled. For interactive testing use your own accounts, or run the isolated local demo with a private password. No demo password ships in the browser bundle.
+The active marketplace now contains one curated creator and one brand account. Earlier records are retained in a disabled archive at the owner’s request. Public demo galleries, external creator references and sample checkout are removed; `/demo` redirects to discovery. Startup never seeds creators or demo gigs. Private account credentials are kept outside the repository.
 
 ## Run locally
 
@@ -134,8 +134,14 @@ Registered member profiles appear before clearly labeled fictional demos in disc
 - Local session signing has no known fallback. An unset local key uses a process-random key for private development; shared local deployments require an explicit strong key. Delivery signing uses an independent purpose-derived key, or `ASSET_SIGNING_SECRET`, and never takes a hosted delivery key from `LOCAL_JWT_SECRET`.
 - Public creator and nested gig responses omit Auth owner UUIDs and contact addresses. Only signed-in brands can request an opted-in email through a rate-limited endpoint.
 - Administrator access requires a server-configured account UUID and a verified hosted identity. Legacy email allowlists are ignored.
-- Live shared demo accounts are banned, their passwords rotated, and sessions revoked. Interactive demos are local only and use an operator-chosen private password; `/demo` remains read-only.
+- Live shared demo accounts are banned, their passwords rotated, and sessions revoked. Interactive demos are local only and use an operator-chosen private password; `/demo` redirects to the active directory.
 - Auth quotas apply per IP and account; paid AI routes share per-user and global budgets. Supabase counters are atomic and persist across restarts. Requests fail closed if quota storage is unavailable.
 - Production runs as UID/GID 10001, uses digest-pinned images and hash-locked runtime dependencies, and excludes pytest, tests, and seeding scripts. Development dependencies are separately locked.
 
 Apply the additive quota statements in `backend/schema.sql` when upgrading another installation. Regenerate locks using `uv pip compile backend/requirements.in --universal --python-version 3.11 --generate-hashes -o backend/requirements.txt` and the equivalent command for `requirements-dev.in`. Review and refresh pinned image digests with security updates. See `docs/security-hardening.md` for limits and verification.
+
+## Curated marketplace
+
+The creator profile presents content fit, skills and tools, portfolio evidence, declared commercial-use rights, and trust signals in an aligned responsive layout. Original Cobalt and Citrus concepts include actual generation tools, workflow notes, dimensions and provenance. The brand brief requests matching content and rights. Portfolio review remains pending; no client reviews or verification badges are invented. See `docs/curated-marketplace.json` for the content and `docs/portfolio-provenance.md` for generation records.
+
+Archived profiles and briefs remain stored but are excluded by the application’s shared data-access layer, including direct URLs, gigs, public portfolios and matching. Disabled users cannot log in, refresh or use existing sessions. Supabase Auth also bans the retired identities; their sessions expire immediately. New public registrations remain available.

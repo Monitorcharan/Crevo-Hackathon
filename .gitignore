@@ -8,6 +8,7 @@ backend/*.db
 backend/deliveries/
 tmp/round2-*.db
 tmp/deliveries/
+tmp/private-account-reset/
 backend/.venv/
 backend/.pytest_cache/
 marketplace-prototype/

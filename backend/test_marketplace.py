@@ -8,9 +8,7 @@ def test_gig_editor_public_view_and_owner_access(tmp_path, monkeypatch):
     monkeypatch.setattr(store, 'REMOTE', False)
     monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'gigs.db')
     with TestClient(main.app) as client:
-        demo_creators = [creator for creator in client.get('/api/creators').json() if creator['portfolio_source'] == 'demo']
-        assert len(demo_creators) >= 4
-        assert all(client.get(f"/api/creators/{creator['id']}/gigs").json() for creator in demo_creators)
+        assert client.get('/api/creators').json() == [], 'Startup must not repopulate removed demo profiles'
 
         first = client.post('/api/auth/register', json={'name': 'Gig Creator', 'email': 'gig-creator@example.com', 'password': 'strong-password', 'role': 'creator'}).json()
         second = client.post('/api/auth/register', json={'name': 'Other Creator', 'email': 'other-gig@example.com', 'password': 'strong-password', 'role': 'creator'}).json()

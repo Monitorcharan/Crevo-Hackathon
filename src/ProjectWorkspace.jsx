@@ -11,25 +11,11 @@ const money = value => new Intl.NumberFormat('en-IN', { style: 'currency', curre
 const date = value => new Date(value).toLocaleString()
 const label = value => (value || '').replaceAll('_', ' ')
 
-function Checkout({ amount, busy, error, onFinish, onClose }) {
-  const [method, setMethod] = useState('UPI')
-  const dialog = useRef(null)
-  useEffect(() => { dialog.current.showModal() }, [])
-  return <dialog ref={dialog} className="crevo-checkout" onCancel={e => { e.preventDefault(); if (!busy) onClose() }}>
-    <div className="checkout-top"><span>CREVO / PAYMENTS</span><button autoFocus disabled={busy} onClick={onClose} aria-label="Close checkout">×</button></div>
-    <span className="workflow-tag">SIMULATION · NO MONEY MOVES</span><h2>Sample checkout</h2><p>A Razorpay-style demo. This is not a Razorpay transaction.</p><strong className="checkout-amount">{money(amount)}</strong>
-    {error && <div role="alert" className="workflow-error">{error}</div>}
-    <fieldset disabled={busy}><legend>Choose a demo payment method</legend><div className="checkout-methods">{['UPI', 'Card', 'Netbanking'].map(item => <button type="button" key={item} aria-pressed={method === item} onClick={() => setMethod(item)}>{item}</button>)}</div></fieldset>
-    <div className="checkout-placeholder">{method === 'UPI' ? 'Demo UPI payment' : method === 'Card' ? 'Demo card payment' : 'Demo bank payment'}<small>No account details, card numbers or OTP needed.</small></div>
-    <button className="button button-lime" disabled={busy} onClick={() => onFinish('success', method)}>Simulate successful payment</button><div className="checkout-options"><button disabled={busy} onClick={() => onFinish('failed', method)}>Simulate failure</button><button disabled={busy} onClick={() => onFinish('cancelled', method)}>Simulate cancellation</button></div>
-  </dialog>
-}
-
 export default function ProjectWorkspace({ session }) {
   const { id } = useParams()
   const [asset, setAsset] = useState(null), [uploading, setUploading] = useState(false), [license, setLicense] = useState(defaultLicense)
   const [project, setProject] = useState(null), [messages, setMessages] = useState([])
-  const [error, setError] = useState(''), [busy, setBusy] = useState(false), [checkout, setCheckout] = useState(false)
+  const [error, setError] = useState(''), [busy, setBusy] = useState(false)
   const [amount, setAmount] = useState(''), [scope, setScope] = useState(''), [body, setBody] = useState('')
   const [title, setTitle] = useState(''), [url, setUrl] = useState(''), [notes, setNotes] = useState(''), [feedback, setFeedback] = useState(''), [statusNote, setStatusNote] = useState('')
   const refresh = useCallback(async () => {
@@ -53,7 +39,7 @@ export default function ProjectWorkspace({ session }) {
   if (!project) return <main className="page-light loading">{error || 'Opening your project…'}</main>
   const brand = session.user.role === 'brand', state = project.workflow || {}, terms = state.terms
   const deliveries = state.deliveries || [], latest = deliveries.at(-1), payment = state.payment
-  const complete = project.status === 'completed', paid = payment?.status === 'demo_succeeded'
+  const complete = project.status === 'completed'
   return <main className="page-light project-page"><div className="container">
     <Link className="back-link" to="/dashboard">← Dashboard</Link><span className="eyebrow">YOUR SHARED WORKSPACE</span><h1>{project.brief?.title}</h1><p>Working with {brand ? project.creator?.name : 'the brand'} · {complete ? 'Completed' : 'In progress'}</p><span className="project-stage">{label(state.stage || (complete ? 'completed' : terms?.accepted_at ? 'production' : 'scope_pending'))}</span>
     <div className="workflow-progress">{[['01', 'Agree the scope', terms?.accepted_at], ['02', 'Create & deliver', latest], ['03', 'Review & approve', complete]].map(([n, text, done]) => <div key={n} className={done ? 'done' : ''}><span>{done ? '✓' : n}</span>{text}</div>)}</div>
@@ -75,11 +61,7 @@ export default function ProjectWorkspace({ session }) {
       {brand && !terms?.accepted_at && !complete && <form className="workflow-form" onSubmit={e => { e.preventDefault(); action('terms', { amount_paise: Math.round(Number(amount) * 100), notes: scope, licensing: license }) }}><LicenseFields value={license} onChange={setLicense}/><label>Proposed amount (INR)<input type="number" required min="1" max="1000000" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} placeholder="25000"/></label><label>Deliverables & usage terms<textarea required maxLength={5000} value={scope} onChange={e => setScope(e.target.value)} placeholder="Deliverables, deadline, revisions and commercial usage rights…"/></label><button className="button button-dark" disabled={busy}>{terms ? 'Update proposal' : 'Propose terms'}</button><small>This INR agreement is separate from the original brief’s USD budget.</small></form>}
       {!brand && terms && !terms.accepted_at && !complete && <button className="button button-dark" disabled={busy} onClick={() => action('accept_terms')}>Confirm scope & license</button>}
       {!terms && !brand && <p>The brand can propose an INR amount and scope here.</p>}
-      <details className="demo-payment-option"><summary>Optional payment walkthrough · simulation</summary><p>No money is charged, held or paid out.</p>{brand && terms?.accepted_at && !paid && <button className="button button-lime" disabled={busy} onClick={() => setCheckout(true)}>Try sample checkout ↗</button>}
-      {payment && <div className="demo-receipt" role="status"><strong>{label(payment.status)}</strong><p>{money(payment.amount_paise)} · {payment.method}</p><small>{payment.id}<br/>{date(payment.created_at)}<br/>Simulated receipt · not proof of payment</small></div>}
-      {state.payment_attempts?.length > 1 && <details><summary>Demo attempt history ({state.payment_attempts.length})</summary>{[...state.payment_attempts].reverse().map(p => <p key={p.id}>{label(p.status)} · {p.method}<small>{date(p.created_at)}</small></p>)}</details>}</details>
       </article><article className="workflow-card"><span className="eyebrow">THE ORIGINAL BRIEF</span><h3>{project.brief?.title}</h3><p>{project.brief?.description}</p><small>Original budget: USD {Number(project.brief?.budget || 0).toLocaleString()}</small><p>{project.brief?.commercial_use}</p><h4>Delivery expectations</h4><p>{project.brief?.deliverables || "Scope to be agreed"}</p><small>Target: {project.brief?.deadline || "To be agreed"} · Revisions: {project.brief?.revision_rounds ?? "To be agreed"}</small><Link to={`/briefs/${project.brief_id}`}>View full brief →</Link></article>
     <article className="workflow-card"><span className="eyebrow">SHARED ACTIVITY</span><h3>Project timeline</h3><ol className="project-activity">{state.selection_snapshot && <li><strong>Creator selected</strong><small>Brand · {date(state.selection_snapshot.selected_at || project.created_at)}</small></li>}{(state.events || []).map((event, index) => <li key={index}><strong>{label(event.action)}</strong><small>{event.actor_id === project.brand_id ? 'Brand' : 'Creator'}{event.version ? ` · Version ${event.version}` : ''} · {date(event.at)}</small></li>)}</ol>{!state.events?.length && <p>Confirm the project agreement to begin.</p>}</article></aside></div><ProjectReview projectId={id} status={project.status} role={session.user.role}/>
-    {checkout && <Checkout amount={terms.amount_paise} busy={busy} error={error} onClose={() => setCheckout(false)} onFinish={async (outcome, method) => { if (await action('payment', { outcome, method })) setCheckout(false) }}/>} 
   </div></main>
 }

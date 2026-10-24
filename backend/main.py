@@ -101,7 +101,6 @@ def log_ai_failure(operation, exc):
 @asynccontextmanager
 async def lifespan(app):
     store.init_local()
-    ensure_demo_gigs()
     yield
 
 
@@ -317,6 +316,8 @@ def is_admin(user):
 
 
 def ensure_active(user):
+    if user.get('disabled_at'):
+        raise HTTPException(403, 'This account is disabled. Please contact Crevo support.')
     if store.REMOTE and user.get('email', '').lower() in {BRAND_EMAIL, CREATOR_EMAIL}:
         raise HTTPException(403, 'Shared demo sign-in is disabled. Please use your own account.')
 
@@ -510,6 +511,7 @@ def firebase_sign_in(data: FirebaseExchange):
     uid = claims['sub']
     user = store.one('users', {'firebase_uid': uid})
     if user:
+        ensure_active(user)
         context = {**user, '_identity_verified': email == user['email'].lower()}
         return {'user': user, 'mode': 'firebase', 'is_admin': is_admin(context)}
     if store.one('users', {'email': email}):
@@ -634,6 +636,7 @@ def login(data: Credentials):
         if not row or not verify_password(data.password, row['password_hash']):
             raise HTTPException(401, 'Invalid email or password')
         token = local_token(user['id'])
+    ensure_active(user)
     return auth_result(user, token, session, auth.user if store.REMOTE else None)
 
 

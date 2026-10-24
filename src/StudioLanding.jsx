@@ -7,7 +7,6 @@ import { ScrollVelocity } from './components/ScrollVelocity.jsx'
 import TiltedCard from './components/TiltedCard.jsx'
 import BorderGlow from './components/BorderGlow.jsx'
 import { AmbientScene, LineReveal, Reveal, useStudioMotion } from './StudioMotion.jsx'
-import { CreatorInspiration } from './CategoriesPage.jsx'
 import CrevoCompanion from './CrevoCompanion.jsx'
 import CrevoWordmark, { CraftPoster } from './CrevoWordmark.jsx'
 import CreatorSpotlight from './CreatorSpotlight.jsx'
@@ -22,7 +21,7 @@ const faqs = [
   ['Who is Crevo for?', 'Brands, agencies, and AI-native creators. Discover creative talent, show your process, and build a collaboration around a clear brief.'],
   ['How do I find the right creator?', 'Search the directory by craft, skills, AI tools, platform, or work type. Explore portfolios and channels before you reach out.'],
   ['What happens after I publish a brief?', 'Creators can apply with an approach. Review the applications, accept a collaborator, and continue in a shared project conversation.'],
-  ['Are portfolios and tools verified?', 'Work, process, and tool details are creator reported unless marked otherwise. Public inspiration profiles are clearly separated from Crevo members.'],
+  ['Are portfolios and tools verified?', 'Work, process, and tool details are creator reported unless marked otherwise. Reviewed evidence is explicitly marked; tool and usage claims are confirmed for each engagement.'],
 ]
 
 export default function StudioLanding() {
@@ -40,7 +39,7 @@ export default function StudioLanding() {
           <Reveal delay={.4}><p className="studio-hero-description">Extraordinary creators. Unconventional ideas.<br/>Your next great collaboration starts here.</p>
           <form className="studio-search" onSubmit={search}><Search size={20}/><input aria-label="Search creators" value={query} onChange={event => setQuery(event.target.value)} placeholder="What do you want to create?"/><button aria-label="Find creators"><ArrowUpRight size={22}/></button></form>
           <div className="studio-suggestions"><span>TRY</span>{['Filmmaking','3D & CGI','Photography'].map(term => <Link key={term} to={`/discover?q=${encodeURIComponent(term)}`}>{term}<ArrowUpRight size={11}/></Link>)}</div>
-          <div className="studio-hero-actions"><Link className="studio-button studio-button-lime" to="/discover">Explore creators <ArrowUpRight size={20}/></Link><Link className="studio-text-link" to="/demo">Take a look around <ArrowRight size={17}/></Link></div></Reveal>
+          <div className="studio-hero-actions"><Link className="studio-button studio-button-lime" to="/discover">Explore creators <ArrowUpRight size={20}/></Link><Link className="studio-text-link" to="/discover">Take a look around <ArrowRight size={17}/></Link></div></Reveal>
         </div>
         <Reveal className="studio-hero-art" delay={.25}>
           
@@ -65,14 +64,13 @@ export default function StudioLanding() {
 
     <section className="studio-craft-section"><div className="studio-shell studio-craft-layout"><Reveal className="studio-craft-intro"><span className="studio-kicker">02 / FIND YOUR FREQUENCY</span><h2>Whatever you<br/>can imagine.<br/><em>Someone can<br/>make it.</em></h2><Link className="studio-button studio-button-dark" to="/categories">All creative categories <ArrowUpRight size={19}/></Link><div className="studio-craft-symbol" aria-hidden="true">✳</div></Reveal><div className="studio-craft-list">{crafts.map(([name, description, number], index) => <Reveal delay={index * .05} key={name}><Link className="studio-craft-row" to={`/discover?category=${encodeURIComponent(name)}`}><span>{number}</span><div><h3>{name}</h3><p>{description}</p></div><ArrowUpRight size={26}/></Link></Reveal>)}<p className="studio-craft-note">From the first sketch to the final frame.<br/>Find a creative partner who gets it.</p></div></div></section>
 
-    <section className="studio-process"><AmbientScene/><div className="studio-shell"><Reveal className="studio-section-head"><div><span className="studio-kicker">03 / LESS FRICTION. MORE CREATION.</span><h2>Great work starts<br/>with a <em>connection.</em></h2></div><Link className="studio-button studio-button-outline" to="/demo">Try the whole journey <ArrowUpRight size={20}/></Link></Reveal><div className="studio-process-grid">{[
+    <section className="studio-process"><AmbientScene/><div className="studio-shell"><Reveal className="studio-section-head"><div><span className="studio-kicker">03 / LESS FRICTION. MORE CREATION.</span><h2>Great work starts<br/>with a <em>connection.</em></h2></div><Link className="studio-button studio-button-outline" to="/discover">Find your collaborator <ArrowUpRight size={20}/></Link></Reveal><div className="studio-process-grid">{[
       ['01', 'Find your people.', 'Discover creators by craft, explore their portfolios, and see how they think.', Search],
       ['02', 'Share the spark.', 'Publish a brief with your vision, goals, and budget. Invite a fresh perspective.', Clapperboard],
       ['03', 'Make it happen.', 'Review applications, choose your collaborator, and build together in one space.', Sparkles],
     ].map(([number, title, description, Icon], i) => <Reveal delay={i * .08} key={number}><BorderGlow className="studio-process-card" backgroundColor="#151915" borderRadius={22} animated={false} glowColor="78 90 65" colors={['#bde74e','#e3ffb0','#56723a']}><span className="studio-process-number">{number}</span><div className="studio-process-icon"><Icon size={32} strokeWidth={1.2}/><span/><span/></div><h3>{title}</h3><p>{description}</p></BorderGlow></Reveal>)}</div></div></section>
 
     <CreatorSpotlight/>
-    <section className="studio-people studio-shell"><Reveal><CreatorInspiration names={['Refik Anadol', 'Beeple', 'Holly Herndon']} limit={3}/></Reveal><Link className="studio-button studio-button-dark" to="/discover">Meet the creative community <ArrowUpRight size={20}/></Link></section>
 
     <section className="studio-invitation studio-shell"><Reveal className="studio-invitation-copy"><span className="studio-kicker">A LITTLE SPARK. A BIG BEGINNING.</span><h2>Good ideas<br/>deserve <em>good company.</em></h2><p>Meet the Crevo companion. A little reminder that every great project begins with curiosity—and someone to share it with.</p><div className="studio-role-links"><Link to="/join">I’m a creator <ArrowUpRight size={20}/></Link><Link to="/join">I’m a brand <ArrowUpRight size={20}/></Link></div></Reveal><Reveal className="studio-mascot"><div className="studio-mascot-ring"/><CrevoCompanion size={310} mood="greeting" interactive/><span>YOUR NEXT IDEA HAS COMPANY.</span></Reveal></section>
 

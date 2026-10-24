@@ -221,3 +221,9 @@ begin
 end $$;
 revoke all on function public.consume_rate_limit(text,integer,integer) from public,anon,authenticated;
 grant execute on function public.consume_rate_limit(text,integer,integer) to service_role;
+
+-- Reversible retirement: identities and work remain stored, but the app rejects
+-- disabled members and excludes archived profiles/briefs from all normal reads.
+alter table public.users add column if not exists disabled_at timestamptz;
+alter table public.creators add column if not exists archived_at timestamptz;
+alter table public.briefs add column if not exists archived_at timestamptz;

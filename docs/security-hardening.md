@@ -22,7 +22,7 @@ New pending email signups retain validated profile data in Supabase Auth metadat
 
 Both previously public hosted demo passwords have been replaced with private random values, both identities are banned, and their Auth sessions were revoked. The backend also rejects these identities on login, refresh and authenticated requests. Their marketplace records remain intact.
 
-The frontend contains no shared demo password or shared sign-in buttons. `/demo` is a read-only walkthrough. Local interactive demos require an operator-chosen private password of at least 12 characters and use a separate SQLite database. Hosted shared-account seeding is disabled.
+The frontend contains no shared demo password or shared sign-in buttons. `/demo` now redirects to discovery after the later curated marketplace update. Local interactive demos require an operator-chosen private password of at least 12 characters and use a separate SQLite database. Hosted shared-account seeding is disabled.
 
 ## Persistent request limits
 

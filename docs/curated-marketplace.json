@@ -1,0 +1,36 @@
+{
+  "creator": {
+    "name": "Crevo Studio",
+    "title": "AI product visualist & campaign art direction",
+    "bio": "A focused studio for AI-generated product imagery. We develop clean studio compositions, material and lighting studies, and social-ready campaign visuals. Published work includes the original Cobalt and Citrus concepts created for this project, with production notes and explicit usage terms. These are independent concepts, not commissioned client campaigns.",
+    "location": "India · remote collaboration worldwide",
+    "categories": ["Product Visualization", "AI Photography", "Advertising Creative"],
+    "skills": ["Art Direction", "Product Imagery", "Visual Concept Development", "Creative Direction"],
+    "platforms": ["Instagram", "Facebook"],
+    "audience": 0,
+    "rate": 450,
+    "avatar_url": "/portfolio/crevo-studio-mark.svg",
+    "portfolio": "Original AI-generated product concepts with a consistent production workflow: define the visual goal, write a structured generation prompt, generate the image, review material realism and composition, inspect the output dimensions, and package the asset with usage notes. Cobalt explores premium blue glass and warm stone in a vertical composition; Citrus explores pale-lime packaging, condensation and dramatic studio lighting in a square composition. Tools and work are documented; independent portfolio verification is pending.",
+    "portfolio_source": "manual",
+    "verified_at": null,
+    "social_links": {},
+    "licensing": {"usage_types": ["organic_social", "paid_social", "web"], "territory": "Worldwide", "duration_months": 12, "exclusive": false}
+  },
+  "brand": {"name": "Crevo Creative Team", "company_name": "Crevo Creative", "logo_url": "/portfolio/crevo-brand-mark.svg"},
+  "portfolio": [
+    {"title": "Cobalt / a study in glass and light", "description": "Original independent skincare product visualization. Cobalt glass, pale limestone, a translucent arc and warm cream studio light create a premium minimalist campaign direction. Created for this project's portfolio; no existing brand or paid client work is represented.", "media_url": "/portfolio/cobalt-studio.png", "media_type": "image", "tools": ["OpenAI Image Generation"], "workflow": "Defined the product, cobalt-and-cream palette, vertical 4:5 composition and minimalist premium studio direction. Generated the still using OpenAI Image Generation through Codex. Reviewed the output for product shape, lighting and visual coherence; inspected the original 1122 × 1402 PNG. No other AI model or editing application is claimed. The prompt and provenance are published alongside the work.", "format": "PNG · 4:5 · 1122 × 1402", "commercial_use": "Declared offer: worldwide organic social, paid social and website use for 12 months, non-exclusive, subject to the agreed project license and underlying rights review. Unbranded AI concept; no identifiable person or third-party logo.", "verification": "creator reported; original generation documented"},
+    {"title": "Citrus / material, freshness and motion", "description": "Original independent beverage product visualization. A pale-lime can, sculptural charcoal stage and translucent ribbon explore a bold minimalist premium studio campaign direction. Created for this project's portfolio; no commissioned campaign or existing beverage brand is represented.", "media_url": "/portfolio/citrus-studio.png", "media_type": "image", "tools": ["OpenAI Image Generation"], "workflow": "Defined a square composition, lime-and-charcoal color direction, realistic condensation and controlled commercial studio light. Generated the image using OpenAI Image Generation through Codex. Reviewed the material rendering and composition; inspected the original 1254 × 1254 PNG. The concept uses no existing logo or identifiable person. Generation prompt and output hash are documented for review.", "format": "PNG · 1:1 · 1254 × 1254", "commercial_use": "Declared offer: worldwide organic social, paid social and website use for 12 months, non-exclusive, subject to the agreed project license and underlying rights review. Independent unbranded AI concept.", "verification": "creator reported; original generation documented"}
+  ],
+  "brief": {
+    "title": "Cobalt launch / premium product imagery",
+    "description": "Create a premium minimalist studio product image for an unbranded cobalt-blue skincare bottle. Use warm cream lighting, a pale stone surface, realistic glass materials and an uncluttered composition. The Cobalt portfolio study is the visual reference. Deliver a vertical 4:5 PNG, production notes and a usage-rights handoff for organic social, paid social and our website.",
+    "category": "Product Visualization", "skills": ["Art Direction", "Product Imagery", "Visual Concept Development"],
+    "platforms": ["Instagram", "Facebook"], "budget": 1500, "location": "Remote",
+    "content_type": "Image", "style": "Premium minimalist studio", "format": "PNG · 4:5",
+    "commercial_use": "Worldwide organic social, paid social and website use for 12 months, non-exclusive. Confirm the final scope, provenance and underlying asset rights before production.",
+    "licensing": {"usage_types": ["organic_social", "paid_social", "web"], "territory": "Worldwide", "duration_months": 12, "exclusive": false},
+    "required_tools": ["OpenAI Image Generation"], "duration_seconds": null,
+    "deliverables": "One premium vertical 4:5 PNG, at least 1000 pixels wide; generation workflow notes; explicit commercial-use handoff.",
+    "deadline": "2026-11-10", "revision_rounds": 2, "status": "open"
+  }
+}

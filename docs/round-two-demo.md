@@ -1,3 +1,7 @@
+# Historical local walkthrough
+
+The live site now uses the curated creator/brand pair and original portfolio in `curated-marketplace.json`. Public demos and their media have been retired. The older local scenario below is retained only as development reference and may recreate local fixture media when explicitly run.
+
 # Crevo Round 2 walkthrough
 
 Round 2 extends the original React/FastAPI marketplace. The new flow uses stored briefs, registered creators, AI portfolios, contact threads, applications, and projects. It does not use a separate hardcoded matching screen.

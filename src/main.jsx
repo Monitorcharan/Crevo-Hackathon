@@ -13,3 +13,4 @@ import './crevo-assistant-companion.css'
 import './flowing-ribbon.css'
 
 import './studio.css'
+import './creator-evidence.css'
