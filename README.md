@@ -94,11 +94,19 @@ The tests cover Firebase identity verification and account linking, account crea
 
 **Validation status:** `npm run build` passes and `python -m pytest -q` passes (7 tests). The running frontend returns HTTP 200, and `/api/health` reports `database: supabase` when configured. A temporary live Supabase smoke test passed Auth login, profile updates, portfolio items, avatar Storage upload, briefs, matching, applications, messaging, and project completion; all temporary records and files were removed. Browser checks passed at desktop and mobile sizes, including navigation to discovery and signup. `npm audit --omit=dev` reports zero production dependency vulnerabilities. The hero uses lightweight CSS animation and does not require WebGL. The deployed Render service passed a temporary end-to-end test covering Supabase Auth, creator profiles, portfolio work and Gemini introduction generation, Storage upload, Gemini brief drafting, AI assessed matching, applications, project messages, and completion. Test accounts, records, and files were removed. A real-inbox signup, confirmation link, and login were verified by the project owner on 2026-10-09.
 
+## Round 2: matching through delivery
+
+The Round 2 layer extends the existing marketplace with portfolio-aware ranked matches and visible gaps; structured licensing comparisons; saved shortlists and audited assistant proposals; creator invitations and responses; scope/license confirmation; and versioned deliveries, revision states and a shared activity timeline. Publishing a new brief automatically proposes suitable creators for brand review. Conflicting rights block selection when structured requirements are present. The assistant uses stored platform records and the configured matching method, with transparent rules when AI is unavailable.
+
+Uploads inspect actual PNG/JPEG/WebP/MP4 bytes for file format, aspect ratio, content type and requested duration before submission. Passed checks and file hashes stay attached to each version. Agreed rights stay attached to the project. Other deliverable types can use external links with clearly labeled manual review.
+
+[Round 2 setup and judge walkthrough](docs/round-two-demo.md). For an isolated local demo run `python backend/run_round_two_local.py` and `npm run dev`. The launcher uses a separate local database and seeds fictional shared accounts. Apply the additive `backend/schema.sql` changes before deploying to the existing Supabase-backed service. The existing Render service publishes this repository; `/api/health` identifies this release as `round-2`.
+
 ## Current scope
 
 - Pre-hire inbox and project conversations receive live server-sent updates while open, with a 10-second refresh fallback. Notification read status is saved on the current device.
 - Creators can publish, edit, and remove public gigs with a cover image, offer details, tools, output format, and commercial-use terms. Brands can view them from creator profiles and contact the creator. Payments and orders are outside this MVP.
-- A project begins when a brand accepts an application. Milestones and shared file delivery are outside this MVP.
+- A project begins when a brand accepts an application. The project workspace supports agreed scope and rights, checked file delivery, version-specific feedback, revisions, and final approval. Payments remain an explicitly labeled simulation.
 - Local auth is for development. Use Supabase Auth and a strong server secret for shared deployments.
 - The animated hero and logo respect reduced-motion settings and do not require WebGL.
 - The lemon-green Crevo mascot from the owner's `crevo_avatar` project appears on the landing page, Categories page, and sign-in artwork. Its 3D scene is code split, pauses off-screen, respects reduced motion, and uses the supplied CSS fallback when WebGL is unavailable.

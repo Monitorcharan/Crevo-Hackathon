@@ -37,7 +37,7 @@ def test_gig_editor_public_view_and_owner_access(tmp_path, monkeypatch):
         assert client.get(f'/api/gigs/{gig_id}').status_code == 404
 
 
-def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
+def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch, complete_workflow):
     monkeypatch.setattr(store, 'REMOTE', False)
     monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'marketplace.db')
     monkeypatch.setattr(main, 'ADMIN_EMAILS', {'admin@example.com'})
@@ -139,7 +139,7 @@ def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch):
         review_url = f"/api/projects/{project['id']}/review"
         review_data = {'rating': 5, 'body': 'Thoughtful process, clear communication, and a strong final film.'}
         assert client.post(review_url, headers=brand_headers, json=review_data).status_code == 409
-        client.post(f"/api/projects/{project['id']}/complete", headers=brand_headers)
+        complete_workflow(client, project['id'], brand_headers, creator_headers)
         assert client.post(review_url, headers=another_headers, json=review_data).status_code == 404
         review = client.post(review_url, headers=brand_headers, json=review_data)
         assert review.status_code == 200, review.text

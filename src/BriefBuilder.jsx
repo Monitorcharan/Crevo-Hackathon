@@ -1,3 +1,4 @@
+import { LicenseFields, defaultLicense } from './Licensing.jsx'
 import BriefReadiness from './BriefReadiness.jsx'
 import { BrandLogo } from './BrandMark.jsx'
 import { useEffect, useRef, useState } from 'react'
@@ -9,7 +10,7 @@ import FormatPicker, { formatComplete, normalizeFormat } from './FormatPicker.js
 import { NotificationBellAuto } from './NotificationBell.jsx'
 
 const csv = text => text.split(',').map(x => x.trim()).filter(Boolean)
-const initialForm = { title: '', description: '', category: '', skills: '', platforms: '', budget: '', location: '', content_type: '', style: '', format: '', commercial_use: '', deliverables: '', deadline: '', revision_rounds: '' }
+const initialForm = { title: '', description: '', category: '', skills: '', platforms: '', budget: '', location: '', content_type: '', style: '', format: '', commercial_use: '', deliverables: '', deadline: '', revision_rounds: '', licensing: defaultLicense, required_tools: '', duration_seconds: '' }
 
 export default function BriefBuilder() {
   const navigate = useNavigate()
@@ -66,7 +67,7 @@ export default function BriefBuilder() {
     try {
       const brief = await api('/briefs', {
         method: 'POST',
-        body: { ...form, skills: csv(form.skills), platforms: csv(form.platforms), budget: Number(form.budget), deadline: form.deadline || null, revision_rounds: form.revision_rounds === '' ? null : Number(form.revision_rounds) },
+        body: { ...form, required_tools: csv(form.required_tools), duration_seconds: form.duration_seconds ? Number(form.duration_seconds) : null, skills: csv(form.skills), platforms: csv(form.platforms), budget: Number(form.budget), deadline: form.deadline || null, revision_rounds: form.revision_rounds === '' ? null : Number(form.revision_rounds) },
       })
       navigate(`/briefs/${brief.id}`, { state: { published: true } })
     } catch (error) {
@@ -112,17 +113,17 @@ export default function BriefBuilder() {
           <div className="form-two">
             <label>Content type<input required value={form.content_type} onChange={event => set('content_type', event.target.value)} placeholder="AI film, animation, images"/></label>
           </div>
-          <FormatPicker value={form.format} onChange={value => set('format', value)}/>
+          <div className="form-two"><label>Required AI tools/models<input value={form.required_tools} onChange={e => set('required_tools', e.target.value)} placeholder="Runway, Midjourney (optional)"/></label><label>Video duration (seconds)<input type="number" min="1" max="36000" value={form.duration_seconds} onChange={e => set('duration_seconds', e.target.value)} placeholder="15"/></label></div><FormatPicker value={form.format} onChange={value => set('format', value)}/>
           <label>Visual style<input required value={form.style} onChange={event => set('style', event.target.value)} placeholder="Cinematic, vibrant, editorial"/></label>
           <label>Commercial-use requirements<textarea required rows={3} value={form.commercial_use} onChange={event => set('commercial_use', event.target.value)} placeholder="Where and for how long will the work be used?"/></label>
-          <div className="form-two">
+          <LicenseFields value={form.licensing} onChange={value => set('licensing', value)}/><div className="form-two">
             <label>Skills needed<input value={form.skills} onChange={event => set('skills', event.target.value)} placeholder="AI video, Editing"/></label>
             <label>Platforms<input value={form.platforms} onChange={event => set('platforms', event.target.value)} placeholder="Instagram, TikTok"/></label>
           </div>
           <section className="round-two-scope"><h3>Delivery expectations</h3><label>Deliverables and quantity<textarea required minLength={10} maxLength={1200} rows={3} value={form.deliverables} onChange={event => set('deliverables', event.target.value)} placeholder="For example: one 15-second vertical film, three stills, final exports and source files if required"/></label><div className="form-two"><label>Target delivery date<input required type="date" value={form.deadline} onChange={event => set('deadline', event.target.value)}/></label><label>Included revision rounds<input required type="number" min="0" max="20" step="1" value={form.revision_rounds} onChange={event => set('revision_rounds', event.target.value)} placeholder="2"/></label></div><small>Agree any changes to scope or timing with the creator before work begins.</small></section>
           <label>Location preference<input value={form.location} onChange={event => set('location', event.target.value)} placeholder="Optional"/></label>
           {publishError && <div className="alert" role="alert">{publishError}</div>}
-          <button className="button button-primary" disabled={drafting || publishing}>{publishing ? 'Publishing brief…' : 'Publish brief'} <ArrowRight size={17}/></button>
+          <button className="button button-primary" disabled={drafting || publishing || !form.licensing.usage_types.length}>{publishing ? 'Publishing brief…' : 'Publish brief'} <ArrowRight size={17}/></button>
         </form>
       </div>
     </div>

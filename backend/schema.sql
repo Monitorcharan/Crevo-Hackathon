@@ -131,6 +131,11 @@ insert into storage.buckets(id,name,public)
 values ('portfolios','portfolios',true)
 on conflict (id) do nothing;
 
+-- Shared project files are private; FastAPI checks membership before downloads.
+insert into storage.buckets(id,name,public)
+values ('crevo-deliveries','crevo-deliveries',false)
+on conflict (id) do nothing;
+
 -- Delivery history and explicitly simulated payment records; existing RLS/grants apply.
 alter table public.projects add column if not exists workflow jsonb not null default '{}'::jsonb;
 alter table public.projects add column if not exists workflow_revision integer not null default 0;
@@ -139,6 +144,28 @@ alter table public.projects add column if not exists workflow_revision integer n
 alter table public.briefs add column if not exists deliverables text not null default '';
 alter table public.briefs add column if not exists deadline date;
 alter table public.briefs add column if not exists revision_rounds integer check (revision_rounds between 0 and 20);
+alter table public.creators add column if not exists licensing jsonb;
+alter table public.briefs add column if not exists licensing jsonb;
+alter table public.briefs add column if not exists required_tools jsonb not null default '[]'::jsonb;
+alter table public.briefs add column if not exists duration_seconds integer check (duration_seconds between 1 and 36000);
+create table if not exists public.brief_candidates (
+  id uuid primary key default gen_random_uuid(),
+  brief_id uuid not null references public.briefs(id) on delete cascade,
+  brand_id uuid not null references public.users(id),
+  creator_id uuid not null references public.creators(id),
+  status text not null check (status in ('proposed','shortlisted','removed','invited','interested','declined')),
+  source text not null check (source in ('manual','agent')),
+  events jsonb not null default '[]'::jsonb,
+  thread_id uuid references public.contact_threads(id),
+  created_at timestamptz not null default now(),
+  unique(brief_id,creator_id)
+);
+create index if not exists brief_candidates_brand_idx on public.brief_candidates(brand_id);
+create index if not exists brief_candidates_creator_idx on public.brief_candidates(creator_id);
+create index if not exists brief_candidates_thread_idx on public.brief_candidates(thread_id);
+alter table public.brief_candidates enable row level security;
+revoke all on public.brief_candidates from anon, authenticated;
+grant select, insert, update, delete on public.brief_candidates to service_role;
 create or replace function public.transition_application(p_application_id uuid, p_brand_id uuid, p_decision text)
 returns jsonb language plpgsql security invoker set search_path = public, pg_temp as $$
 declare a public.applications%rowtype; b public.briefs%rowtype; p public.projects%rowtype;
@@ -157,7 +184,9 @@ if p_decision='declined' then
  update public.applications set status='declined' where id=a.id returning * into a;
  return to_jsonb(a);
 end if;
-insert into public.projects(brief_id,creator_id,brand_id,status) values(a.brief_id,a.creator_id,p_brand_id,'active')
+insert into public.projects(brief_id,creator_id,brand_id,status,workflow)
+values(a.brief_id,a.creator_id,p_brand_id,'active',jsonb_build_object('stage','scope_pending','selection_snapshot',
+  jsonb_build_object('brief',to_jsonb(b),'creator_offer',(select licensing from public.creators where id=a.creator_id),'selected_by',p_brand_id,'selected_at',now())))
 on conflict (brief_id,creator_id) do nothing;
 select * into p from public.projects where brief_id=a.brief_id and creator_id=a.creator_id;
 update public.applications set status='accepted' where id=a.id;

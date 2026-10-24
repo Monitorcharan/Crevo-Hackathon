@@ -5,6 +5,9 @@ dist/
 backend/.env
 backend/__pycache__/
 backend/*.db
+backend/deliveries/
+tmp/round2-*.db
+tmp/deliveries/
 backend/.venv/
 backend/.pytest_cache/
 marketplace-prototype/

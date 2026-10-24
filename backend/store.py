@@ -17,7 +17,7 @@ REMOTE = bool(SUPABASE_URL and PUBLIC_KEY and SECRET_KEY)
 if os.getenv('CREVO_REQUIRE_SUPABASE') == '1' and not REMOTE:
     raise RuntimeError('Hosted Crevo requires Supabase credentials')
 admin = create_client(SUPABASE_URL, SECRET_KEY) if REMOTE else None
-JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links'}
+JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links', 'licensing', 'required_tools', 'events'}
 
 
 def connect():
@@ -43,7 +43,13 @@ def init_local():
         create table if not exists contact_messages(id text primary key,thread_id text not null,sender_id text not null,body text not null,created_at text default current_timestamp);
         create table if not exists reviews(id text primary key,project_id text not null unique,brand_id text not null,creator_id text not null,rating integer not null,body text not null,created_at text default current_timestamp);
         create table if not exists verification_requests(id text primary key,creator_id text not null,evidence_url text not null,statement text not null,status text not null,decision_note text not null default '',reviewed_by text,reviewed_at text,created_at text default current_timestamp);
+        create table if not exists brief_candidates(id text primary key,brief_id text not null,brand_id text not null,creator_id text not null,status text not null,source text not null,events text not null default '[]',thread_id text,created_at text default current_timestamp,unique(brief_id,creator_id));
         ''')
+        for table, additions in [('creators', [('licensing', 'text')]), ('briefs', [('licensing', 'text'), ('required_tools', "text not null default '[]'"), ('duration_seconds', 'integer')])]:
+            columns = {row[1] for row in db.execute(f'pragma table_info({table})')}
+            for field, definition in additions:
+                if field not in columns:
+                    db.execute(f'alter table {table} add column {field} {definition}')
         brief_columns = {row[1] for row in db.execute('pragma table_info(briefs)')}
         for field, definition in [('deliverables', "text not null default ''"), ('deadline', 'text'), ('revision_rounds', 'integer')]:
             if field not in brief_columns:
@@ -110,6 +116,8 @@ def normalize(row, table=None):
         if isinstance(item[key], str):
             item[key] = json.loads(item[key])
     item.pop('password_hash', None)
+    if isinstance(item.get('created_at'), str) and 'T' not in item['created_at']:
+        item['created_at'] = item['created_at'].replace(' ', 'T') + '+00:00'
     return item
 
 

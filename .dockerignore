@@ -12,3 +12,8 @@ marketplace-prototype
 .runtime-check
 *.log
 backend/.env
+backend/deliveries
+tmp
+.deck-build
+deliverables
+demo_production

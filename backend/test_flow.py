@@ -5,7 +5,7 @@ import main
 from main import app
 
 
-def test_brand_creator_collaboration(tmp_path, monkeypatch):
+def test_brand_creator_collaboration(tmp_path, monkeypatch, complete_workflow):
     monkeypatch.setattr(store, 'REMOTE', False)
     monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'test.db')
     monkeypatch.setattr(main, 'AI_KEY', '')
@@ -69,6 +69,7 @@ def test_brand_creator_collaboration(tmp_path, monkeypatch):
         assert declined.status_code == 200 and declined.json()['status'] == 'declined'
         assert client.post(f"/api/applications/{second_application['id']}/accept", headers=brand_headers).status_code == 409
 
+        complete_workflow(client, project_id, brand_headers, creator_headers)
         completed = client.post(f'/api/projects/{project_id}/complete', headers=brand_headers)
         assert completed.status_code == 200 and completed.json()['status'] == 'completed'
         assert client.post(f'/api/projects/{project_id}/complete', headers=brand_headers).status_code == 200
