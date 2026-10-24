@@ -149,9 +149,9 @@ function BrandDashboard({ user }) {
 
 function CreatorProfileChecklist({ creator }) {
   if (!creator || creator.name.startsWith('[Demo]')) return null
-  const missing = [!creator.avatar_url && 'Add your real profile photo', (!creator.title || creator.title === 'Creator') && 'Describe your creative role', !creator.bio && 'Write your biography', !creator.categories?.length && 'Choose your categories', !Object.values(creator.social_links || {}).some(Boolean) && 'Link your public work'].filter(Boolean)
+  const missing = [!creator.avatar_url && 'Add a profile photo or studio mark', (!creator.title || creator.title === 'Creator') && 'Describe your creative role', !creator.bio && 'Write your biography', !creator.categories?.length && 'Choose your categories'].filter(Boolean)
   if (!missing.length) return null
-  return <div className="creator-setup-note"><div><span className="eyebrow">COMPLETE YOUR REAL CREATOR PROFILE</span><h2>Help brands know your work.</h2><p>Your profile is live. Add details you can stand behind, including a photo you have permission to use.</p><ul>{missing.map(item => <li key={item}>{item}</li>)}</ul></div><Link to="/profile/edit" className="button button-primary">Complete profile <ArrowUpRight size={17}/></Link></div>
+  return <div className="creator-setup-note"><div><span className="eyebrow">COMPLETE YOUR CREATOR PROFILE</span><h2>Help brands know your work.</h2><p>Add the remaining profile details so brands can understand your creative work.</p><ul>{missing.map(item => <li key={item}>{item}</li>)}</ul></div><Link to="/profile/edit" className="button button-primary">Complete profile <ArrowUpRight size={17}/></Link></div>
 }
 
 function CreatorDashboard({ refresh }) {
