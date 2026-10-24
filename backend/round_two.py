@@ -93,9 +93,11 @@ def register(app, current_user, matches):
     def candidate_action(candidate_id: str, data: CandidateAction, user=Depends(current_user)):
         row = store.one('brief_candidates', {'id': candidate_id})
         creator = store.one('creators', {'id': row['creator_id']}) if row else None
-        if not row or user['id'] not in (row['brand_id'], creator.get('owner_id')):
+        if not row or not creator or user['id'] not in (row['brand_id'], creator.get('owner_id')):
             raise HTTPException(404, 'Invitation not found')
         brief = store.one('briefs', {'id': row['brief_id']})
+        if not brief:
+            raise HTTPException(404, 'Brief no longer available')
         brand = user['id'] == row['brand_id']
         if (data.action in ('shortlist', 'remove', 'contact') and not brand) or (data.action in ('interested', 'decline') and brand):
             raise HTTPException(403, 'This action belongs to your collaborator.')

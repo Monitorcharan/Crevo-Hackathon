@@ -35,9 +35,9 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The API is at `http://localhost:8000`, with interactive API docs at `/docs`. Local mode creates `backend/crevo.db` and eight illustrated sample portfolios. Create one brand account and one creator account to try the full workflow.
+Open `http://localhost:5173`. The API is at `http://localhost:8000`, with interactive API docs at `/docs`. Local mode creates `backend/crevo.db`. Startup does not seed creators or demo gigs. Create one brand account and one creator account and add portfolio evidence to try the full workflow.
 
-Demo path: create a creator account → complete the profile → add an AI work sample with tools and usage terms → create a brand account → publish a structured brief → review ranked matches → return as the creator and apply → accept the application as the brand → exchange project messages → mark the project complete.
+Workflow: creator profile and AI portfolio → structured brand brief → explained matches → reviewed shortlist → invitation and creator response → selection → scope/license confirmation → production updates → checked delivery → version-specific feedback and revisions → final approval. See the [complete Round 1 and Round 2 workflow](docs/rounds-one-and-two-workflow.md) for the current live walkthrough.
 
 ## Supabase mode
 
@@ -72,15 +72,15 @@ Firebase client ID tokens are verified on the server against Google's signing ce
 - A creator with at least one portfolio item can submit a public work or workflow link and a statement for verification. A profile shows **Crevo Verified** only after a configured administrator reviews and approves the request. It means submitted portfolio evidence was reviewed, not that every tool claim or outcome is guaranteed. Pending and rejected requests never show the badge.
 - Set `CREVO_ADMIN_USER_IDS` in the backend or Render environment to a comma-separated list of existing account UUIDs permitted to approve requests. Hosted administrators must authenticate with a verified email; registering an email address never grants administrative access. Those accounts see **Verifications** in navigation and can review requests at `/admin/verifications`. Leave this unset to disable approvals.
 - Discovery and brief creation now include 26 creative categories, including AI filmmaking, animation, 3D/CGI, generative art, product visualization, voice, copywriting, and VFX.
-- All 26 categories have their own visual cards at `/categories`, linked from the glass navbar. A card opens discovery with that category selected. The demo portfolios use generated and original vector concept artwork and prominently label their fictional feedback.
+- All 26 categories have their own visual cards at `/categories`, linked from the glass navbar. A card opens discovery with that category selected. The current portfolio uses original Cobalt and Citrus image concepts with documented provenance; no fictional feedback is presented.
 
 The idempotent `backend/schema.sql` adds contact threads/messages, completed-project reviews, verification requests, and the creator opt-in email/approval fields. Apply it to an existing Supabase project before deploying this version. All new tables have RLS enabled and direct browser roles revoked; FastAPI enforces record ownership and uses its server-side Supabase client.
 
 ## AI behavior
 
-Set `GEMINI_API_KEY` or `OPENAI_API_KEY` in `backend/.env` to enable real portfolio introduction generation, AI assisted structured brief drafting, and AI assisted match assessment. Gemini takes priority when both keys are present. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`; `OPENAI_MODEL` defaults to `gpt-4.1-mini`. These features use the providers' official text generation APIs. Match ranking gives 70% weight to transparent category, skill, platform, budget, and location rules and 30% to an AI assessment of the top eight candidates. If the AI service is unavailable, the rules ranking remains available. Google says free-tier Gemini content can be used to improve its products, so avoid putting confidential client details into AI drafts on the free tier. Without an AI API key, portfolio introductions are labeled template drafts, brief drafting returns an explicit configuration error, and match ranking is labeled weighted rules. No simulated AI response is presented as AI generated.
+Set `GEMINI_API_KEY` or `OPENAI_API_KEY` in `backend/.env` to enable real portfolio introduction generation, AI assisted structured brief drafting, and AI assisted match assessment. Gemini takes priority when both keys are present. `GEMINI_MODEL` defaults to `gemini-3.5-flash-lite`; `OPENAI_MODEL` defaults to `gpt-4.1-mini`. These features use the providers' official text generation APIs. Match ranking gives 70% weight to normalized category, skill, tool, format, content, style, rights, trust and budget rules and 30% to an AI assessment of the top eight candidates. Rights and evidence caps apply after the AI contribution. If the AI service is unavailable, the rules ranking remains available. Google says free-tier Gemini content can be used to improve its products, so avoid putting confidential client details into AI drafts on the free tier. Without an AI API key, portfolio introductions are labeled template drafts, brief drafting returns an explicit configuration error, and match ranking is labeled weighted rules. No simulated AI response is presented as AI generated.
 
-Creators can add Instagram, Facebook, X, YouTube, and Reddit profile URLs; their public profile shows clickable platform logos for saved accounts. Creators can add work samples with a media URL, AI tools/models, production workflow, output format, and commercial-use terms. Individual tool and work claims remain **creator reported**. Crevo Verification separately records administrator review of submitted portfolio evidence. Briefs include content type, style, format/aspect ratio and commercial-use requirements. Media URLs must be publicly accessible; Supabase Storage currently handles profile photos only.
+Creators can add Instagram, Facebook, X, YouTube, and Reddit profile URLs; their public profile shows clickable platform logos for saved accounts. Creators can add work samples with a media URL, AI tools/models, production workflow, output format, and commercial-use terms. Individual tool and work claims remain **creator reported**. Crevo Verification separately records administrator review of submitted portfolio evidence. Briefs include content type, style, format/aspect ratio and commercial-use requirements. Public portfolio media must be accessible to visitors. Supabase Storage handles profile images and private checked project deliveries, with project membership enforced on downloads.
 
 ## Verify
 
@@ -93,7 +93,7 @@ pytest -q
 
 The tests cover Firebase identity verification and account linking, account creation, profile editing, AI portfolio metadata, structured briefs, discovery, applications, project messaging, contact-thread privacy, completed-project reviews, and administrator-approved verification. It uses an isolated local database.
 
-**Validation status:** `npm run build` passes and `python -m pytest -q` passes (12 tests). The running frontend returns HTTP 200, and `/api/health` reports `database: supabase` when configured. A temporary live Supabase smoke test passed Auth login, profile updates, portfolio items, avatar Storage upload, briefs, matching, applications, messaging, and project completion; all temporary records and files were removed. Browser checks passed at desktop and mobile sizes, including navigation to discovery and signup. `npm audit --omit=dev` reports zero production dependency vulnerabilities. The hero uses lightweight CSS animation and does not require WebGL. The deployed Render service passed a temporary end-to-end test covering Supabase Auth, creator profiles, portfolio work and Gemini introduction generation, Storage upload, Gemini brief drafting, AI assessed matching, applications, project messages, and completion. Test accounts, records, and files were removed. A real-inbox signup, confirmation link, and login were verified by the project owner on 2026-10-09.
+**Validation status (24 October 2026):** 52 backend tests and 8 frontend tests pass; the production build passes. A temporary live engagement passed existing-account login, AI-assisted matching, actual shortlist proposals, invitation notification and response, selection, scope/license confirmation, production updates, rejection of a wrong-ratio upload, checked delivery, revision, approval and private file access. Only that run's temporary records and files were removed; the prepared Cobalt brief remains reset. The current creator has complete matching essentials and pending independent verification. Public email signup still needs an email provider for reliable confirmation delivery. See the [full guide](docs/rounds-one-and-two-workflow.md) for the exact journey and limits.
 
 ## Round 2: matching through delivery
 
@@ -101,13 +101,13 @@ The Round 2 layer extends the existing marketplace with portfolio-aware ranked m
 
 Uploads inspect actual PNG/JPEG/WebP/MP4 bytes for file format, aspect ratio, content type and requested duration before submission. Passed checks and file hashes stay attached to each version. Agreed rights stay attached to the project. Other deliverable types can use external links with clearly labeled manual review.
 
-[Round 2 setup and judge walkthrough](docs/round-two-demo.md). For an isolated local demo run `python backend/run_round_two_local.py` and `npm run dev`. The launcher uses a separate local database and seeds fictional shared accounts. Apply the additive `backend/schema.sql` changes before deploying to the existing Supabase-backed service. The existing Render service publishes this repository; `/api/health` identifies this release as `round-2`.
+[Current live Round 1 and Round 2 walkthrough](docs/rounds-one-and-two-workflow.md). For isolated development fixtures, see the historical [local Round 2 setup](docs/round-two-demo.md). Apply the additive `backend/schema.sql` changes before deploying another installation. The existing Render service publishes this repository; `/api/health` identifies this release as `round-2`.
 
 ## Current scope
 
 - Pre-hire inbox and project conversations receive live server-sent updates while open, with a 10-second refresh fallback. Notification read status is saved on the current device.
 - Creators can publish, edit, and remove public gigs with a cover image, offer details, tools, output format, and commercial-use terms. Brands can view them from creator profiles and contact the creator. Payments and orders are outside this MVP.
-- A project begins when a brand accepts an application. The project workspace supports agreed scope and rights, checked file delivery, version-specific feedback, revisions, and final approval. Payments remain an explicitly labeled simulation.
+- A project begins when a brand accepts an application. The project workspace supports agreed scope and rights, checked file delivery, version-specific feedback, revisions, and final approval. The live interface has no payment checkout or actual payment processing.
 - Local auth is for development. Use Supabase Auth and a strong server secret for shared deployments.
 - The animated hero and logo respect reduced-motion settings and do not require WebGL.
 - The lemon-green Crevo mascot from the owner's `crevo_avatar` project appears on the landing page, Categories page, and sign-in artwork. Its 3D scene is code split, pauses off-screen, respects reduced motion, and uses the supplied CSS fallback when WebGL is unavailable.
@@ -115,7 +115,7 @@ Uploads inspect actual PNG/JPEG/WebP/MP4 bytes for file format, aspect ratio, co
 
 ## Public deployment
 
-The repository includes a single-service Render Docker deployment. The container builds the Vite frontend and serves it with FastAPI from one public URL. Supabase remains the persistent database, Auth service, and avatar store; Render's free container filesystem is not used for saved data.
+The repository includes a single-service Render Docker deployment. The container builds the Vite frontend and serves it with FastAPI from one public URL. Supabase remains the persistent database, Auth service, profile image store and private delivery store; Render's free container filesystem is not used for saved data.
 
 1. Push this folder as a public GitHub repository. Local `.env` files, build output, dependencies, and the earlier `marketplace-prototype/` are excluded from Git and Docker.
 2. Import `render.yaml` as a Render Blueprint. Choose the Free web service plan. Enter `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_SECRET_KEY` as private environment values. Enter `GEMINI_API_KEY` or `OPENAI_API_KEY` to enable actual AI portfolio introductions, brief drafting, and AI match assessment. Never commit or paste these values into a public page.
@@ -126,7 +126,7 @@ Render's Free web service spins down after idle time, so the first visit may tak
 
 ## Creator presentation
 
-Registered member profiles appear before clearly labeled fictional demos in discovery. The landing page shows members, three sample creators with credited stock portraits, and then independent public inspiration profiles with sourced portraits. Stock models are not represented as members. Demo portraits are presentation assets only; real account identity data is unchanged. The profile-type filter separates members from demos. Photo sources and licenses are included in `public/demo-portraits/CREDITS.md`.
+The live marketplace shows the curated registered creator with original Cobalt and Citrus concepts, actual tool/workflow notes and provenance. Public demo galleries, stock portrait creator cards and external inspiration profiles have been retired. Earlier records remain disabled or archived and are excluded from discovery and matching. The creator uses a studio mark; no unrelated person's identity is represented as a member.
 
 
 ## Security hardening (24 October 2026)
@@ -141,6 +141,8 @@ Registered member profiles appear before clearly labeled fictional demos in disc
 Apply the additive quota statements in `backend/schema.sql` when upgrading another installation. Regenerate locks using `uv pip compile backend/requirements.in --universal --python-version 3.11 --generate-hashes -o backend/requirements.txt` and the equivalent command for `requirements-dev.in`. Review and refresh pinned image digests with security updates. See `docs/security-hardening.md` for limits and verification.
 
 ## Curated marketplace
+
+See [trust signals and connection recovery](docs/trust-signals.md) for the public evidence panel, review requirements, matching inputs and the fix for intermittent Supabase connection errors.
 
 The creator profile presents content fit, skills and tools, portfolio evidence, declared commercial-use rights, and trust signals in an aligned responsive layout. Original Cobalt and Citrus concepts include actual generation tools, workflow notes, dimensions and provenance. The brand brief requests matching content and rights. Portfolio review remains pending; no client reviews or verification badges are invented. See `docs/curated-marketplace.json` for the content and `docs/portfolio-provenance.md` for generation records.
 

@@ -1,5 +1,7 @@
 # Historical local walkthrough
 
+For the current live site, use the [complete Round 1 and Round 2 workflow](rounds-one-and-two-workflow.md). This page documents an older isolated local scenario.
+
 The live site now uses the curated creator/brand pair and original portfolio in `curated-marketplace.json`. Public demos and their media have been retired. The older local scenario below is retained only as development reference and may recreate local fixture media when explicitly run.
 
 # Crevo Round 2 walkthrough

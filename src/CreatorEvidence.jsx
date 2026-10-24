@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, Clapperboard, Layers3, ScanSearch, ShieldCheck, Wrench } from 'lucide-react'
+import { ArrowUpRight, Clapperboard, Layers3, ScanSearch, Wrench } from 'lucide-react'
 import { api } from './api.js'
+import { CreatorTrustSignals } from './CreatorTrust.jsx'
 
 const join = values => [...new Set((values || []).filter(Boolean))].join(' · ') || 'Not yet provided'
 const usage = { organic_social: 'Organic social', paid_social: 'Paid social', web: 'Website', broadcast: 'Broadcast', print: 'Print' }
@@ -26,7 +27,7 @@ export default function CreatorEvidence({ creator }) {
       <article className="creator-signal signal-tools"><span className="signal-icon"><Wrench size={21}/></span><span className="signal-number">02 / PRODUCTION CAPABILITY</span><h3>Skills & tools</h3><p>{join(creator.skills)}</p><dl><div><dt>Tools in published work</dt><dd>{state.loading ? 'Loading work…' : join(tools)}</dd></div></dl><small>Tool use is supported by creator-provided workflow notes.</small></article>
       <article className="creator-signal signal-work"><span className="signal-icon"><Layers3 size={21}/></span><span className="signal-number">03 / PUBLISHED WORK</span><h3>Portfolio evidence</h3><p>{state.loading ? 'Loading evidence…' : `${work.length} published work ${work.length === 1 ? 'sample' : 'samples'}`}</p><ul>{work.slice(0, 3).map(item => <li key={item.id}><Link to={`/creators/${creator.id}/work`}>{item.title}<ArrowUpRight size={14}/></Link><span>{item.format || item.media_type}</span></li>)}</ul>{!state.loading && !work.length && <small>Ask the creator to publish relevant work before selecting them.</small>}</article>
       <article className="creator-signal signal-rights"><span className="signal-icon"><ScanSearch size={21}/></span><span className="signal-number">04 / DECLARED USAGE RIGHTS</span><h3>Commercial-use fit</h3><p>{terms ? join(terms.usage_types.map(value => usage[value] || value)) : 'Usage rights need confirmation'}</p>{terms && <dl><div><dt>Territory</dt><dd>{terms.territory}</dd></div><div><dt>Duration</dt><dd>{terms.duration_months === 0 ? 'Perpetual' : `${terms.duration_months} months`}</dd></div><div><dt>Exclusivity</dt><dd>{terms.exclusive ? 'Available by agreement' : 'Non-exclusive'}</dd></div></dl>}<small>Each brief is checked against these terms before selection.</small></article>
-      <article className="creator-signal signal-trust"><span className="signal-icon"><ShieldCheck size={21}/></span><span className="signal-number">05 / EVIDENCE & CONFIDENCE</span><h3>Trust signals</h3><p>{creator.verified_at ? 'Portfolio evidence reviewed by Crevo' : 'Creator-reported profile'}</p><dl><div><dt>Workflow notes</dt><dd>{state.loading ? 'Loading…' : `${work.filter(item => item.workflow?.trim()).length} of ${work.length} work samples`}</dd></div><div><dt>Completed-project reviews</dt><dd>{creator.review_count || 0}</dd></div></dl><small>{creator.verified_at ? 'Reviewed evidence does not guarantee tool licenses or project outcomes.' : 'Independent portfolio review is pending. No verification badge is implied.'}</small></article>
+      <CreatorTrustSignals creatorId={creator.id}/>
     </div>
   </section>
 }

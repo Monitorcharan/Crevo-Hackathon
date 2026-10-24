@@ -36,7 +36,8 @@ def test_matching_uses_portfolio_and_caps_unsafe_or_sparse_matches():
     brief = {'category': 'AI Filmmaking', 'skills': ['Editing'], 'budget': 1000, 'content_type': 'Video', 'format': '9:16', 'style': 'cinematic', 'required_tools': ['Runway'], 'licensing': LICENSE}
     work = {'id': 'work', 'title': 'Cinematic launch video', 'description': '', 'workflow': 'Cinematic editing', 'format': '9:16', 'tools': ['Runway'], 'media_url': 'https://example.com/work', 'media_type': 'video'}
     result = score_match(creator, brief, [work])
-    assert result['score'] == 100 and result['strength'] == 'strong' and result['evidence'][0]['id'] == 'work'
+    assert result['score'] == 98 and result['strength'] == 'strong' and result['evidence'][0]['id'] == 'work'
+    assert result['trust']['matching']['points'] == 3  # Review alone does not imply completed-project feedback.
     missing = score_match({**creator, 'licensing': None}, brief, [work])
     assert missing['score'] <= 74 and missing['strength'] != 'strong'
     mismatch = score_match({**creator, 'licensing': {**LICENSE, 'territory': 'India'}}, brief, [work])

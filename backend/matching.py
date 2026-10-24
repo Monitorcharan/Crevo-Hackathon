@@ -3,6 +3,7 @@ import re
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
+from trust_signals import build_trust
 
 
 class LicenseTerms(BaseModel):
@@ -83,7 +84,7 @@ def profile_readiness(creator, portfolio):
     return {'checks': checks, 'work_samples': len(work), 'ready': all(item['complete'] for item in checks)}
 
 
-def score_match(creator, brief, portfolio):
+def score_match(creator, brief, portfolio, trust=None):
     portfolio = [p for p in portfolio if p.get('media_type') != 'gig']
     factors, weaknesses, breakdown, evidence = [], [], [], []
     def signal(name, weight, fit, reason, gap):
@@ -121,7 +122,8 @@ def score_match(creator, brief, portfolio):
         signal('Creative style', 10, min(1, len(hits) / len(style_words)), 'Portfolio style evidence: ' + ', '.join(sorted(hits)), 'Some visual direction needs discussion; text evidence is incomplete.')
     check = license_check(brief.get('licensing'), creator.get('licensing'))
     signal('Usage rights', 15, int(check['status'] == 'compatible'), 'Declared usage rights cover this brief', '; '.join(check['issues']))
-    signal('Trust', 5, int(bool(creator.get('verified_at'))), 'Portfolio evidence reviewed by Crevo', 'Portfolio and tool claims remain creator reported.')
+    trust = trust or build_trust(creator, portfolio)
+    signal('Trust', 5, trust['matching']['points'] / 5, '; '.join(trust['matching']['reasons']), '; '.join(trust['matching']['gaps']))
     if brief.get('budget', 0):
         rate = creator.get('rate', 0)
         signal('Budget', 5, int(0 < rate <= brief['budget']), 'Starting rate fits the budget', 'Starting rate is unknown or exceeds the budget; confirm the project quote.')
@@ -135,7 +137,7 @@ def score_match(creator, brief, portfolio):
     score = round(100 * sum(x['points'] for x in breakdown) / max(1, total))
     conflicts = brief_conflicts(brief)
     result = {'creator': creator, 'score': score, 'factors': factors, 'weaknesses': conflicts + weaknesses, 'conflicts': conflicts, 'portfolio_count': len(portfolio),
-              'breakdown': breakdown, 'licensing': check, 'evidence': sorted(evidence, key=lambda p: -p['overlap'])[:3],
+              'breakdown': breakdown, 'licensing': check, 'trust': trust, 'evidence': sorted(evidence, key=lambda p: -p['overlap'])[:3],
               'method': 'portfolio evidence + weighted rules', 'ai_reason': None}
     return finalize_match(result)
 

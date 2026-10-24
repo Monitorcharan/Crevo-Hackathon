@@ -5,6 +5,7 @@ import uuid
 from pathlib import Path
 
 from supabase import create_client
+from supabase_transport import client_options
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / 'crevo.db'
@@ -16,7 +17,7 @@ if any((SUPABASE_URL, PUBLIC_KEY, SECRET_KEY)) and not all((SUPABASE_URL, PUBLIC
 REMOTE = bool(SUPABASE_URL and PUBLIC_KEY and SECRET_KEY)
 if os.getenv('CREVO_REQUIRE_SUPABASE') == '1' and not REMOTE:
     raise RuntimeError('Hosted Crevo requires Supabase credentials')
-admin = create_client(SUPABASE_URL, SECRET_KEY) if REMOTE else None
+admin = create_client(SUPABASE_URL, SECRET_KEY, options=client_options()) if REMOTE else None
 JSON_FIELDS = {'categories', 'skills', 'platforms', 'tools', 'social_links', 'licensing', 'required_tools', 'events'}
 
 
