@@ -47,6 +47,7 @@ def init_local():
         create table if not exists reviews(id text primary key,project_id text not null unique,brand_id text not null,creator_id text not null,rating integer not null,body text not null,created_at text default current_timestamp);
         create table if not exists verification_requests(id text primary key,creator_id text not null,evidence_url text not null,statement text not null,status text not null,decision_note text not null default '',reviewed_by text,reviewed_at text,created_at text default current_timestamp);
         create table if not exists brief_candidates(id text primary key,brief_id text not null,brand_id text not null,creator_id text not null,status text not null,source text not null,events text not null default '[]',thread_id text,created_at text default current_timestamp,unique(brief_id,creator_id));
+        create table if not exists opencalls(id text primary key,brief_id text not null unique,owner_id text not null,state text not null,revision integer not null default 0,created_at text default current_timestamp);
         ''')
         for table, additions in [('creators', [('licensing', 'text')]), ('briefs', [('licensing', 'text'), ('required_tools', "text not null default '[]'"), ('duration_seconds', 'integer')])]:
             columns = {row[1] for row in db.execute(f'pragma table_info({table})')}
@@ -84,7 +85,7 @@ def init_local():
 
 
 def json_fields(table):
-    return JSON_FIELDS | ({'workflow'} if table == 'projects' else set())
+    return JSON_FIELDS | ({'workflow'} if table == 'projects' else {'state'} if table == 'opencalls' else set())
 
 
 def normalize(row, table=None):

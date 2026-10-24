@@ -39,3 +39,5 @@ htmlcov/
 *.log
 .DS_Store
 Thumbs.db
+# Local OpenCall previews; hosted previews use private Supabase Storage.
+/backend/opencall-media/

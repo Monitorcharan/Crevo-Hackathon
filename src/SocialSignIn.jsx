@@ -3,10 +3,11 @@ import { SiGoogle, SiApple, SiFacebook } from 'react-icons/si'
 import { useNavigate } from 'react-router-dom'
 import { api, setAuthMode, setToken } from './api.js'
 import { firebaseConfig, firebaseSignOut, signInWithProvider } from './firebaseAuth.js'
+import { openCallReturnTo } from './opencall-state.js'
 
 const providers = [{ key: 'google', label: 'Google', Icon: SiGoogle }, { key: 'apple', label: 'Apple', Icon: SiApple }, { key: 'facebook', label: 'Facebook', Icon: SiFacebook }]
 
-export default function SocialSignIn({ role, companyName = '', connect = false, onAuth }) {
+export default function SocialSignIn({ role, companyName = '', connect = false, onAuth, returnTo }) {
   const [enabled, setEnabled] = useState([]), [busy, setBusy] = useState(''), [error, setError] = useState(''), [notice, setNotice] = useState('')
   const navigate = useNavigate()
   useEffect(() => { firebaseConfig().then(c => setEnabled(c.providers || [])).catch(() => {}) }, [])
@@ -22,7 +23,7 @@ export default function SocialSignIn({ role, companyName = '', connect = false, 
         setNotice(`${name[0].toUpperCase() + name.slice(1)} connected. You can use it next time you sign in.`)
       } else {
         const result = await api('/auth/firebase', { method: 'POST', body: { id_token: idToken, role, company_name: role === 'brand' ? companyName.trim() : '' } })
-        setToken(null); setAuthMode('firebase'); onAuth(result); navigate('/dashboard')
+        setToken(null); setAuthMode('firebase'); onAuth(result); navigate(openCallReturnTo(returnTo))
       }
     } catch (cause) {
       await firebaseSignOut()

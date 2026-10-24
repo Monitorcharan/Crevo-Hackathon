@@ -1047,6 +1047,9 @@ def accept(application_id: str, user=Depends(require_role('brand'))):
     brief = store.one('briefs', {'id': application['brief_id']}) if application else None
     if not brief or brief['owner_id'] != user['id']:
         raise HTTPException(404, 'Application not found')
+    open_call = find_opencall_for_brief(brief['id'])
+    if open_call and open_call['state']['status'] != 'cancelled':
+        raise HTTPException(409, 'Choose the winning submission on this brief’s OpenCall page.')
     creator = store.one('creators', {'id': application['creator_id']})
     if application['status'] != 'accepted' and brief.get('licensing') and license_check(brief['licensing'], creator.get('licensing'))['status'] != 'compatible':
         raise HTTPException(409, 'Usage rights do not cover this brief. Ask the creator to update their declared rights before selection.')
@@ -1391,6 +1394,8 @@ from project_workflow import register as register_project_workflow
 register_project_workflow(app, current_user, permitted_project)
 from round_two import register as register_round_two
 register_round_two(app, current_user, matches)
+from opencall import register as register_opencall, find_for_brief as find_opencall_for_brief
+register_opencall(app, current_user)
 
 DIST_DIR = Path(__file__).resolve().parents[1] / 'dist'
 

@@ -127,6 +127,12 @@ Visual quality, exact colors/logos, arbitrary requirements in prose, originality
 
 The brief budget is USD; the project quote is separately agreed in INR. Payment processing, escrow, automatic currency conversion and revision billing are outside the current interface.
 
+## OpenCall Beta
+
+`/opencall` adds public creative challenges: brands publish an existing brief, creators upload real concepts, and selection uses brand evaluation, browser-based visitor voting, or a fixed 50/50 combination. The selected creator continues into the existing scope, licensing, revisions and delivery workspace. The interface uses Crevo's existing paper/forest/lime palette and motion preferences.
+
+Run `npm run build`, then `python run_opencall_local.py --port 8011` from `backend` for an isolated preview. The launcher asks for a local password; it preserves the hosted marketplace. Use **OpenCall Beta** in the navigation, or visit `/opencall`, for the public feature. See the [complete OpenCall guide](docs/opencall.md) for the workflow, voting limitations and schema setup for a new environment.
+
 ## Verify
 
 ```powershell
@@ -136,7 +142,9 @@ cd backend
 python -m pytest -q
 ```
 
-Latest verification on 24 October 2026: **52 backend tests, 8 frontend tests and the production build passed**. A temporary live journey passed **19 checks**, including concurrent dashboard/inbox reads, AI-assisted matching, shortlist proposals, invitation response, agreed rights, failed and successful uploads, revision, approval, trust-history updates and private downloads. Temporary records/files were removed and the existing engagement state was preserved.
+Local OpenCall verification on 25 October 2026: **69 backend tests, 12 frontend tests and the production build passed**. This includes 17 OpenCall checks covering privacy, uploads, visitor voting, scoring, rights, concurrent winner selection, rollback and the existing revision/delivery workflow. Beta also includes stage-specific next steps, safe login return links, protection from stale refreshes, deadline checks during uploads and profile persistence across preview restarts. The additive hosted schema was installed for the Beta release. Winner handoff was checked under the service role in a rollback-only transaction. Eleven hosted API checks then passed for real preview storage, visitor voting, combined scoring, winner selection, retry safety and project access. Temporary records and files were removed; existing marketplace records were preserved.
+
+Earlier live verification on 24 October 2026 passed **19 checks**, including concurrent dashboard/inbox reads, AI-assisted matching, shortlist proposals, invitation response, agreed rights, failed and successful uploads, revision, approval, trust-history updates and private downloads. Temporary records/files were removed and the existing engagement state was preserved.
 
 Dependency inputs live in `backend/requirements.in` and `requirements-dev.in`; their `.txt` files are hash-locked. Regenerate a reviewed runtime lock with `uv pip compile backend/requirements.in --universal --python-version 3.11 --generate-hashes -o backend/requirements.txt` and the equivalent command for the development input.
 

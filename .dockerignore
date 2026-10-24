@@ -12,6 +12,8 @@ backend/test_*.py
 backend/conftest.py
 backend/seed_*.py
 backend/run_round_two_local.py
+backend/run_opencall_local.py
+backend/opencall-media
 backend/prepare_round_two_demo.py
 docs
 .pytest_cache
