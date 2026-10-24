@@ -13,6 +13,7 @@ function emailDraft(creator, subject, message, budget, timeline) {
 }
 
 export default function CreatorContact({ creator, session }) {
+  const [contactEmail, setContactEmail] = useState(null)
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [mode, setMode] = useState('')
@@ -22,7 +23,16 @@ export default function CreatorContact({ creator, session }) {
   const [timeline, setTimeline] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const canContactInCrevo = session?.user?.role === 'brand' && Boolean(creator.owner_id)
+  const canContactInCrevo = session?.user?.role === 'brand' && creator.can_contact
+
+  useEffect(() => {
+    let active = true
+    setContactEmail(null)
+    if (session?.user?.role === 'brand' && creator.has_contact_email) {
+      api(`/creators/${creator.id}/contact-details`).then(data => { if (active) setContactEmail(data.contact_email) }).catch(() => {})
+    }
+    return () => { active = false }
+  }, [creator.id, creator.has_contact_email, session?.user?.id, session?.user?.role])
 
   useEffect(() => {
     if (!mode) return
@@ -31,7 +41,7 @@ export default function CreatorContact({ creator, session }) {
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [mode])
 
-  if (!creator.owner_id && !creator.contact_email) return null
+  if (!creator.can_contact && !contactEmail) return null
 
   function open(modeToOpen) {
     setMode(modeToOpen); setMenuOpen(false); setError('')
@@ -52,16 +62,17 @@ export default function CreatorContact({ creator, session }) {
     finally { setBusy(false) }
   }
 
-  const mailHref = creator.contact_email ? emailDraft(creator, subject || `Project inquiry for ${creator.name}`, message || `I'd like to discuss a project with you.\n\nProject requirements:`, budget, timeline) : ''
+  const mailCreator = { ...creator, contact_email: contactEmail }
+  const mailHref = contactEmail ? emailDraft(mailCreator, subject || `Project inquiry for ${creator.name}`, message || `I'd like to discuss a project with you.\n\nProject requirements:`, budget, timeline) : ''
 
   return <div className="creator-contact">
     <button type="button" className="button button-primary" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}><MessageCircle size={18}/> Contact creator</button>
     {menuOpen && <div className="creator-contact-menu">
-      {creator.owner_id && <>
+      {creator.can_contact && <>
         <button type="button" onClick={() => open('quote')}><FileText size={20}/><span><strong>Get a quote</strong><small>Share scope, timing, and budget</small></span><ArrowRight size={17}/></button>
         <button type="button" onClick={() => open('question')}><MessageCircle size={20}/><span><strong>Ask a question</strong><small>Start a private Crevo chat</small></span><ArrowRight size={17}/></button>
       </>}
-      {creator.contact_email && <a href={emailDraft(creator, `Project inquiry for ${creator.name}`, "I'd like to discuss a project with you.\n\nProject requirements:", '', '')}><Mail size={20}/><span><strong>Email creator</strong><small>Open a draft in your email app</small></span><ArrowRight size={17}/></a>}
+      {contactEmail && <a href={emailDraft(mailCreator, `Project inquiry for ${creator.name}`, "I'd like to discuss a project with you.\n\nProject requirements:", '', '')}><Mail size={20}/><span><strong>Email creator</strong><small>Open a draft in your email app</small></span><ArrowRight size={17}/></a>}
     </div>}
     {mode && <div className="contact-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setMode('') }}>
       <div className="contact-dialog" role="dialog" aria-modal="true" aria-label={mode === 'quote' ? 'Request a quote' : 'Ask the creator a question'}>
@@ -74,9 +85,9 @@ export default function CreatorContact({ creator, session }) {
           {error && <div className="alert" role="alert">{error}</div>}
           <div className="contact-actions">
             {canContactInCrevo ? <button className="button button-dark" disabled={busy}>{busy ? 'Sending…' : mode === 'quote' ? 'Send quote request' : 'Send question'} <Send size={17}/></button> : <Link className="button button-dark" to="/join?role=brand">Join as a brand <ArrowRight size={17}/></Link>}
-            {creator.contact_email && <a className="button button-outline-dark" href={mailHref}><Mail size={17}/> Open email draft</a>}
+            {contactEmail && <a className="button button-outline-dark" href={mailHref}><Mail size={17}/> Open email draft</a>}
           </div>
-          {creator.contact_email && <small>Your email app opens with these details filled in. Email replies are outside Crevo.</small>}
+          {contactEmail && <small>Your email app opens with these details filled in. Email replies are outside Crevo.</small>}
         </form>
       </div>
     </div>}

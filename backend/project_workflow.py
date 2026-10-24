@@ -13,10 +13,11 @@ from fastapi.responses import FileResponse, Response
 import jwt
 from pydantic import BaseModel, Field
 import store
+from security_config import signing_keys
 from matching import LicenseTerms, license_check
 from delivery_checks import inspect_bytes, check_delivery, requires_checked_file, MAX_BYTES
 
-ASSET_SECRET = os.getenv('LOCAL_JWT_SECRET') or os.getenv('SUPABASE_SECRET_KEY') or os.getenv('SUPABASE_SERVICE_ROLE_KEY') or uuid.uuid4().hex
+_, ASSET_SECRET = signing_keys(store.REMOTE, store.SECRET_KEY)
 
 
 class WorkflowAction(BaseModel):
@@ -76,7 +77,7 @@ def register(app, current_user, permitted_project):
             folder.mkdir(parents=True, exist_ok=True)
             (folder / asset_id).write_bytes(raw)
         url = f'/api/projects/{project_id}/files/{asset_id}'
-        asset = {'project_id': project_id, 'asset_id': asset_id, 'url': url, 'filename': (file.filename or 'delivery')[:200], 'checks': result,
+        asset = {'project_id': project_id, 'asset_id': asset_id, 'url': url, 'filename': (file.filename or 'delivery')[:200], 'checks': result, 'aud': 'crevo-delivery',
                  'exp': datetime.now(timezone.utc) + timedelta(hours=24), 'purpose': 'delivery_asset'}
         return {**result, 'asset_token': jwt.encode(asset, ASSET_SECRET, algorithm='HS256'), 'filename': asset['filename']}
 
@@ -187,7 +188,7 @@ def register(app, current_user, permitted_project):
             asset = None
             if data.asset_token:
                 try:
-                    asset = jwt.decode(data.asset_token, ASSET_SECRET, algorithms=['HS256'])
+                    asset = jwt.decode(data.asset_token, ASSET_SECRET, algorithms=['HS256'], audience='crevo-delivery', options={'require': ['exp', 'aud', 'project_id', 'purpose']})
                     if asset['project_id'] != project_id or asset['purpose'] != 'delivery_asset' or not asset['checks']['passed']:
                         raise ValueError('Wrong asset')
                     if not check_delivery(asset['checks']['metadata'], brief)['passed']:

@@ -4,6 +4,7 @@ Never writes to the configured Supabase project. All accounts are fictional,
 sign-in-capable shared demo accounts; sample media is a technical placeholder.
 """
 import argparse
+import os
 import shutil
 from pathlib import Path
 import main
@@ -11,6 +12,9 @@ import store
 
 
 def seed(path):
+    password = os.getenv('CREVO_LOCAL_DEMO_PASSWORD', '')
+    if len(password) < 12:
+        raise RuntimeError('Set CREVO_LOCAL_DEMO_PASSWORD to a private password of at least 12 characters.')
     store.REMOTE = False
     store.DB_PATH = Path(path).resolve()
     store.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -20,7 +24,7 @@ def seed(path):
     def account(name, email, role):
         user = store.one('users', {'email': email})
         if not user:
-            user = main.register(main.Register(name=name, email=email, password='CrevoDemo2026!', role=role, company_name='Sola Coffee · Shared Demo' if role == 'brand' else ''))['user']
+            user = main.register(main.Register(name=name, email=email, password=password, role=role, company_name='Sola Coffee · Shared Demo' if role == 'brand' else ''))['user']
         return user
     brand = account('Sola Demo Brand', 'brand.demo.crevo@example.com', 'brand')
     people = [
@@ -53,7 +57,7 @@ def seed(path):
                                 licensing=license, required_tools=['Runway'], duration_seconds=15, deliverables='One 15-second vertical MP4, with generation and handoff notes.', deadline='2026-11-10', revision_rounds=2), user=brand)
     print('Local demo database:', store.DB_PATH)
     print('Brief:', brief['id'])
-    print('Use the existing Try as a brand / Try as a creator buttons. Password: CrevoDemo2026!')
+    print('Log in locally with the shared demo email addresses and the private password you configured.')
     print('Sample media: public/round-two-samples (solid-color technical demonstrations).')
 
 

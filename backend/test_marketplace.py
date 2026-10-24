@@ -40,7 +40,7 @@ def test_gig_editor_public_view_and_owner_access(tmp_path, monkeypatch):
 def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch, complete_workflow):
     monkeypatch.setattr(store, 'REMOTE', False)
     monkeypatch.setattr(store, 'DB_PATH', tmp_path / 'marketplace.db')
-    monkeypatch.setattr(main, 'ADMIN_EMAILS', {'admin@example.com'})
+    monkeypatch.setattr(main, 'ADMIN_USER_IDS', set())
 
     with TestClient(main.app) as client:
         def register(name, email, role, company_name=''):
@@ -54,6 +54,7 @@ def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch, complete_wo
         brand = register('Brand Owner', 'brand@example.com', 'brand', 'North Studio')
         another = register('Other Brand', 'other@example.com', 'brand', 'South Studio')
         admin = register('Admin', 'admin@example.com', 'brand', 'Crevo Team')
+        monkeypatch.setattr(main, 'ADMIN_USER_IDS', {admin['user']['id']})
         creator = register('Creator', 'creator@example.com', 'creator')
         brand_headers = {'Authorization': f"Bearer {brand['access_token']}"}
         another_headers = {'Authorization': f"Bearer {another['access_token']}"}
@@ -67,7 +68,9 @@ def test_contact_reviews_and_verified_creator(tmp_path, monkeypatch, complete_wo
             'audience': 0, 'rate': 500, 'social_links': {}, 'contact_email': 'hello@creator.example',
         })
         assert edit.status_code == 200, edit.text
-        assert client.get(f'/api/creators/{creator_id}').json()['contact_email'] == 'hello@creator.example'
+        public_profile = client.get(f'/api/creators/{creator_id}').json()
+        assert 'contact_email' not in public_profile and 'owner_id' not in public_profile
+        assert client.get(f'/api/creators/{creator_id}/contact-details', headers=brand_headers).json()['contact_email'] == 'hello@creator.example'
 
         quote = client.post(f'/api/creators/{creator_id}/contact', headers=brand_headers, json={
             'creator_id': creator_id, 'kind': 'quote', 'subject': 'Campaign film',

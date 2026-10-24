@@ -32,6 +32,8 @@ def init_local():
         return
     with connect() as db:
         db.executescript('''
+        create table if not exists request_limits(bucket text primary key,hits integer not null,expires_at integer not null);
+        create index if not exists request_limits_expiry_idx on request_limits(expires_at);
         create table if not exists users(id text primary key,email text unique not null,name text not null,role text not null,password_hash text not null,firebase_uid text unique,company_name text not null default '',logo_url text,created_at text default current_timestamp);
         create table if not exists creators(id text primary key,owner_id text unique,name text not null,title text not null,bio text not null,location text not null,categories text not null,skills text not null,platforms text not null,social_links text not null default '{}',contact_email text,verified_at text,audience integer not null,rate integer not null,avatar_url text,portfolio text not null,portfolio_source text not null,created_at text default current_timestamp);
         create table if not exists portfolio_items(id text primary key,creator_id text not null,title text not null,description text not null,media_url text not null,media_type text not null,tools text not null,workflow text not null,format text not null,commercial_use text not null,verification text not null,created_at text default current_timestamp);

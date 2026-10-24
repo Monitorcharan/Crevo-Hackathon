@@ -194,3 +194,30 @@ return to_jsonb(p);
 end $$;
 revoke all on function public.transition_application(uuid,uuid,text) from public,anon,authenticated;
 grant execute on function public.transition_application(uuid,uuid,text) to service_role;
+
+-- Atomic hosted quotas; no raw IP addresses or emails are retained.
+create table if not exists public.request_limits (
+  bucket text primary key, hits integer not null, expires_at timestamptz not null
+);
+create index if not exists request_limits_expiry_idx on public.request_limits(expires_at);
+alter table public.request_limits enable row level security;
+revoke all on public.request_limits from public, anon, authenticated;
+grant select, insert, update, delete on public.request_limits to service_role;
+create or replace function public.consume_rate_limit(p_key text,p_limit integer,p_window integer)
+returns jsonb language plpgsql security invoker set search_path=public,pg_temp as $$
+declare epoch bigint; retry integer; saved integer; b text;
+begin
+  if p_key !~ '^[a-f0-9]{64}$' or p_limit not between 1 and 10000 or p_window not between 1 and 86400 then
+    raise exception 'Invalid quota parameters';
+  end if;
+  epoch := floor(extract(epoch from clock_timestamp()));
+  retry := p_window - (epoch % p_window)::integer;
+  b := p_key || ':' || (epoch / p_window)::text;
+  delete from public.request_limits where bucket in (select bucket from public.request_limits where expires_at < now() limit 100);
+  insert into public.request_limits(bucket,hits,expires_at) values(b,1,to_timestamp(epoch+retry))
+    on conflict(bucket) do update set hits=request_limits.hits+1 where request_limits.hits < p_limit
+    returning hits into saved;
+  return jsonb_build_object('allowed',saved is not null,'retry_after',retry);
+end $$;
+revoke all on function public.consume_rate_limit(text,integer,integer) from public,anon,authenticated;
+grant execute on function public.consume_rate_limit(text,integer,integer) to service_role;

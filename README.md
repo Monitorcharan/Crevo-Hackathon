@@ -10,11 +10,11 @@ A React and FastAPI MVP for AI creator discovery and brand collaboration. The la
 
 The public directory can include eight clearly labeled fictional demo portfolios: four AI-generated concept images and four original SVG concept illustrations. Demo feedback is never counted as a completed-project review; the demo profiles cannot sign in or apply to briefs. The no-sign-in `/demo` route lets visitors edit a sample brief, recalculate transparent rules-based matches, shortlist a creator, and preview an unsent inquiry. This walkthrough writes no account data. Create your own creator and brand accounts to try the full workflow.
 
-For a quick hackathon walkthrough, `/login` also offers one-click access to separate **shared demo creator** and **shared demo brand** accounts. Their email addresses and common demo password are intentionally displayed on that page. The creator has an illustrative portfolio item, and the brand has a sample published brief. These accounts are not administrators; anything a visitor changes in them is visible to the next visitor. To provision the accounts in a fresh Supabase project, run `python backend/seed_login_demo.py` after configuring `backend/.env`. Never reuse these public credentials for a personal account.
+The public `/demo` route is a read-only walkthrough. Shared demo sign-in has been removed from the hosted application, and the previously advertised live demo identities are disabled. For interactive testing use your own accounts, or run the isolated local demo with a private password. No demo password ships in the browser bundle.
 
 ## Run locally
 
-Requires Node.js 20+ and Python 3.11+.
+Requires a supported Node.js LTS release (the container uses Node 24) and Python 3.11+.
 
 In one terminal:
 
@@ -22,7 +22,7 @@ In one terminal:
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install --require-hashes -r requirements-dev.txt
 Copy-Item .env.example .env
 uvicorn main:app --reload
 ```
@@ -67,10 +67,10 @@ Firebase client ID tokens are verified on the server against Google's signing ce
 ## Contact, reviews, and Crevo Verification
 
 - A brand can open a creator profile and choose **Get a quote** or **Ask a question**. The request starts a private Crevo inbox thread; only that brand and creator can read or reply. The inbox refreshes messages every 10 seconds while open.
-- Creators can opt in to public email contact by saving a **Public contact email** on their profile. The Email creator action opens the visitor's email app with the creator address and request details filled in. Crevo does not send, track, or store external emails.
+- Creators can opt in to sharing a contact email with signed-in brands by saving a **Contact email for signed-in brands** on their profile. The Email creator action opens the visitor's email app with the creator address and request details filled in. Crevo does not send, track, or store external emails.
 - Brands can leave one 1–5 star review per completed Crevo project. Reviews appear publicly with the brand name and project title. Reviews cannot be posted before completion or by another account.
 - A creator with at least one portfolio item can submit a public work or workflow link and a statement for verification. A profile shows **Crevo Verified** only after a configured administrator reviews and approves the request. It means submitted portfolio evidence was reviewed, not that every tool claim or outcome is guaranteed. Pending and rejected requests never show the badge.
-- Set `CREVO_ADMIN_EMAILS` in the backend or Render environment to a comma-separated list of account emails permitted to approve requests. Those accounts see **Verifications** in navigation and can review requests at `/admin/verifications`. Leave this unset to disable approvals.
+- Set `CREVO_ADMIN_USER_IDS` in the backend or Render environment to a comma-separated list of existing account UUIDs permitted to approve requests. Hosted administrators must authenticate with a verified email; registering an email address never grants administrative access. Those accounts see **Verifications** in navigation and can review requests at `/admin/verifications`. Leave this unset to disable approvals.
 - Discovery and brief creation now include 26 creative categories, including AI filmmaking, animation, 3D/CGI, generative art, product visualization, voice, copywriting, and VFX.
 - All 26 categories have their own visual cards at `/categories`, linked from the glass navbar. A card opens discovery with that category selected. The demo portfolios use generated and original vector concept artwork and prominently label their fictional feedback.
 
@@ -127,3 +127,15 @@ Render's Free web service spins down after idle time, so the first visit may tak
 ## Creator presentation
 
 Registered member profiles appear before clearly labeled fictional demos in discovery. The landing page shows members, three sample creators with credited stock portraits, and then independent public inspiration profiles with sourced portraits. Stock models are not represented as members. Demo portraits are presentation assets only; real account identity data is unchanged. The profile-type filter separates members from demos. Photo sources and licenses are included in `public/demo-portraits/CREDITS.md`.
+
+
+## Security hardening (24 October 2026)
+
+- Local session signing has no known fallback. An unset local key uses a process-random key for private development; shared local deployments require an explicit strong key. Delivery signing uses an independent purpose-derived key, or `ASSET_SIGNING_SECRET`, and never takes a hosted delivery key from `LOCAL_JWT_SECRET`.
+- Public creator and nested gig responses omit Auth owner UUIDs and contact addresses. Only signed-in brands can request an opted-in email through a rate-limited endpoint.
+- Administrator access requires a server-configured account UUID and a verified hosted identity. Legacy email allowlists are ignored.
+- Live shared demo accounts are banned, their passwords rotated, and sessions revoked. Interactive demos are local only and use an operator-chosen private password; `/demo` remains read-only.
+- Auth quotas apply per IP and account; paid AI routes share per-user and global budgets. Supabase counters are atomic and persist across restarts. Requests fail closed if quota storage is unavailable.
+- Production runs as UID/GID 10001, uses digest-pinned images and hash-locked runtime dependencies, and excludes pytest, tests, and seeding scripts. Development dependencies are separately locked.
+
+Apply the additive quota statements in `backend/schema.sql` when upgrading another installation. Regenerate locks using `uv pip compile backend/requirements.in --universal --python-version 3.11 --generate-hashes -o backend/requirements.txt` and the equivalent command for `requirements-dev.in`. Review and refresh pinned image digests with security updates. See `docs/security-hardening.md` for limits and verification.

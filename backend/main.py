@@ -18,6 +18,8 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from supabase import create_client
 from supabase.lib.client_options import SyncClientOptions
@@ -30,14 +32,17 @@ import firebase_identity
 from demo_gigs import ensure_demo_gigs
 from matching import LicenseTerms, score_match, finalize_match, license_check, brief_conflicts, profile_readiness
 from demo_accounts import demo_creator_for_brief, can_match
+from demo_accounts import BRAND_EMAIL, CREATOR_EMAIL
+from security_config import signing_keys
+import rate_limits
 
-SECRET = os.getenv('LOCAL_JWT_SECRET', 'replace-me-for-any-shared-environment')
+SECRET, _ = signing_keys(store.REMOTE, store.SECRET_KEY)
 AI_KEY = os.getenv('OPENAI_API_KEY', '')
 AI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4.1-mini')
 GEMINI_KEY = os.getenv('GEMINI_API_KEY', '')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash-lite')
 AI_PROVIDER = 'gemini' if GEMINI_KEY else 'openai' if AI_KEY else None
-ADMIN_EMAILS = {email.strip().lower() for email in os.getenv('CREVO_ADMIN_EMAILS', '').split(',') if email.strip()}
+ADMIN_USER_IDS = {value.strip() for value in os.getenv('CREVO_ADMIN_USER_IDS', '').split(',') if value.strip()}
 BRIEF_CATEGORIES = ('Lifestyle', 'Fashion', 'Beauty', 'Travel', 'Food', 'Design', 'Technology', 'Culture',
                     'AI Filmmaking', 'AI Animation', 'Motion Design', '3D & CGI', 'Generative Art',
                     'Product Visualization', 'AI Photography', 'Social Media Content', 'UGC',
@@ -102,6 +107,18 @@ async def lifespan(app):
 
 app = FastAPI(title='Crevo API', version='0.2.0', lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(','), allow_methods=['*'], allow_headers=['*'])
+
+
+@app.middleware('http')
+async def auth_request_limits(request, call_next):
+    try:
+        await run_in_threadpool(rate_limits.auth_ip, request)
+    except HTTPException as exc:
+        return JSONResponse({'detail': exc.detail}, status_code=exc.status_code, headers=exc.headers)
+    response = await call_next(request)
+    if request.url.path.startswith('/api/auth/'):
+        response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 class Credentials(BaseModel):
@@ -295,11 +312,61 @@ def verify_password(password, encoded):
 
 
 def is_admin(user):
-    return bool(ADMIN_EMAILS and user['email'].lower() in ADMIN_EMAILS)
+    return bool(user['id'] in ADMIN_USER_IDS and (user.get('_identity_verified') or not store.REMOTE)
+                and user.get('email', '').lower() not in {BRAND_EMAIL, CREATOR_EMAIL})
 
 
-def auth_result(user, token, session=None):
-    result = {'user': user, 'access_token': token, 'mode': 'supabase' if store.REMOTE else 'local', 'is_admin': is_admin(user)}
+def ensure_active(user):
+    if store.REMOTE and user.get('email', '').lower() in {BRAND_EMAIL, CREATOR_EMAIL}:
+        raise HTTPException(403, 'Shared demo sign-in is disabled. Please use your own account.')
+
+
+def identity_user(user, identity=None):
+    verified = bool(identity and getattr(identity, 'email_confirmed_at', None)
+                    and (getattr(identity, 'email', '') or '').lower() == user['email'].lower())
+    return {**user, '_identity_verified': verified}
+
+
+def account_view(user):
+    return {key: value for key, value in user.items() if not key.startswith('_')}
+
+
+def hosted_profile(identity):
+    """Only a verified Auth identity can materialize a marketplace account."""
+    if not identity or not getattr(identity, 'email_confirmed_at', None):
+        raise HTTPException(401, 'Confirm your email before signing in.')
+    user_id = str(identity.id)
+    user = store.one('users', {'id': user_id})
+    if user:
+        return user
+    profile = (getattr(identity, 'user_metadata', None) or {}).get('crevo_profile') or {}
+    try:
+        data = Register(email=identity.email, password='unused-profile-validation', **profile)
+        if data.role == 'brand' and len(data.company_name.strip()) < 2:
+            raise ValueError('Missing company')
+    except Exception:
+        raise HTTPException(409, 'Your verified account needs a marketplace profile. Please contact Crevo support.')
+    user_data = {'id': user_id, 'email': str(data.email).lower(), 'name': data.name.strip(),
+                 'role': data.role, 'company_name': data.company_name.strip() if data.role == 'brand' else ''}
+    try:
+        user = store.insert('users', user_data)
+    except Exception:
+        # Concurrent first requests may have already created this same identity.
+        user = store.one('users', {'id': user_id})
+        if not user:
+            raise HTTPException(503, 'Could not create your marketplace profile. Please try again shortly.')
+    if user['role'] == 'creator' and not store.one('creators', {'owner_id': user_id}):
+        try:
+            store.insert('creators', {'owner_id': user_id, 'name': user['name'], 'title': 'Creator', 'bio': '', 'location': '', 'categories': [], 'skills': [], 'platforms': [], 'audience': 0, 'rate': 0, 'avatar_url': None, 'portfolio': '', 'portfolio_source': 'manual'})
+        except Exception:
+            if not store.one('creators', {'owner_id': user_id}):
+                raise HTTPException(503, 'Could not create your creator profile. Please try again shortly.')
+    return user
+
+
+def auth_result(user, token, session=None, identity=None):
+    context = identity_user(user, identity) if store.REMOTE else user
+    result = {'user': account_view(user), 'access_token': token, 'mode': 'supabase' if store.REMOTE else 'local', 'is_admin': bool(token) and is_admin(context)}
     if session:
         result.update(refresh_token=session.refresh_token, expires_at=session.expires_at)
     return result
@@ -341,10 +408,11 @@ def auth_failure(exc, operation):
 
 
 def local_token(user_id):
-    return jwt.encode({'sub': user_id, 'exp': datetime.now(timezone.utc) + timedelta(days=7)}, SECRET, algorithm='HS256')
+    return jwt.encode({'sub': user_id, 'exp': datetime.now(timezone.utc) + timedelta(days=7),
+                       'iss': 'crevo-local', 'aud': 'crevo-session', 'purpose': 'login'}, SECRET, algorithm='HS256')
 
 
-def current_user(authorization: str = Header(default='')):
+def current_user(request: Request = None, authorization: str = Header(default='')):
     if not authorization.startswith('Bearer '):
         raise HTTPException(401, 'Sign in to continue')
     token = authorization[7:]
@@ -355,15 +423,27 @@ def current_user(authorization: str = Header(default='')):
             unverified_issuer = ''
         if unverified_issuer == f'https://securetoken.google.com/{firebase_identity.PROJECT_ID}':
             claims = firebase_identity.verify_id_token(token)
+            if not claims.get('email_verified'):
+                raise HTTPException(401, 'Confirm your identity email before signing in.')
             user = store.one('users', {'firebase_uid': claims['sub']})
+            if user:
+                user = {**user, '_identity_verified': bool(claims.get('email_verified') and claims.get('email', '').lower() == user['email'].lower())}
         elif store.REMOTE:
             result = store.admin.auth.get_user(token)
-            user = store.one('users', {'id': str(result.user.id)})
+            user = hosted_profile(result.user)
+            if user:
+                user = identity_user(user, result.user)
         else:
-            user_id = jwt.decode(token, SECRET, algorithms=['HS256'])['sub']
+            claims = jwt.decode(token, SECRET, algorithms=['HS256'], audience='crevo-session', issuer='crevo-local', options={'require': ['sub', 'exp', 'purpose']})
+            if claims['purpose'] != 'login':
+                raise HTTPException(401, 'Invalid session purpose')
+            user_id = claims['sub']
             user = store.one('users', {'id': str(user_id)})
         if not user:
             raise HTTPException(401, 'Account not found')
+        ensure_active(user)
+        if request is not None:
+            rate_limits.ai_request(request, user)
         return user
     except HTTPException:
         raise
@@ -381,7 +461,9 @@ def require_role(role):
 
 @app.get('/api/health')
 def health():
-    return {'ok': True, 'release': 'round-2', 'database': 'supabase' if store.REMOTE else 'local', 'ai_enabled': bool(AI_PROVIDER), 'ai_provider': AI_PROVIDER, 'firebase_enabled': firebase_identity.public_config()['enabled']}
+    return {'ok': True, 'release': 'round-2', 'database': 'supabase' if store.REMOTE else 'local', 'ai_enabled': bool(AI_PROVIDER), 'ai_provider': AI_PROVIDER, 'firebase_enabled': firebase_identity.public_config()['enabled'],
+            'security_revision': '2026-10-24', 'non_root': os.geteuid() != 0 if hasattr(os, 'geteuid') else None,
+            'local_sessions_enabled': not store.REMOTE, 'rate_limits_enabled': rate_limits.ENABLED}
 
 
 @app.post('/api/assistant/chat')
@@ -421,13 +503,15 @@ def firebase_sign_in(data: FirebaseExchange):
         claims = firebase_identity.verify_id_token(data.id_token)
     except firebase_identity.FirebaseIdentityError as exc:
         raise HTTPException(401, str(exc))
-    uid = claims['sub']
-    user = store.one('users', {'firebase_uid': uid})
-    if user:
-        return {'user': user, 'mode': 'firebase', 'is_admin': is_admin(user)}
     email = (claims.get('email') or '').strip().lower()
     if not email or not claims.get('email_verified'):
         raise HTTPException(422, 'This provider must share a verified email address')
+    ensure_active({'email': email})
+    uid = claims['sub']
+    user = store.one('users', {'firebase_uid': uid})
+    if user:
+        context = {**user, '_identity_verified': email == user['email'].lower()}
+        return {'user': user, 'mode': 'firebase', 'is_admin': is_admin(context)}
     if store.one('users', {'email': email}):
         raise HTTPException(409, 'This email already has a Crevo account. Log in with email, then connect this provider from your dashboard.')
     if data.role not in ('creator', 'brand'):
@@ -455,7 +539,7 @@ def firebase_sign_in(data: FirebaseExchange):
         if store.REMOTE:
             store.admin.auth.admin.delete_user(user_id)
         raise HTTPException(400, 'Could not finish creating the Crevo account')
-    return {'user': user, 'mode': 'firebase', 'is_admin': is_admin(user)}
+    return {'user': user, 'mode': 'firebase', 'is_admin': is_admin({**user, '_identity_verified': True})}
 
 
 @app.post('/api/auth/firebase/link')
@@ -475,6 +559,8 @@ def link_firebase_identity(data: FirebaseExchange, user=Depends(current_user)):
 
 @app.post('/api/auth/register')
 def register(data: Register):
+    ensure_active({'email': str(data.email)})
+    rate_limits.consume('signup-email', data.email.lower(), 5, 3600)
     if data.role not in ('creator', 'brand'):
         raise HTTPException(422, 'Choose creator or brand')
     company_name = data.company_name.strip()
@@ -485,10 +571,11 @@ def register(data: Register):
         if store.one('users', {'email': data.email.lower()}):
             raise HTTPException(409, 'This email is already registered. Log in instead.')
         if store.REMOTE:
-            credentials = {'email': data.email.lower(), 'password': data.password}
+            credentials = {'email': data.email.lower(), 'password': data.password,
+                           'options': {'data': {'crevo_profile': {'name': data.name.strip(), 'role': data.role, 'company_name': company_name}}}}
             app_url = (os.getenv('PUBLIC_APP_URL') or os.getenv('RENDER_EXTERNAL_URL') or '').rstrip('/')
             if app_url:
-                credentials['options'] = {'email_redirect_to': app_url + '/login'}
+                credentials['options']['email_redirect_to'] = app_url + '/login'
             auth = public_auth_client().auth.sign_up(credentials)
             if not auth.user:
                 raise HTTPException(503, 'Account registration is temporarily unavailable. Please try again shortly.')
@@ -497,6 +584,9 @@ def register(data: Register):
             user_id = str(auth.user.id)
             session = auth.session
             access_token = auth.session.access_token if auth.session else None
+            if not access_token:
+                return {'user': None, 'access_token': None, 'mode': 'supabase', 'is_admin': False,
+                        'email_confirmation_required': True}
         else:
             user_id = str(uuid.uuid4())
             access_token = local_token(user_id)
@@ -513,7 +603,7 @@ def register(data: Register):
         user = store.insert('users', user_data)
         if data.role == 'creator':
             store.insert('creators', {'owner_id': user_id, 'name': user['name'], 'title': 'Creator', 'bio': '', 'location': '', 'categories': [], 'skills': [], 'platforms': [], 'audience': 0, 'rate': 0, 'avatar_url': None, 'portfolio': '', 'portfolio_source': 'manual'})
-        return {**auth_result(user, access_token, session), 'email_confirmation_required': access_token is None}
+        return {**auth_result(user, access_token, session, auth.user if store.REMOTE else None), 'email_confirmation_required': access_token is None}
     except HTTPException:
         raise
     except Exception as exc:
@@ -523,9 +613,8 @@ def register(data: Register):
 
 @app.post('/api/auth/login')
 def login(data: Credentials):
-    user = store.one('users', {'email': data.email.lower()})
-    if not user:
-        raise HTTPException(401, 'Invalid email or password')
+    ensure_active({'email': str(data.email)})
+    rate_limits.consume('login-email', data.email.lower(), 10, 600)
     session = None
     if store.REMOTE:
         try:
@@ -534,13 +623,18 @@ def login(data: Credentials):
             token = auth.session.access_token
         except Exception as exc:
             raise auth_failure(exc, 'login')
+        user = hosted_profile(auth.user)
+        ensure_active(user)
     else:
+        user = store.one('users', {'email': data.email.lower()})
+        if not user:
+            raise HTTPException(401, 'Invalid email or password')
         with store.connect() as db:
             row = db.execute('select password_hash from users where id=?', (user['id'],)).fetchone()
         if not row or not verify_password(data.password, row['password_hash']):
             raise HTTPException(401, 'Invalid email or password')
         token = local_token(user['id'])
-    return auth_result(user, token, session)
+    return auth_result(user, token, session, auth.user if store.REMOTE else None)
 
 
 @app.post('/api/auth/refresh')
@@ -551,10 +645,9 @@ def refresh_auth(data: RefreshSession):
         auth = public_auth_client().auth.refresh_session(data.refresh_token)
         if not auth.user or not auth.session:
             raise HTTPException(401, 'Your session expired. Please log in again.')
-        user = store.one('users', {'id': str(auth.user.id)})
-        if not user:
-            raise HTTPException(401, 'Account not found. Please log in again.')
-        return auth_result(user, auth.session.access_token, auth.session)
+        user = hosted_profile(auth.user)
+        ensure_active(user)
+        return auth_result(user, auth.session.access_token, auth.session, auth.user)
     except HTTPException:
         raise
     except Exception as exc:
@@ -565,7 +658,7 @@ def refresh_auth(data: RefreshSession):
 def me(user=Depends(current_user)):
     creator = store.one('creators', {'owner_id': user['id']}) if user['role'] == 'creator' else None
     readiness = profile_readiness(creator, store.all_rows('portfolio_items', {'creator_id': creator['id']})) if creator else None
-    return {'user': user, 'creator': creator, 'is_admin': is_admin(user), 'round_two_readiness': readiness}
+    return {'user': account_view(user), 'creator': creator, 'is_admin': is_admin(user), 'round_two_readiness': readiness}
 
 
 @app.put('/api/me/brand')
@@ -618,7 +711,16 @@ def creators(q: str = '', category: str = '', platform: str = '', skill: str = '
     for field, value in (('categories', category), ('platforms', platform), ('skills', skill), ('portfolio_tools', tool), ('content_types', content_type)):
         if value:
             enriched = [c for c in enriched if value.lower() in {entry.lower() for entry in c[field]}]
-    return enriched
+    return [creator_public_view(creator) for creator in enriched]
+
+
+def creator_public_view(creator):
+    fields = {'id', 'name', 'title', 'bio', 'location', 'categories', 'skills', 'platforms', 'social_links',
+              'audience', 'rate', 'avatar_url', 'portfolio', 'portfolio_source', 'verified_at', 'licensing',
+              'created_at', 'review_count', 'rating_average', 'portfolio_image', 'portfolio_tools', 'content_types'}
+    return {**{key: value for key, value in creator.items() if key in fields},
+            'can_contact': bool(creator.get('owner_id')) and not creator.get('name', '').startswith('[Demo]'),
+            'has_contact_email': bool(creator.get('contact_email'))}
 
 
 @app.get('/api/creators/{creator_id}')
@@ -628,9 +730,18 @@ def creator_detail(creator_id: str):
         raise HTTPException(404, 'Creator not found')
     reviews = store.all_rows('reviews', {'creator_id': creator_id})
     work = [item for item in store.all_rows('portfolio_items', {'creator_id': creator_id}, order='created_at') if item['media_type'] != 'gig']
-    return {**creator, 'review_count': len(reviews),
+    return creator_public_view({**creator, 'review_count': len(reviews),
             'portfolio_image': next((item['media_url'] for item in work if item['media_type'] == 'image'), None),
-            'rating_average': round(sum(r['rating'] for r in reviews) / len(reviews), 1) if reviews else None}
+            'rating_average': round(sum(r['rating'] for r in reviews) / len(reviews), 1) if reviews else None})
+
+
+@app.get('/api/creators/{creator_id}/contact-details')
+def creator_contact_details(creator_id: str, user=Depends(require_role('brand'))):
+    rate_limits.consume('contact-details', user['id'], 30, 3600)
+    creator = store.one('creators', {'id': creator_id})
+    if not creator:
+        raise HTTPException(404, 'Creator not found')
+    return {'contact_email': creator.get('contact_email')}
 
 
 @app.get('/api/creators/{creator_id}/portfolio')
@@ -969,7 +1080,7 @@ def creator_reviews(creator_id: str):
         brand = store.one('users', {'id': review['brand_id']})
         project = store.one('projects', {'id': review['project_id']})
         brief = store.one('briefs', {'id': project['brief_id']}) if project else None
-        result.append({**review, 'brand_name': (brand.get('company_name') or brand['name']) if brand else 'Brand',
+        result.append({**{key: review[key] for key in ('id', 'creator_id', 'rating', 'body', 'created_at')}, 'brand_name': (brand.get('company_name') or brand['name']) if brand else 'Brand',
                        'project_title': brief['title'] if brief else 'Completed project'})
     return result
 

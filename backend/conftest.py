@@ -4,11 +4,13 @@ from pathlib import Path
 import pytest
 from PIL import Image
 import main
+import rate_limits
 
 
 @pytest.fixture(autouse=True)
 def disable_live_ai(monkeypatch):
     monkeypatch.setattr(main, 'AI_PROVIDER', None)
+    monkeypatch.setattr(rate_limits, 'ENABLED', False)
 
 
 @pytest.fixture

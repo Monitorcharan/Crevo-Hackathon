@@ -90,14 +90,14 @@ def test_unconfirmed_login_and_rotating_refresh_tokens(monkeypatch):
     session = SimpleNamespace(access_token='new-access', refresh_token='rotated-refresh', expires_at=2000000000)
     def refresh(value):
         assert value == 'original-refresh'
-        return SimpleNamespace(user=SimpleNamespace(id=user['id']), session=session)
+        return SimpleNamespace(user=SimpleNamespace(id=user['id'], email=user['email'], email_confirmed_at='2026-10-24'), session=session)
     auth.refresh_session = refresh
     result = main.refresh_auth(main.RefreshSession(refresh_token='original-refresh'))
     assert result['access_token'] == 'new-access' and result['refresh_token'] == 'rotated-refresh'
     monkeypatch.setattr(store, 'one', lambda *args: None)
     with pytest.raises(HTTPException) as error:
         main.refresh_auth(main.RefreshSession(refresh_token='original-refresh'))
-    assert error.value.status_code == 401
+    assert error.value.status_code == 409 and 'marketplace profile' in error.value.detail
 
 
 def test_auth_clients_do_not_persist_or_auto_refresh_server_sessions(monkeypatch):

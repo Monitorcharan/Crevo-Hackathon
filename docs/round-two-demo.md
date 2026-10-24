@@ -2,15 +2,11 @@
 
 Round 2 extends the original React/FastAPI marketplace. The new flow uses stored briefs, registered creators, AI portfolios, contact threads, applications, and projects. It does not use a separate hardcoded matching screen.
 
-## Existing accounts and hosted shared demo
+## Existing accounts and local demonstration
 
-Older registered member accounts use the same Round 2 features. Their dashboard shows the missing categories, skills, portfolio evidence, workflow metadata, and declared usage rights. No commercial rights or work claims are automatically assigned to a real member.
+Older registered members use the same Round 2 features. Their dashboard identifies missing categories, skills, portfolio evidence, workflow metadata, and usage rights. Real members supply their own claims.
 
-The existing **Try as a brand** and **Try as a creator** accounts can run a hosted fictional scenario. An operator can prepare it with `python backend/prepare_round_two_demo.py --apply`; without `--apply` the command only reports planned changes. It adds a labeled technical video and fictional licensing offer to the existing shared creator, and creates **[Demo] Round 2 / Cafe launch walkthrough** under the shared brand. Existing real member records and the older closed brief stay intact.
-
-Log in as the shared brand, open that brief, build the auto-shortlist, and invite the shared creator. Use the shared creator login in another browser session to respond and deliver. The demonstration uses the regular stored-record matching, shortlist, invitation, agreement, revision, and file-check APIs. Technical media and scenario rights remain visibly fictional.
-
-The exception is restricted to briefs titled `[Demo]...` owned by the known shared brand. Those briefs match only the known shared creator. Regular brands continue to receive registered member recommendations with static demos excluded. Changing a real brief's title to `[Demo]` does not enable the exception.
+Hosted shared sign-in was retired during security hardening. Its records are retained, but those identities cannot sign in. Use your own creator and brand accounts on the live site, or the isolated local scenario below. The public `/demo` route is read-only.
 
 ## Start the isolated local demo
 
@@ -24,7 +20,7 @@ python backend/run_round_two_local.py
 npm run dev
 ```
 
-Open `http://localhost:5173/login`. The existing **Try as a brand** and **Try as a creator** buttons use the seeded accounts. The shared password is `CrevoDemo2026!`. Data is saved in `tmp/round2-preview.db`, separately from the original SQLite database and hosted Supabase project. To start a fresh scenario, pass a new file: `python backend/run_round_two_local.py --db tmp/round2-fresh.db`.
+Open `http://localhost:5173/login`. The launcher asks for a private local password. Log in with `brand.demo.crevo@example.com` and `creator.demo.crevo@example.com` using that password in separate browser sessions. No credentials are embedded in the frontend. Data is saved in `tmp/round2-preview.db`, separately from the original SQLite database and hosted Supabase project. To start a fresh scenario, pass a new file: `python backend/run_round_two_local.py --db tmp/round2-fresh.db`.
 
 All seeded identities and portfolio claims are fictional, clearly described shared demo accounts. Their MP4 samples are solid-color technical placeholders, not creative campaigns. Replace these with your team's actual creative exports for the presentation. File dimensions and duration checks run on the actual uploaded bytes either way.
 
@@ -36,7 +32,7 @@ Rules matching works without an AI service. Add `--ai` to the launcher to enable
 2. **Matching.** Inspect the ranked cards, component scores, portfolio references, and weaknesses. Maya and Arjun have compatible declared offers. Nia's India-only, three-month offer conflicts with the brief. Sol's sparse profile has weak evidence. Unknown rights are not treated as compatible.
 3. **Assistant.** On the seeded brief, choose **Build auto-shortlist**. Accept the proposals, keep/remove individual creators, or reject the set. Check the durable activity history, including removed proposals. The assistant only proposes candidates with scores of at least 50 and no declared rights conflict. An empty result explains that more suitable evidence or refined requirements are needed.
 4. **Contact.** Invite Maya with an editable message. This creates a private inbox conversation and a creator notification. Generating or accepting proposals alone does not send invitations.
-5. **Creator response.** Open `/login`, choose **Try as a creator**, open the invitation notification, then accept or decline from the brief. Accepting creates an application for the brand to review. The profile editor includes the creator's structured offered rights.
+5. **Creator response.** Open `/login`, sign in with the local creator account, open the invitation notification, then accept or decline from the brief. Accepting creates an application for the brand to review. The profile editor includes the creator's structured offered rights.
 6. **Selection and agreement.** Switch to the brand, review the application, and select Maya. A creator with conflicting or undeclared rights cannot be selected for a brief with structured requirements. The project retains the selected brief and offered-rights snapshot. Propose the INR quote and scope, review the license, then switch to the creator and confirm the scope and license. Production starts only after acceptance. The quote explicitly remains separate from the original USD budget; the payment walkthrough is optional and simulated.
 7. **Fail a delivery check.** Upload `public/round-two-samples/round2-landscape.mp4`. The server inspects the file and flags the 16:9 versus 9:16 mismatch. It returns a fix and no submission token. The brand's version history remains unchanged.
 8. **Submit version 1.** Upload `public/round-two-samples/round2-vertical.mp4`, or your own 15-second 9:16 MP4, add a title and handoff notes, and submit. File type, aspect ratio, and duration (±0.5s) are checked before submission. The saved version includes the results and file hash.

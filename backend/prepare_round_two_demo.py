@@ -18,6 +18,8 @@ TERMS = {'usage_types': ['organic_social', 'paid_social', 'web'], 'territory': '
 
 
 def prepare(apply=False):
+    if store.REMOTE:
+        raise RuntimeError('Shared sign-in demos are restricted to isolated local databases.')
     brand = store.one('users', {'email': BRAND_EMAIL})
     user = store.one('users', {'email': CREATOR_EMAIL})
     if not brand or brand['role'] != 'brand' or not user or user['role'] != 'creator':
