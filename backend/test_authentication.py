@@ -110,3 +110,14 @@ def test_auth_clients_do_not_persist_or_auto_refresh_server_sessions(monkeypatch
     assert seen['options'].auto_refresh_token is False
     assert seen['options'].persist_session is False
     assert seen['options'].flow_type == 'implicit'
+
+
+@pytest.mark.parametrize('code', ['validation_failed', 'refresh_token_not_found', 'refresh_token_already_used', 'session_not_found'])
+def test_invalid_refresh_is_not_reported_as_a_temporary_outage(monkeypatch, code):
+    def refresh(_):
+        raise AuthApiError('Private upstream diagnostic', 400, code)
+    hosted(monkeypatch, SimpleNamespace(refresh_session=refresh))
+    with pytest.raises(HTTPException) as error:
+        main.refresh_auth(main.RefreshSession(refresh_token='invalid-test-refresh'))
+    assert error.value.status_code == 401
+    assert 'log in again' in error.value.detail

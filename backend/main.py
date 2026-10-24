@@ -331,6 +331,8 @@ def auth_failure(exc, operation):
         'refresh_token_already_used': (401, 'Your session expired. Please log in again.'),
         'session_expired': (401, 'Your session expired. Please log in again.'),
         'session_not_found': (401, 'Your session expired. Please log in again.'),
+        'validation_failed': (401, 'Your session expired. Please log in again.') if operation == 'refresh' else (422, 'Check the account details and try again.'),
+        'bad_jwt': (401, 'Your session expired. Please log in again.'),
     }
     status, message = errors.get(safe_code, (503, 'Sign-in is temporarily unavailable. Please try again shortly.'))
     headers = {'Retry-After': '3600' if code == 'over_email_send_rate_limit' else '60'} if status == 429 else None
