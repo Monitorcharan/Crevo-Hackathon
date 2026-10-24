@@ -157,6 +157,10 @@ def test_shortlist_invitation_revision_and_delivery_journey(tmp_path, monkeypatc
         action(brand, 'terms', amount_paise=250000, notes='One image, 10 November deadline, two revisions.', licensing=LICENSE)
         action(creator, 'accept_terms')
         action(brand, 'submit', status=403, title='Wrong role', notes='Brands cannot submit deliveries.')
+        action(brand, 'status_update', status=403, notes='Brands cannot post production updates.')
+        action(creator, 'status_update', status=422, notes='  ')
+        updated = action(creator, 'status_update', notes='Moodboard approved, starting first generation pass.')
+        assert updated['workflow']['updates'][0]['note'].startswith('Moodboard') and updated['workflow']['updates'][0]['actor_id']
         assert client.post(base + '/assets', headers=other, files={'file': ('bad.png', image(), 'image/png')}).status_code == 404
         failed = client.post(base + '/assets', headers=creator, files={'file': ('wrong.png', image(160, 90), 'image/png')}).json()
         assert failed['passed'] is False and failed['asset_token'] is None
@@ -179,6 +183,9 @@ def test_shortlist_invitation_revision_and_delivery_journey(tmp_path, monkeypatc
         assert versions[0]['feedback'].startswith('Move the product') and versions[1]['responds_to_version'] == 1
         assert versions[0]['asset']['checks']['metadata']['sha256'] != versions[1]['asset']['checks']['metadata']['sha256']
         assert versions[0]['revision_status'] == 'approved'
+        assert versions[0]['changes'] is None
+        assert versions[1]['changes']['from_version'] == 1 and versions[1]['changes']['comparable']
+        assert versions[1]['changes']['items'] == ['A new file was uploaded.']
         assert versions[1]['checks']['source'] == 'server inspected uploaded bytes'
         assert completed['workflow']['licensing_snapshot']['agreed'] == LICENSE
         assert client.get(versions[0]['url'], headers=brand).content == image()

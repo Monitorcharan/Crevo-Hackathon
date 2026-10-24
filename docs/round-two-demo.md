@@ -33,6 +33,10 @@ Rules matching works without an AI service. Add `--ai` to the launcher to enable
 9. **Revise.** As the brand, request specific changes on version 1. As the creator, choose **Start revision**, upload the revised file, describe the changes, and submit version 2. The previous feedback, actor, timestamp, and relationship between versions stay visible.
 10. **Deliver.** As the brand, approve the latest version. The project completes, additional submissions are blocked, and both sides retain the agreed license, scope, version history, file checks, and activity timeline. A completed-project review is then available.
 
+## Production updates and version comparison
+
+After the scope is accepted, the creator can post short progress updates; the brand sees them in the workspace's **Progress updates** panel. When a revised version is submitted, the server compares its inspected file metadata with the previous version and lists what changed (new file, dimensions, format, duration). This is a metadata comparison, not a visual diff.
+
 ## Existing hosted project
 
 Apply the additive statements in `backend/schema.sql` before deploying this code to the existing Supabase-backed service. The schema adds structured rights, tools, duration, and shortlist records and updates the transactional selection function. The new table enables RLS, revokes direct browser access, and grants access only to the backend service role, consistent with the original architecture. Existing records remain intact. The existing Render service serves the deployed app; `/api/health` identifies the Round 2 release.

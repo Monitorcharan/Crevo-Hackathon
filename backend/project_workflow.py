@@ -21,7 +21,7 @@ ASSET_SECRET = os.getenv('LOCAL_JWT_SECRET') or os.getenv('SUPABASE_SECRET_KEY')
 
 class WorkflowAction(BaseModel):
     revision: int = Field(ge=0)
-    action: Literal['terms', 'accept_terms', 'payment', 'submit', 'revise', 'approve', 'production', 'start_revision']
+    action: Literal['terms', 'accept_terms', 'payment', 'submit', 'revise', 'approve', 'production', 'start_revision', 'status_update']
     amount_paise: int = Field(default=0, ge=0, le=100000000)
     outcome: Literal['success', 'failed', 'cancelled'] = 'cancelled'
     method: Literal['UPI', 'Card', 'Netbanking'] = 'UPI'
@@ -31,6 +31,26 @@ class WorkflowAction(BaseModel):
     version: int = Field(default=0, ge=0)
     licensing: LicenseTerms | None = None
     asset_token: str = Field(default='', max_length=8000)
+
+
+def describe_changes(previous, asset):
+    """Compare the checked file metadata of two consecutive versions."""
+    old = ((previous or {}).get('asset') or {}).get('checks', {}).get('metadata')
+    new = (asset or {}).get('checks', {}).get('metadata')
+    if not old or not new:
+        return {'from_version': previous['version'] if previous else None, 'items': [], 'comparable': False}
+    items = []
+    if old['sha256'] == new['sha256']:
+        items.append('The file is identical to the previous version.')
+    else:
+        items.append('A new file was uploaded.')
+    if (old['width'], old['height']) != (new['width'], new['height']):
+        items.append(f"Dimensions changed from {old['width']} × {old['height']} to {new['width']} × {new['height']} px.")
+    if old['mime'] != new['mime']:
+        items.append(f"Format changed from {old['mime']} to {new['mime']}.")
+    if old.get('duration_seconds') != new.get('duration_seconds') and (old.get('duration_seconds') or new.get('duration_seconds')):
+        items.append(f"Duration changed from {old.get('duration_seconds') or 'n/a'} to {new.get('duration_seconds') or 'n/a'} seconds.")
+    return {'from_version': previous['version'], 'items': items, 'comparable': True}
 
 
 def register(app, current_user, permitted_project):
@@ -99,7 +119,7 @@ def register(app, current_user, permitted_project):
         payment = state.get('payment', {})
         if data.action in ('terms', 'payment', 'revise', 'approve') and not brand:
             raise HTTPException(403, 'Only the project brand can do this.')
-        if data.action in ('accept_terms', 'submit', 'production', 'start_revision') and brand:
+        if data.action in ('accept_terms', 'submit', 'production', 'start_revision', 'status_update') and brand:
             raise HTTPException(403, 'Only the project creator can do this.')
         if status == 'completed' and data.action != 'payment':
             raise HTTPException(409, 'This project is already completed.')
@@ -135,6 +155,16 @@ def register(app, current_user, permitted_project):
             elif deliveries:
                 raise HTTPException(409, 'Production status cannot replace an active review or revision.')
             state['stage'] = 'revision_in_progress' if data.action == 'start_revision' else 'production'
+        elif data.action == 'status_update':
+            if not terms or not terms.get('accepted_at'):
+                raise HTTPException(409, 'Accept the scope and license before posting production updates.')
+            if not data.notes.strip():
+                raise HTTPException(422, 'Write a short progress update.')
+            updates = state.setdefault('updates', [])
+            if len(updates) >= 100:
+                raise HTTPException(409, 'Production update limit reached.')
+            updates.append({'note': data.notes.strip()[:1000], 'at': now, 'actor_id': user['id'],
+                            'version': deliveries[-1]['version'] if deliveries else None})
         elif data.action == 'payment':
             if not terms or not terms.get('accepted_at'):
                 raise HTTPException(409, 'The creator must accept the INR terms first.')
@@ -181,6 +211,7 @@ def register(app, current_user, permitted_project):
                                'asset': {k: v for k, v in asset.items() if k not in ('exp', 'purpose')} if asset else None,
                                'checks': asset['checks'] if asset else {'passed': None, 'checks': [], 'source': 'External link; manual review required'},
                                'responds_to_version': deliveries[-1]['version'] if deliveries else None,
+                               'changes': describe_changes(deliveries[-1] if deliveries else None, asset) if deliveries else None,
                                'submitted_at': now, 'submitted_by': user['id'], 'status': 'awaiting_review'})
             state['stage'] = 'in_review'
         elif data.action in ('revise', 'approve'):

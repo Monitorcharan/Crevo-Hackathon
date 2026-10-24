@@ -29,7 +29,7 @@ The additive columns are included in `backend/schema.sql` and have been applied 
 
 Use separate brand and creator sessions. Show revision 1, request a change, submit revision 2, and approve it. Explain that payment is a UI simulation and that delivery approval is a real persisted workflow. Do not describe it as paid escrow or a settled creator payout.
 
-Automated tests and provider transactions were not run for this change.
+Automated backend tests cover the delivery, revision and production-update flow; provider transactions were not run.
 
 ## Database advisory
 
