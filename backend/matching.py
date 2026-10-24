@@ -63,6 +63,26 @@ def eligible(creator):
     return bool(creator.get('owner_id')) and creator.get('portfolio_source') != 'demo' and not creator.get('name', '').lower().startswith('[demo]') and creator.get('name') != 'Crevo Demo Creator'
 
 
+def profile_readiness(creator, portfolio):
+    """Existing members keep their data; missing evidence is an owner setup task."""
+    work = [item for item in portfolio if item.get('media_type') != 'gig']
+    rights = False
+    if creator.get('licensing'):
+        try:
+            LicenseTerms.model_validate(creator['licensing'])
+            rights = True
+        except ValueError:
+            pass
+    checks = [
+        {'key': 'categories', 'label': 'Choose your creative categories', 'complete': bool(creator.get('categories')), 'href': '/profile/edit'},
+        {'key': 'skills', 'label': 'Add the skills you can demonstrate', 'complete': bool(creator.get('skills')), 'href': '/profile/edit'},
+        {'key': 'portfolio', 'label': 'Add an AI work sample with tools, workflow and format', 'complete': bool(work), 'href': '/portfolio/edit'},
+        {'key': 'workflow', 'label': 'Describe the tools, workflow and output format on your samples', 'complete': any(item.get('tools') and item.get('workflow') and item.get('format') for item in work), 'href': '/portfolio/edit'},
+        {'key': 'licensing', 'label': 'Confirm the usage rights you can offer', 'complete': rights, 'href': '/profile/edit'},
+    ]
+    return {'checks': checks, 'work_samples': len(work), 'ready': all(item['complete'] for item in checks)}
+
+
 def score_match(creator, brief, portfolio):
     portfolio = [p for p in portfolio if p.get('media_type') != 'gig']
     factors, weaknesses, breakdown, evidence = [], [], [], []

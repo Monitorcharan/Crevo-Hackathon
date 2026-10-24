@@ -2,6 +2,16 @@
 
 Round 2 extends the original React/FastAPI marketplace. The new flow uses stored briefs, registered creators, AI portfolios, contact threads, applications, and projects. It does not use a separate hardcoded matching screen.
 
+## Existing accounts and hosted shared demo
+
+Older registered member accounts use the same Round 2 features. Their dashboard shows the missing categories, skills, portfolio evidence, workflow metadata, and declared usage rights. No commercial rights or work claims are automatically assigned to a real member.
+
+The existing **Try as a brand** and **Try as a creator** accounts can run a hosted fictional scenario. An operator can prepare it with `python backend/prepare_round_two_demo.py --apply`; without `--apply` the command only reports planned changes. It adds a labeled technical video and fictional licensing offer to the existing shared creator, and creates **[Demo] Round 2 / Cafe launch walkthrough** under the shared brand. Existing real member records and the older closed brief stay intact.
+
+Log in as the shared brand, open that brief, build the auto-shortlist, and invite the shared creator. Use the shared creator login in another browser session to respond and deliver. The demonstration uses the regular stored-record matching, shortlist, invitation, agreement, revision, and file-check APIs. Technical media and scenario rights remain visibly fictional.
+
+The exception is restricted to briefs titled `[Demo]...` owned by the known shared brand. Those briefs match only the known shared creator. Regular brands continue to receive registered member recommendations with static demos excluded. Changing a real brief's title to `[Demo]` does not enable the exception.
+
 ## Start the isolated local demo
 
 From the repository root, in two terminals:

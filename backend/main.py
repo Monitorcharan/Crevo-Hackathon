@@ -28,7 +28,8 @@ import store
 from engagements import transition as transition_application
 import firebase_identity
 from demo_gigs import ensure_demo_gigs
-from matching import LicenseTerms, eligible, score_match, finalize_match, license_check, brief_conflicts
+from matching import LicenseTerms, score_match, finalize_match, license_check, brief_conflicts, profile_readiness
+from demo_accounts import demo_creator_for_brief, can_match
 
 SECRET = os.getenv('LOCAL_JWT_SECRET', 'replace-me-for-any-shared-environment')
 AI_KEY = os.getenv('OPENAI_API_KEY', '')
@@ -563,7 +564,8 @@ def refresh_auth(data: RefreshSession):
 @app.get('/api/me')
 def me(user=Depends(current_user)):
     creator = store.one('creators', {'owner_id': user['id']}) if user['role'] == 'creator' else None
-    return {'user': user, 'creator': creator, 'is_admin': is_admin(user)}
+    readiness = profile_readiness(creator, store.all_rows('portfolio_items', {'creator_id': creator['id']})) if creator else None
+    return {'user': user, 'creator': creator, 'is_admin': is_admin(user), 'round_two_readiness': readiness}
 
 
 @app.put('/api/me/brand')
@@ -841,8 +843,11 @@ async def matches(brief_id: str, user=Depends(require_role('brand'))):
     if not brief or brief['owner_id'] != user['id']:
         raise HTTPException(404, 'Brief not found')
     portfolio = [p for p in store.all_rows('portfolio_items') if p.get('media_type') != 'gig']
+    demo_creator_id = demo_creator_for_brief(brief)
     results = [score_match(creator, brief, [p for p in portfolio if p['creator_id'] == creator['id']])
-               for creator in store.all_rows('creators') if eligible(creator)]
+               for creator in store.all_rows('creators') if can_match(creator, demo_creator_id)]
+    for result in results:
+        result['demo_scenario'] = bool(demo_creator_id)
     results.sort(key=lambda x: x['score'], reverse=True)
     if AI_PROVIDER and results:
         candidates = [{'id': x['creator']['id'], 'name': x['creator']['name'], 'title': x['creator']['title'], 'bio': x['creator']['bio'], 'skills': x['creator']['skills'], 'categories': x['creator']['categories'], 'platforms': x['creator']['platforms'], 'rate': x['creator']['rate'], 'licensing': x['creator'].get('licensing'), 'verified_at': x['creator'].get('verified_at'), 'gaps': x['weaknesses'], 'portfolio': [{'title': p['title'], 'tools': p['tools'], 'format': p['format'], 'workflow': p['workflow']} for p in store.all_rows('portfolio_items', {'creator_id': x['creator']['id']})[:5]], 'rule_score': x['score']} for x in results[:8]]

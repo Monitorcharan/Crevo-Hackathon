@@ -5,7 +5,8 @@ from typing import Literal
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel, Field
 import store
-from matching import LicenseTerms, eligible
+from matching import LicenseTerms
+from demo_accounts import demo_creator_for_brief, can_match
 
 
 class CandidateAction(BaseModel):
@@ -79,7 +80,7 @@ def register(app, current_user, matches):
         if brief['status'] != 'open' or data.action != 'shortlist':
             raise HTTPException(409, 'Shortlisting requires an open brief.')
         creator = store.one('creators', {'id': data.creator_id})
-        if not creator or not eligible(creator):
+        if not creator or not can_match(creator, demo_creator_for_brief(brief)):
             raise HTTPException(422, 'Choose an available registered creator.')
         row = store.one('brief_candidates', {'brief_id': brief_id, 'creator_id': creator['id']})
         if row and row['status'] in ('invited', 'interested', 'declined'):
