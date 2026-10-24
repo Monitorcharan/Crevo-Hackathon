@@ -6,7 +6,7 @@ import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, usePa
 import { AnimatePresence } from 'motion/react'
 import { ArrowRight, ArrowUpRight, Aperture, Box, BriefcaseBusiness, Check, ChevronDown, CirclePlus, Clapperboard, Compass, Film, Instagram, Layers3, Menu, MessageCircle, Search, Send, Sparkles, UserRound, WandSparkles, X } from 'lucide-react'
 import { SiInstagram, SiFacebook, SiX, SiYoutube, SiReddit } from 'react-icons/si'
-import { api, authMode, setAuthMode, setToken, token } from './api.js'
+import { api, authMode, saveSession, setAuthMode, setToken, token } from './api.js'
 import { firebaseSignOut } from './firebaseAuth.js'
 import SocialSignIn from './SocialSignIn.jsx'
 import BrandProfile from './BrandProfile.jsx'
@@ -137,15 +137,15 @@ function Auth({ onAuth, mode }) {
     setError(''); setBusy(true)
     try {
       const result = await api('/auth/login', { method: 'POST', body: { email: account.email, password: demoPassword } })
-      await firebaseSignOut(); setToken(result.access_token); setAuthMode('supabase'); onAuth(result); navigate('/dashboard')
+      await firebaseSignOut(); saveSession(result); onAuth(result); navigate('/dashboard')
     } catch (e) { setError(e.message) } finally { setBusy(false) }
   }
   async function submit(e) {
-    e.preventDefault(); setError(''); setBusy(true)
+    e.preventDefault(); setError(''); setNotice(''); setBusy(true)
     try {
       const result = await api(join ? '/auth/register' : '/auth/login', { method: 'POST', body: join ? { role, name, company_name: role === 'brand' ? companyName.trim() : '', email, password } : { email, password } })
       if (result.email_confirmation_required) { setNotice('Check your email to confirm your account, then log in.'); return }
-      await firebaseSignOut(); setToken(result.access_token); setAuthMode('supabase'); onAuth(result); navigate('/dashboard')
+      await firebaseSignOut(); saveSession(result); onAuth(result); navigate('/dashboard')
     } catch (e) { setError(e.message) } finally { setBusy(false) }
   }
   return <main className="auth-page"><div className="auth-art"><Logo/><div className="auth-art-inner"><span className="eyebrow">CREATIVE ENERGY, CONNECTED</span><h2>Better together.<br/><em>Always.</em></h2><div className="auth-brand-visual" aria-hidden="true"><CrevoCompanion size={280} mood="happy" className="auth-mascot"/></div></div></div><div className="auth-panel"><div className="auth-box"><span className="eyebrow">{join ? 'JOIN THE COMMUNITY' : 'WELCOME BACK'}</span><h1>{join ? 'Make your move.' : 'Good to see you.'}</h1><p>{join ? 'Create your space to discover, connect and collaborate.' : 'Log in to pick up where the creativity left off.'}</p>{join && <div className="role-switch"><button className={role === 'creator' ? 'selected' : ''} onClick={() => setRole('creator')} type="button"><UserRound size={17}/> I’m a creator</button><button className={role === 'brand' ? 'selected' : ''} onClick={() => setRole('brand')} type="button"><BriefcaseBusiness size={17}/> I’m a brand</button></div>}<form onSubmit={submit}>{join && <label>Your full name<input required minLength={2} maxLength={80} value={name} onChange={e => setName(e.target.value)} placeholder="Your name"/></label>}{join && role === 'brand' && <label>Brand or company name<input required minLength={2} maxLength={120} value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="The name creators will see"/></label>}<label>Email address<input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"/></label><label>Password<input required minLength={8} type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters"/></label><Alert error={error}/>{notice && <div className="notice">{notice}</div>}<Primary type="submit" disabled={busy}>{busy ? 'Please wait…' : join ? 'Create account' : 'Log in'} <ArrowRight size={18}/></Primary></form>{!join && <div className="demo-login"><div className="demo-login-heading"><span className="eyebrow">EXPLORE THE WORKING DEMO</span><p>Shared sample accounts with a portfolio and a published brief. Changes made here are visible to other visitors.</p></div><div className="demo-login-options">{demoAccounts.map(account => <button key={account.role} type="button" className="demo-login-option" disabled={busy} onClick={() => loginDemo(account)}><account.Icon size={20} aria-hidden="true"/><span><strong>{account.label}</strong><small>{account.email}</small></span><ArrowRight size={17} aria-hidden="true"/></button>)}</div><small className="demo-login-password">Manual login password for both demo accounts: <strong>{demoPassword}</strong></small></div>}<SocialSignIn role={join ? role : undefined} companyName={join && role === 'brand' ? companyName : ''} onAuth={onAuth}/><div className="auth-footer">{join ? 'Already a member?' : 'New to Crevo?'} <Link to={join ? '/login' : '/join'}>{join ? 'Log in' : 'Join now'}</Link></div></div></div></main>
@@ -227,7 +227,12 @@ function Footer() { return <footer className="footer"><div className="container"
 export default function App() {
   const location = useLocation()
   const [session, setSession] = useState(null), [checking, setChecking] = useState(Boolean(token() || authMode() === 'firebase')), [version, setVersion] = useState(0)
-  useEffect(() => { if (!token() && authMode() !== 'firebase') return; api('/me').then(data => setSession({ user: data.user, is_admin: data.is_admin })).catch(() => { setToken(null); setAuthMode(null) }).finally(() => setChecking(false)) }, [])
+  useEffect(() => { if (!token() && authMode() !== 'firebase') return; api('/me').then(data => setSession({ user: data.user, is_admin: data.is_admin })).catch(error => { if ([401, 403].includes(error.status)) { setToken(null); setAuthMode(null) } }).finally(() => setChecking(false)) }, [])
+  useEffect(() => {
+    const expired = () => setSession(null)
+    window.addEventListener('crevo:session-expired', expired)
+    return () => window.removeEventListener('crevo:session-expired', expired)
+  }, [])
   async function logout() { await firebaseSignOut(); setToken(null); setAuthMode(null); setSession(null); window.location.href = '/' }
   if (checking) return <div className="boot"><BrandMark className="boot-mark"/>crevo</div>
   const authPage = location.pathname === '/login' || location.pathname === '/join'

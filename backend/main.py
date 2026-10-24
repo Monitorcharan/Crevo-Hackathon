@@ -20,6 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 from supabase import create_client
+from supabase.lib.client_options import SyncClientOptions
+from supabase_auth.errors import AuthApiError
 
 load_dotenv()
 import store
@@ -110,6 +112,10 @@ class Register(Credentials):
     name: str = Field(min_length=2, max_length=80)
     role: str
     company_name: str = Field(default='', max_length=120)
+
+
+class RefreshSession(BaseModel):
+    refresh_token: str = Field(min_length=1, max_length=4096)
 
 
 class BrandEdit(BaseModel):
@@ -291,8 +297,44 @@ def is_admin(user):
     return bool(ADMIN_EMAILS and user['email'].lower() in ADMIN_EMAILS)
 
 
-def auth_result(user, token):
-    return {'user': user, 'access_token': token, 'mode': 'supabase' if store.REMOTE else 'local', 'is_admin': is_admin(user)}
+def auth_result(user, token, session=None):
+    result = {'user': user, 'access_token': token, 'mode': 'supabase' if store.REMOTE else 'local', 'is_admin': is_admin(user)}
+    if session:
+        result.update(refresh_token=session.refresh_token, expires_at=session.expires_at)
+    return result
+
+
+def public_auth_client():
+    # Each HTTP request owns its session; do not leave SDK refresh timers running.
+    return create_client(store.SUPABASE_URL, store.PUBLIC_KEY,
+                         options=SyncClientOptions(auto_refresh_token=False, persist_session=False, flow_type='implicit'))
+
+
+def auth_failure(exc, operation):
+    # Never log provider messages: they may contain addresses, credentials, or tokens.
+    code = getattr(exc, 'code', '') or 'unknown'
+    safe_code = code if isinstance(code, str) and code.replace('_', '').isalnum() else 'unknown'
+    logging.warning('Auth %s failed: code=%s type=%s', operation, safe_code, type(exc).__name__)
+    errors = {
+        'over_email_send_rate_limit': (429, 'The confirmation email could not be sent because the email service limit was reached. Try again later or use an available social sign-in option.'),
+        'over_request_rate_limit': (429, 'Too many sign-in attempts. Wait a few minutes and try again.'),
+        'email_address_invalid': (422, 'This email address was rejected. Check the spelling and use your real email address.'),
+        'email_address_not_authorized': (503, 'Email signup is not available for this address yet. Use an available social sign-in option or contact Crevo support.'),
+        'email_not_confirmed': (403, 'Confirm your email using the link in your inbox before logging in.'),
+        'weak_password': (422, 'Choose a stronger password with uppercase and lowercase letters, numbers, and symbols.'),
+        'user_already_exists': (409, 'This email is already registered. Log in instead.'),
+        'email_exists': (409, 'This email is already registered. Log in instead.'),
+        'signup_disabled': (503, 'New account registration is temporarily unavailable.'),
+        'email_provider_disabled': (503, 'Email sign-in is temporarily unavailable. Use an available social sign-in option.'),
+        'invalid_credentials': (401, 'Invalid email or password'),
+        'refresh_token_not_found': (401, 'Your session expired. Please log in again.'),
+        'refresh_token_already_used': (401, 'Your session expired. Please log in again.'),
+        'session_expired': (401, 'Your session expired. Please log in again.'),
+        'session_not_found': (401, 'Your session expired. Please log in again.'),
+    }
+    status, message = errors.get(safe_code, (503, 'Sign-in is temporarily unavailable. Please try again shortly.'))
+    headers = {'Retry-After': '3600' if code == 'over_email_send_rate_limit' else '60'} if status == 429 else None
+    return HTTPException(status, message, headers=headers)
 
 
 def local_token(user_id):
@@ -435,29 +477,45 @@ def register(data: Register):
     company_name = data.company_name.strip()
     if data.role == 'brand' and len(company_name) < 2:
         raise HTTPException(422, 'Enter your brand or company name')
-    if store.one('users', {'email': data.email.lower()}):
-        raise HTTPException(409, 'This email is already registered')
+    session = None
     try:
+        if store.one('users', {'email': data.email.lower()}):
+            raise HTTPException(409, 'This email is already registered. Log in instead.')
         if store.REMOTE:
-            auth = create_client(store.SUPABASE_URL, store.PUBLIC_KEY).auth.sign_up({'email': data.email.lower(), 'password': data.password})
+            credentials = {'email': data.email.lower(), 'password': data.password}
+            app_url = (os.getenv('PUBLIC_APP_URL') or os.getenv('RENDER_EXTERNAL_URL') or '').rstrip('/')
+            if app_url:
+                credentials['options'] = {'email_redirect_to': app_url + '/login'}
+            auth = public_auth_client().auth.sign_up(credentials)
             if not auth.user:
-                raise HTTPException(400, 'Supabase could not create the account')
+                raise HTTPException(503, 'Account registration is temporarily unavailable. Please try again shortly.')
+            if not auth.session and auth.user.identities == []:
+                raise HTTPException(409, 'This email is already registered. Log in instead.')
             user_id = str(auth.user.id)
+            session = auth.session
             access_token = auth.session.access_token if auth.session else None
         else:
             user_id = str(uuid.uuid4())
             access_token = local_token(user_id)
+    except AuthApiError as exc:
+        raise auth_failure(exc, 'register')
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise auth_failure(exc, 'register')
+    try:
         user_data = {'id': user_id, 'email': data.email.lower(), 'name': data.name.strip(), 'role': data.role, 'company_name': company_name if data.role == 'brand' else ''}
         if not store.REMOTE:
             user_data['password_hash'] = hash_password(data.password)
         user = store.insert('users', user_data)
         if data.role == 'creator':
             store.insert('creators', {'owner_id': user_id, 'name': user['name'], 'title': 'Creator', 'bio': '', 'location': '', 'categories': [], 'skills': [], 'platforms': [], 'audience': 0, 'rate': 0, 'avatar_url': None, 'portfolio': '', 'portfolio_source': 'manual'})
-        return {**auth_result(user, access_token), 'email_confirmation_required': access_token is None}
+        return {**auth_result(user, access_token, session), 'email_confirmation_required': access_token is None}
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(400, 'Could not create account; check Auth and database configuration')
+    except Exception as exc:
+        logging.error('Account profile creation failed: type=%s', type(exc).__name__)
+        raise HTTPException(503, 'We could not finish creating your profile. Please try again shortly or contact Crevo support.')
 
 
 @app.post('/api/auth/login')
@@ -465,19 +523,39 @@ def login(data: Credentials):
     user = store.one('users', {'email': data.email.lower()})
     if not user:
         raise HTTPException(401, 'Invalid email or password')
+    session = None
     if store.REMOTE:
         try:
-            auth = create_client(store.SUPABASE_URL, store.PUBLIC_KEY).auth.sign_in_with_password({'email': data.email.lower(), 'password': data.password})
+            auth = public_auth_client().auth.sign_in_with_password({'email': data.email.lower(), 'password': data.password})
+            session = auth.session
             token = auth.session.access_token
-        except Exception:
-            raise HTTPException(401, 'Invalid email or password')
+        except Exception as exc:
+            raise auth_failure(exc, 'login')
     else:
         with store.connect() as db:
             row = db.execute('select password_hash from users where id=?', (user['id'],)).fetchone()
         if not row or not verify_password(data.password, row['password_hash']):
             raise HTTPException(401, 'Invalid email or password')
         token = local_token(user['id'])
-    return auth_result(user, token)
+    return auth_result(user, token, session)
+
+
+@app.post('/api/auth/refresh')
+def refresh_auth(data: RefreshSession):
+    if not store.REMOTE:
+        raise HTTPException(401, 'Please log in again.')
+    try:
+        auth = public_auth_client().auth.refresh_session(data.refresh_token)
+        if not auth.user or not auth.session:
+            raise HTTPException(401, 'Your session expired. Please log in again.')
+        user = store.one('users', {'id': str(auth.user.id)})
+        if not user:
+            raise HTTPException(401, 'Account not found. Please log in again.')
+        return auth_result(user, auth.session.access_token, auth.session)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise auth_failure(exc, 'refresh')
 
 
 @app.get('/api/me')
