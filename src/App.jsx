@@ -62,7 +62,7 @@ function Nav({ session, onLogout, dark }) {
     {session && <NavLink to="/dashboard" onClick={() => setOpen(false)}>Dashboard</NavLink>}
     {session?.is_admin && <NavLink to="/admin/verifications" onClick={() => setOpen(false)}>Verifications</NavLink>}
     {!session && <><NavLink className="mobile-auth-link" to="/login" onClick={() => setOpen(false)}>Log in</NavLink><NavLink className="mobile-auth-link" to="/join" onClick={() => setOpen(false)}>Get started</NavLink></>}
-  </nav><NotificationBell user={session?.user}/><div className="nav-actions"><MotionToggle/>{session ? <><span className="nav-greeting">Hi, {session.user.name.split(' ')[0]}</span><button className="text-button" onClick={onLogout}>Log out</button></> : <><Link className="text-button" to="/login">Log in</Link><Link className="button button-small button-light" to="/join">Get started <ArrowUpRight size={15}/></Link></>}</div><div className="studio-mobile-motion"><MotionToggle/></div><button className="mobile-menu" aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></header>
+  </nav><NotificationBell user={session?.user}/><div className="nav-actions"><MotionToggle/>{session ? <><span className="nav-greeting">Hi, {session.user.name}</span><button className="text-button" onClick={onLogout}>Log out</button></> : <><Link className="text-button" to="/login">Log in</Link><Link className="button button-small button-light" to="/join">Get started <ArrowUpRight size={15}/></Link></>}</div><div className="studio-mobile-motion"><MotionToggle/></div><button className="mobile-menu" aria-label="Toggle menu" onClick={() => setOpen(!open)}>{open ? <X/> : <Menu/>}</button></div></header>
 }
 
 
@@ -137,7 +137,7 @@ function Auth({ onAuth, mode }) {
 function Protected({ session, children }) { return session ? children : <Navigate to="/login" replace/> }
 
 function Dashboard({ session, refresh }) {
-  return <main className="page-light dashboard"><div className="container dash-top"><div><span className="eyebrow">YOUR CREATIVE SPACE</span><h1>Hey, {session.user.name.split(' ')[0]}<span className="accent">.</span></h1><p>{session.user.role === 'brand' ? 'Your next great collaboration starts here.' : 'Your next opportunity is waiting.'}</p></div><Pill lime>{session.user.role.toUpperCase()} ACCOUNT</Pill></div>{session.user.role === 'brand' ? <BrandDashboard user={session.user}/> : <CreatorDashboard refresh={refresh}/>}<div className="container">{authMode() !== 'firebase' && <SocialSignIn connect/>}</div></main>
+  return <main className="page-light dashboard"><div className="container dash-top"><div><span className="eyebrow">YOUR CREATIVE SPACE</span><h1>Hey, {session.user.name}<span className="accent">.</span></h1><p>{session.user.role === 'brand' ? 'Your next great collaboration starts here.' : 'Your next opportunity is waiting.'}</p></div><Pill lime>{session.user.role.toUpperCase()} ACCOUNT</Pill></div>{session.user.role === 'brand' ? <BrandDashboard user={session.user}/> : <CreatorDashboard refresh={refresh}/>}<div className="container">{authMode() !== 'firebase' && <SocialSignIn connect/>}</div></main>
 }
 
 function BrandDashboard({ user }) {
